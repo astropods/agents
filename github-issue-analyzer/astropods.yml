@@ -13,7 +13,7 @@ models:
   openai:
     provider: openai
 
-tools:
+integrations:
   github:
     provider: github
 
@@ -30,8 +30,8 @@ ingestion:
         args:
           SYNC_MODE: "startup"
           ISSUE_LIMIT: "20"
-          GITHUB_OWNER: "facebook"
-          GITHUB_REPO: "react"
+          GITHUB_OWNER: "mastra-ai"
+          GITHUB_REPO: "mastra"
     trigger:
       type: startup
   schedule:
@@ -42,8 +42,8 @@ ingestion:
         args:
           SYNC_MODE: "schedule"
           ISSUE_LIMIT: "0"
-          GITHUB_OWNER: "facebook"
-          GITHUB_REPO: "react"
+          GITHUB_OWNER: "mastra-ai"
+          GITHUB_REPO: "mastra"
     trigger:
       type: schedule
 
