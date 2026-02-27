@@ -1,0 +1,32 @@
+{
+  "name": "github-issue-analyzer",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "GitHub Issue Analyzer — ingests GitHub issues into a Neo4j knowledge graph with OpenAI-powered analysis",
+  "scripts": {
+    "dev": "bun --watch agent/index.ts",
+    "dev:ingest": "bun --watch ingestion/index.ts",
+    "start": "bun agent/index.ts",
+    "ingest": "bun ingestion/index.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:evals": "vitest run --project evals",
+    "test:dump": "bun test/dump-fixtures.ts"
+  },
+  "main": "./agent/index.ts",
+  "dependencies": {
+    "@mastra/core": "latest",
+    "@astropods/adapter-mastra": "latest",
+    "neo4j-driver": "^5.28.1",
+    "openai": "^4.104.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@mastra/evals": "latest",
+    "@testcontainers/neo4j": "^10.0.0",
+    "@types/bun": "^1.1.14",
+    "testcontainers": "^10.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.0.0"
+  }
+}
