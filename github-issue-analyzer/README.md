@@ -11,7 +11,7 @@ Built with [Mastra](https://mastra.ai) and the Astro platform.
 │  Ingestion (SYNC_MODE=startup — full sync)            │
 │                                                       │
 │  GitHub GraphQL ─► Neo4j ─► OpenAI ─► Neo4j           │
-│  (fetch issues)    (store)   (analyze)  (store result) │
+│  (fetch issues)    (store)  (analyze)  (store result) │
 └───────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────┐
