@@ -2,6 +2,7 @@
 
 Pre-built Astro AI agents you can run locally with `ast dev`.
 
+- **CLI [docs](https://docs.astropods.ai)**
 - **Read our [blog](https://blog.astropods.ai)**
 - **Join the [waitlist](https://blog.astropods.ai/waitlist)**
 
