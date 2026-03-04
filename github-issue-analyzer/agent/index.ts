@@ -13,6 +13,8 @@
  */
 
 import { Agent } from '@mastra/core/agent';
+import { Memory } from '@mastra/memory';
+import { LibSQLStore } from '@mastra/libsql';
 import { serve } from '@astropods/adapter-mastra';
 import { queryNeo4jTool } from './tools/query-neo4j';
 import { summarizeCommentsTool } from './tools/summarize-comments';
@@ -77,6 +79,13 @@ configured repository and answer questions about them.
 - (Issue)-[:BELONGS_TO_CATEGORY]->(Category)
 `.trim();
 
+const memory = new Memory({
+  storage: new LibSQLStore({
+    id: 'memory',
+    url: ':memory:',
+  }),
+});
+
 const agent = new Agent({
   name: 'github-issue-analyzer',
   instructions: INSTRUCTIONS,
@@ -85,6 +94,7 @@ const agent = new Agent({
     queryNeo4j: queryNeo4jTool,
     summarizeComments: summarizeCommentsTool,
   },
+  memory,
 });
 
 serve(agent);
