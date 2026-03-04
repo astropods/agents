@@ -45,7 +45,7 @@ async function main() {
     repo = requireEnv('GITHUB_REPO');
   } catch (err) {
     console.error((err as Error).message);
-    console.error('Set these in astroai.yml under ingestion.*.container.build.args');
+    console.error('Set these in astropods.yml under ingestion.*.container.build.args');
     process.exit(1);
   }
 

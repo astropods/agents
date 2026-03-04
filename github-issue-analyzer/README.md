@@ -110,7 +110,7 @@ github-issue-analyzer/
 
 ## Configuration
 
-All configuration is in `astroai.yml`.
+All configuration is in `astropods.yml`.
 
 **Providers** (credentials auto-injected from `.env`):
 
@@ -120,7 +120,7 @@ All configuration is in `astroai.yml`.
 | `tools.github` | `github` | `GITHUB_TOKEN` |
 | `knowledge.graph` | `neo4j` | `NEO4J_HOST`, `NEO4J_PORT` (auto) |
 
-**Ingestion build args** (baked into container images via `astroai.yml`):
+**Ingestion build args** (baked into container images via `astropods.yml`):
 
 | Arg | Default | Description |
 |-----|---------|-------------|

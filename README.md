@@ -1,6 +1,6 @@
 # Astropods Agents
 
-Pre-built Astro AI agents you can run locally with `ast dev`.
+Pre-built agents packages as Astropods you can run locally with `ast dev`.
 
 - **CLI [docs](https://docs.astropods.ai)**
 - **Read our [blog](https://blog.astropods.ai)**
