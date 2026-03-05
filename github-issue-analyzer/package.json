@@ -16,6 +16,8 @@
   "main": "./agent/index.ts",
   "dependencies": {
     "@mastra/core": "latest",
+    "@mastra/memory": "latest",
+    "@mastra/libsql": "latest",
     "@astropods/adapter-mastra": "latest",
     "neo4j-driver": "^5.28.1",
     "openai": "^4.104.0",
