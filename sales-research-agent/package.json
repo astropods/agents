@@ -1,0 +1,26 @@
+{
+  "name": "sales-research-agent",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Account research assistant — Gong transcript search + Salesforce lookups",
+  "scripts": {
+    "dev": "bun --watch agent/index.ts",
+    "start": "bun agent/index.ts",
+    "ingest": "bun ingestion/startup/index.ts"
+  },
+  "main": "./agent/index.ts",
+  "dependencies": {
+    "@mastra/core": "latest",
+    "@mastra/memory": "latest",
+    "@mastra/libsql": "latest",
+    "@astropods/adapter-mastra": "latest",
+    "@qdrant/js-client-rest": "^1.17.0",
+    "openai": "^4.104.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.9.3"
+  }
+}

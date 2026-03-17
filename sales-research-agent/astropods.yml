@@ -1,0 +1,82 @@
+spec: package/v1
+name: sales-research-agent
+
+meta:
+  description: Account research assistant — searches Gong call transcripts and Salesforce data to answer questions about customer accounts
+
+providers:
+  gong:
+    scope: [integrations]
+    variables:
+      - name: ACCESS_KEY
+        description: Gong API access key
+        datatype: string
+        secret: true
+      - name: ACCESS_KEY_SECRET
+        description: Gong API access key secret
+        datatype: string
+        secret: true
+      - name: BASE_URL
+        description: Gong API base URL
+        datatype: string
+        default: https://api.gong.io
+      - name: APP_URL
+        description: Gong web app base URL (used to build call deep links)
+        datatype: string
+        default: https://app.gong.io
+  sf:
+    scope: [integrations]
+    variables:
+      - name: CLIENT_ID
+        description: Salesforce connected-app consumer key
+        datatype: string
+        secret: true
+      - name: CLIENT_SECRET
+        description: Salesforce connected-app consumer secret
+        datatype: string
+        secret: true
+      - name: REFRESH_TOKEN
+        description: Salesforce OAuth refresh token
+        datatype: string
+        secret: true
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+models:
+  anthropic:
+    provider: anthropic
+  openai:
+    provider: openai
+
+integrations:
+  gong:
+    provider: gong
+  sf:
+    provider: sf
+
+knowledge:
+  vectors:
+    provider: qdrant
+    persistent: true
+
+inputs:
+  MAX_CALLS:
+    name: MAX_CALLS
+    datatype: number
+    description: Maximum number of Gong calls to ingest (omit for unlimited)
+    optional: true
+
+ingestion:
+  startup:
+    container:
+      build:
+        context: .
+        dockerfile: ingestion/startup/Dockerfile
+    trigger:
+      type: startup
+
+dev:
+  interfaces: [web]
