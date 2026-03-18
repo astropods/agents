@@ -1,23 +1,22 @@
 spec: package/v1
 name: release-note-helper
 
-meta:
-  description: An agent that helps you craft release notes from Jira issues and GitHub PRs
-
-inputs:
-  JIRA_BASE_URL:
-    name: JIRA_BASE_URL
-    datatype: string
-    description: Jira instance base URL (e.g. https://your-org.atlassian.net)
-  JIRA_EMAIL:
-    name: JIRA_EMAIL
-    datatype: string
-    description: Atlassian account email for Jira API authentication
-  JIRA_API_KEY:
-    name: JIRA_API_KEY
-    datatype: string
-    secret: true
-    description: Jira API token
+providers:
+  jira:
+    scope: [integrations]
+    variables:
+      - name: API_KEY
+        description: Jira API token
+        datatype: string
+        secret: true
+      - name: BASE_URL
+        description: Jira instance base URL (e.g. https://your-org.atlassian.net)
+        datatype: string
+        secret: true
+      - name: EMAIL
+        description: Atlassian account email for Jira API authentication
+        datatype: string
+        secret: true
 
 agent:
   build:
@@ -31,6 +30,8 @@ models:
 integrations:
   github:
     provider: github
+  jira:
+    provider: jira
 
 knowledge:
   preferences:
@@ -38,5 +39,3 @@ knowledge:
 
 dev:
   interfaces: [web, slack]
-  overrides:
-    messagingImage: astropods/messaging
