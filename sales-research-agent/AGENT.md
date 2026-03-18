@@ -1,5 +1,5 @@
 ---
-description: Account research assistant — searches Gong call transcripts and Salesforce data to answer questions about customer accounts
+description: Account research assistant searches Gong call transcripts and Salesforce data to answer questions about customer accounts
 model: anthropic/claude-sonnet-4-5
 interfaces: [web]
 integrations: [gong, salesforce]
