@@ -12,6 +12,7 @@ Pre-built agents packages as Astropods you can run locally with `ast dev`.
 |-------|-------------|
 | [github-issue-analyzer](./github-issue-analyzer) | Ingests GitHub issues into a Neo4j knowledge graph, enriches with OpenAI analysis, and answers questions via Cypher and comment summarization. Requires `GITHUB_TOKEN` and `OPENAI_API_KEY`. |
 | [release-note-helper](./release-note-helper) | Queries Jira for completed issues, lets you curate candidates interactively, verifies linked GitHub PRs, and drafts a formatted release note matching your team's style. Remembers preferences across sessions via Redis. Requires `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_KEY`, `GITHUB_TOKEN`, and `ANTHROPIC_API_KEY`. |
+| [sales-research-agent](./sales-research-agent) | Researches customer accounts by searching Gong call transcripts (semantic vector search via Qdrant) and Salesforce data. Requires `GONG_ACCESS_KEY`, `GONG_ACCESS_KEY_SECRET`, and Salesforce OAuth credentials. |
 
 ## Quick start
 
