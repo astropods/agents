@@ -1,6 +1,9 @@
 spec: astro/v1
 name: github-issue-analyzer
 
+meta:
+  visibility: public
+
 agent:
   build:
     context: .
@@ -31,6 +34,18 @@ ingestion:
           GITHUB_REPO: "mastra"
     trigger:
       type: startup
+  schedule:
+    container:
+      build:
+        context: .
+        dockerfile: ingestion/Dockerfile
+        args:
+          SYNC_MODE: "schedule"
+          ISSUE_LIMIT: "0"
+          GITHUB_OWNER: "mastra-ai"
+          GITHUB_REPO: "mastra"
+    trigger:
+      type: schedule
 
 dev:
-  interfaces: [web, slack]
+  interfaces: [web]

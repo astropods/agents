@@ -1,12 +1,12 @@
 ---
-description: GitHub Issue Analyzer — ingests GitHub issues into a Neo4j knowledge graph with OpenAI-powered analysis
+description: Understand what's happening in your GitHub repository — surface issue trends, categories, competitor mentions, and solutions without writing a single query
 model: openai/gpt-4o
 interfaces: [web, slack]
 integrations: [github, neo4j]
 knowledge: graph (Neo4j)
 ---
 
-Analyzes GitHub issues from a repository by ingesting them into a Neo4j knowledge graph, enriching each issue with structured OpenAI analysis, and answering questions using Cypher queries and comment summarization.
+Reading through hundreds of GitHub issues to spot patterns, find workarounds, or understand what competitors are mentioned takes hours. This agent does it for you — it ingests your repository's issues into a knowledge graph, enriches them with AI analysis, and lets you ask questions in plain English to get instant answers.
 
 ## What you can ask
 
