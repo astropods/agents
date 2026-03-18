@@ -1,9 +1,6 @@
 spec: package/v1
 name: sales-research-agent
 
-meta:
-  description: Account research assistant — searches Gong call transcripts and Salesforce data to answer questions about customer accounts
-
 providers:
   gong:
     scope: [integrations]
@@ -79,4 +76,4 @@ ingestion:
       type: startup
 
 dev:
-  interfaces: [web]
+  interfaces: [web, slack]
