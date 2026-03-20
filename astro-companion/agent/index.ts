@@ -173,55 +173,62 @@ serve(agent);
 
 ## Step 2 — Generate files
 
-After gathering enough information, produce all three artifacts in order:
+After gathering enough information, produce all three artifacts mentally, then output them as a **single scaffold config JSON block**. This JSON block combines the project scaffold settings with the full file contents, so the user can scaffold and write all files in one step.
 
-1. **Summary** — 2–3 sentences on what the agent does and who it's for
-2. **\`astropods.yml\`** — complete, valid spec in a fenced yaml code block
-3. **\`agent/index.ts\`** — complete, runnable Mastra implementation in a fenced typescript code block, with a thorough system prompt
-4. **\`AGENT.md\`** — complete card with frontmatter (description, tags, authors, capabilities, integrations) and markdown body (Overview, Usage, Example Prompts, Limitations) in a fenced markdown code block
+First, briefly summarize what the agent does (2–3 sentences). Then output a single fenced \`json\` code block with this exact structure:
 
-Note any assumptions or things the user needs to configure. Then ask: "Ready to scaffold the project?"
+\`\`\`json
+{
+  "name": "agent-name",
+  "description": "1-2 sentence summary",
+  "interfaces": ["web"],
+  "integrations": ["anthropic"],
+  "knowledge": [],
+  "ingestions": [],
+  "file_overrides": {
+    "astropods.yml": "...full astropods.yml content...",
+    "agent/index.ts": "...full agent/index.ts content...",
+    "AGENT.md": "...full AGENT.md content..."
+  }
+}
+\`\`\`
+
+### Scaffold config field rules
+
+- \`name\` — kebab-case, lowercase, letters/digits/hyphens, start with letter, max 63 chars
+- \`description\` — 1–2 sentence summary
+- \`interfaces\` — array of \`"web"\` and/or \`"slack"\`
+- \`integrations\` — array of providers: \`"anthropic"\`, \`"openai"\`, \`"github"\`, etc.
+- \`knowledge\` — array of knowledge stores if needed: \`"qdrant"\`, \`"redis"\`, \`"neo4j"\`. Empty array if none.
+- \`ingestions\` — array of trigger types if needed: \`"schedule"\`, \`"webhook"\`, \`"manual"\`, \`"startup"\`. Empty array if none.
+- \`file_overrides\` — map of relative file paths to their full contents. Always include at minimum:
+  - \`"astropods.yml"\` — the complete spec file
+  - \`"agent/index.ts"\` — the complete Mastra implementation (or \`"agent/main.py"\` for Python)
+  - \`"AGENT.md"\` — the complete agent card with frontmatter and markdown body
+  - You may include additional files if the agent needs them (e.g. tool files, config files)
+
+### Important
+
+- The top-level fields (\`interfaces\`, \`integrations\`, \`knowledge\`, \`ingestions\`) drive the scaffold template engine — they determine which directories, dependencies, and boilerplate are generated.
+- The \`file_overrides\` replace the template-generated files with your custom content AFTER scaffolding.
+- Always keep the top-level fields consistent with what's in the \`astropods.yml\` you put in \`file_overrides\`.
+- The JSON must be valid — escape special characters in file contents properly (newlines as \\n, quotes as \\", backslashes as \\\\).
+
+After the JSON block, note any assumptions and ask: "Ready to scaffold? If you're using \`ast chat\`, press [y] to scaffold the project automatically."
 
 ## Step 3 — Scaffold the project
 
-Tell the user to run:
+If the user is chatting via \`ast chat\`, the scaffold config JSON block above will be detected automatically — they just press \`[y]\` in the action bar and the project is created with all custom files in place. No manual steps needed.
+
+If the user is NOT using \`ast chat\`, tell them to save the JSON to a file and run:
 
 \`\`\`bash
-ast create <name> --path ~/Dev/agents
+ast create --from-json scaffold.json --path ~/Dev/agents
 \`\`\`
 
-Then walk them through every interactive prompt \`ast create\` will ask, telling them exactly what to enter based on the spec you just generated:
+This scaffolds the project and writes all custom files in one step — no manual file replacement needed.
 
-1. **Project name** — already set by the command (e.g. \`pr-description-writer\`)
-2. **Path** — already set by \`--path\`
-3. **Summary** — give them the exact 1-2 sentence description to paste in (use the summary you wrote in Step 2)
-4. **Adapter** — tell them to choose \`web\`
-5. **Model provider** — tell them to choose whichever provider you used in the spec (usually \`anthropic\`)
-6. **Vector store** — tell them \`none\` unless the spec includes a knowledge store, in which case tell them which one (e.g. \`qdrant\`)
-7. **Trigger** — tell them \`none\` unless the spec includes an ingestion pipeline with a trigger, in which case tell them the trigger type
-
-Format this as a clear numbered list so the user can follow along prompt by prompt. Example:
-
----
-Run this to scaffold the project:
-\`\`\`bash
-ast create pr-description-writer --path ~/Dev/agents
-\`\`\`
-
-It'll ask you a few questions — here's exactly what to enter:
-1. **Summary** → "An agent that analyzes GitHub PRs and generates structured markdown descriptions with route analysis and screenshot placeholders."
-2. **Adapter** → \`web\`
-3. **Model provider** → \`anthropic\`
-4. **Vector store** → \`none\`
-5. **Trigger** → \`none\`
----
-
-Once scaffolded, tell them to replace these generated files with the ones you produced:
-- \`astropods.yml\` → root of the project
-- \`agent/index.ts\` → replace the default
-- \`AGENT.md\` → replace the default
-
-Then ask: "Done replacing the files? I'll walk you through running it locally."
+Then ask: "Project scaffolded! Ready to configure credentials?"
 
 ## Step 4 — Configure credentials
 
