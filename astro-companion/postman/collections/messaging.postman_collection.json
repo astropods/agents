@@ -1,0 +1,112 @@
+{
+    "info": {
+        "name": "Messaging Web API",
+        "description": "Web adapter endpoints for conversations, messages, history, and streaming.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080"
+        },
+        {
+            "key": "conversationId",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "Health",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/health",
+                "description": "Health check endpoint."
+            }
+        },
+        {
+            "name": "Create conversation",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "if (pm.response.code === 201) {",
+                            "    const json = pm.response.json();",
+                            "    if (json.conversation_id) {",
+                            "        pm.collectionVariables.set('conversationId', json.conversation_id);",
+                            "    }",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{}"
+                },
+                "url": "{{baseUrl}}/api/conversations",
+                "description": "Create a new conversation. Optional body: {\"title\": \"...\", \"metadata\": {}}. Saves conversation_id to collection variable for subsequent requests."
+            }
+        },
+        {
+            "name": "Send message",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"content\": \"Hello, what can you do?\"\n}"
+                },
+                "url": "{{baseUrl}}/api/conversations/{{conversationId}}/messages",
+                "description": "Send a message in a conversation. Requires conversation_id (set by Create conversation or manually)."
+            }
+        },
+        {
+            "name": "Get conversation history",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/conversations/{{conversationId}}/history",
+                "description": "Get message history for a conversation."
+            }
+        },
+        {
+            "name": "Stream (SSE)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "text/event-stream"
+                    }
+                ],
+                "url": "{{baseUrl}}/api/conversations/{{conversationId}}/stream",
+                "description": "Server-Sent Events stream for real-time agent responses. In Postman this may show as a long-running request; use a terminal curl -N for live events."
+            }
+        },
+        {
+            "name": "Get agent config",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/agent/config",
+                "description": "Get agent configuration (e.g. model, tools) for the connected agent."
+            }
+        }
+    ]
+}

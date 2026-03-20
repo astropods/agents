@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://astropods.ai/schema/package.json
+spec: package/v1
+name: astro-companion
+
+meta:
+  visibility: public
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+models:
+  anthropic:
+    provider: anthropic
+
+dev:
+  interfaces:
+    messaging:
+      adapters: [web]
