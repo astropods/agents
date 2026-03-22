@@ -1,5 +1,5 @@
 {
-  "name": "sales-research-agent",
+  "name": "@astropods/sales-research-agent",
   "version": "0.1.0",
   "type": "module",
   "license": "Apache-2.0",

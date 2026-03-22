@@ -1,5 +1,5 @@
 {
-  "name": "release-note-helper",
+  "name": "@astropods/release-note-helper",
   "version": "0.1.0",
   "type": "module",
   "description": "An agent that helps you craft release notes from Jira issues and GitHub PRs",
