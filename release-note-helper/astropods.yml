@@ -1,6 +1,9 @@
 spec: package/v1
 name: release-note-helper
 
+meta:
+  visibility: public
+
 providers:
   jira:
     scope: [integrations]
