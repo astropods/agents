@@ -1,6 +1,9 @@
 spec: package/v1
 name: sales-research-agent
 
+meta:
+  visibility: public
+
 providers:
   gong:
     scope: [integrations]
