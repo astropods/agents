@@ -1,5 +1,5 @@
 spec: package/v1
-name: sales-research-agent
+name: "@astropods/sales-research-agent"
 
 meta:
   visibility: public

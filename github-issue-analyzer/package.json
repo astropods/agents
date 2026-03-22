@@ -1,5 +1,5 @@
 {
-  "name": "github-issue-analyzer",
+  "name": "@astropods/github-issue-analyzer",
   "version": "0.1.0",
   "type": "module",
   "description": "GitHub Issue Analyzer — ingests GitHub issues into a Neo4j knowledge graph with OpenAI-powered analysis",
