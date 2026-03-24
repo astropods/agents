@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://astropods.ai/schema/package.json
+spec: astro/v1
+name: "@astropods/feature-flag-assistant"
+
+meta:
+  visibility: public
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+models:
+  anthropic:
+    provider: anthropic
+
+integrations:
+  github:
+    provider: github
+
+inputs:
+  launchdarkly_api_key:
+    name: LAUNCHDARKLY_API_KEY
+    datatype: string
+    secret: true
+    description: LaunchDarkly REST API key with read access to flags and code references
+  launchdarkly_project_key:
+    name: LAUNCHDARKLY_PROJECT_KEY
+    datatype: string
+    description: LaunchDarkly project key (e.g. "default" or your project slug)
+    default: default
+  launchdarkly_production_env:
+    name: LAUNCHDARKLY_PRODUCTION_ENV
+    datatype: string
+    description: LaunchDarkly environment key that represents production
+    default: production
+  github_repo:
+    name: GITHUB_REPO
+    datatype: string
+    description: "GitHub repository to search for flag references (format: owner/repo)"
+  slack_notify_channel:
+    name: SLACK_NOTIFY_CHANNEL
+    datatype: string
+    description: "Slack channel ID or name to post scheduled flag audit reports to"
+
+ingestion:
+  scheduled-report:
+    container:
+      build:
+        context: .
+        dockerfile: ingestion/Dockerfile
+    trigger:
+      type: schedule
+
+dev:
+  interfaces:
+    messaging:
+      adapters: [web, slack]
