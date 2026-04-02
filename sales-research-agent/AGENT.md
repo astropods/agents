@@ -4,6 +4,10 @@ model: anthropic/claude-sonnet-4-5
 interfaces: [web]
 integrations: [gong, salesforce]
 knowledge: vectors (Qdrant)
+repository:
+  type: git
+  url: "https://github.com/astropods/agents"
+  directory: sales-research-agent
 ---
 
 Researches customer accounts by combining Gong call transcript search with Salesforce CRM data. Surfaces relevant context from past conversations and deal history to help sales, CS, and leadership answer questions about any account.

@@ -4,6 +4,10 @@ model: anthropic/claude-sonnet-4-5
 interfaces: [web, slack]
 integrations: [jira, github]
 knowledge: preferences (Redis)
+repository:
+  type: git
+  url: "https://github.com/astropods/agents"
+  directory: release-note-helper
 ---
 
 Guides you through the full release note workflow: queries Jira for completed issues, helps you curate which ones belong in the release, verifies linked GitHub PRs, and drafts a formatted release note matching your team's style.

@@ -4,6 +4,10 @@ model: openai/gpt-4o
 interfaces: [web, slack]
 integrations: [github, neo4j]
 knowledge: graph (Neo4j)
+repository:
+  type: git
+  url: "https://github.com/astropods/agents"
+  directory: github-issue-analyzer
 ---
 
 Reading through hundreds of GitHub issues to spot patterns, find workarounds, or understand what competitors are mentioned takes hours. This agent does it for you — it ingests your repository's issues into a knowledge graph, enriches them with AI analysis, and lets you ask questions in plain English to get instant answers.
