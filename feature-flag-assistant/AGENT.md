@@ -9,6 +9,10 @@ capabilities:
   - "Send bi-weekly scheduled flag audit reports to Slack"
 integrations:
   - "anthropic"
+repository:
+  type: git
+  url: "https://github.com/astropods/astro"
+  directory: modules/agents/feature-flag-assistant
 ---
 
 # Feature Flag Helper Agent
