@@ -20,7 +20,7 @@ Pre-built agents packages as Astropods you can run locally with `ast dev`.
 Clone the repo and run an agent:
 
 ```bash
-git clone git@github.com:astropods/agents.git
+git clone https://github.com/astropods/agents.git
 cd agents/github-issue-analyzer  # or replace with another agent
 ast configure                    # update required API keys
 ast dev
