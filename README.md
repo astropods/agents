@@ -2,9 +2,9 @@
 
 Pre-built agents packages as Astropods you can run locally with `ast dev`.
 
-- **CLI [docs](https://docs.astropods.ai)**
-- **Read our [blog](https://blog.astropods.ai)**
-- **Join the [waitlist](https://blog.astropods.ai/waitlist)**
+- **CLI [docs](https://docs.astropods.com)**
+- **Read our [blog](https://blog.astropods.com)**
+- **[Request an invite](https://astropods.com)**
 
 ## Agents
 
