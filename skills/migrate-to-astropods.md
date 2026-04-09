@@ -19,6 +19,7 @@ Read the code to understand:
 ### 2. Create `astropods.yml`
 
 Link to the astropods spec: https://docs.astropods.com/astropods-package-spec
+Below is an example:
 
 ```yaml
 # yaml-language-server: $schema=https://astropods.ai/schema/package.json
