@@ -73,7 +73,7 @@ dev:
 
 ### 3. Create `Dockerfile`
 
-Match the runtime the agent already uses. Don't change how it runs — just containerize it.
+Match the runtime the agent already uses. Don't change how it runs, just containerize it. If a change is required, prompt for input with options.
 
 **Python:**
 ```dockerfile
