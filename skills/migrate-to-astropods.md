@@ -134,7 +134,53 @@ USER node
 CMD ["node", "agent/index.js"]        # ← match the actual entry point
 ```
 
-### 4. Verify
+### 4. Wire up an adapter (if applicable)
+
+If the agent uses a supported framework, replace the entry point with the adapter's `serve()` call. **No other agent code changes are needed.**
+
+#### LangChain (Python)
+
+Add `astropods-adapter-langchain` to `requirements.txt`, then update the entry point:
+
+```python
+from astropods_adapter_langchain import LangChainAdapter, serve
+
+# existing agent setup stays untouched
+agent = create_agent(llm, tools=tools, system_prompt=system_prompt)
+
+adapter = LangChainAdapter(agent, name="my-agent", system_prompt=system_prompt, tools=tools)
+serve(adapter)
+```
+
+Notes:
+- Uses `astream(stream_mode="updates")` — responses arrive as complete messages, not token-by-token
+- `options.conversation_id` is passed as `thread_id` automatically — LangGraph memory/checkpointing works across turns
+- `tools` passed to `LangChainAdapter` is only for playground display; actual tool wiring stays in `create_agent`
+
+#### Mastra (TypeScript/Bun)
+
+Add `@astropods/adapter-mastra` to `package.json`, then update the entry point:
+
+```typescript
+import { Agent } from '@mastra/core/agent';
+import { serve } from '@astropods/adapter-mastra';
+
+const agent = new Agent({
+  name: 'My Agent',
+  instructions: 'You are a helpful assistant.',
+  model: openai('gpt-4o'),
+  tools: { ... },
+});
+
+serve(agent);
+```
+
+Notes:
+- Uses `fullStream` — responses stream token-by-token
+- `options.conversationId` is passed as the memory `thread` automatically
+- OTEL tracing is auto-configured when `OTEL_EXPORTER_OTLP_ENDPOINT` is set
+
+### 5. Verify
 
 Run `ast dev` in the agent directory. It should load the spec, build the container, and expose a messaging interface.
 
