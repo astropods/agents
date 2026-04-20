@@ -3,9 +3,9 @@ FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Install dependencies (scoped .npmrc redirects @astropods/* to local Verdaccio)
-COPY package.json .npmrc* ./
-RUN sed -i 's|localhost|host.docker.internal|g' .npmrc 2>/dev/null || true && bun install
+# Install dependencies
+COPY package.json ./
+RUN bun install
 
 # Copy source
 COPY . .

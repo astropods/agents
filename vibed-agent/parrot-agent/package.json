@@ -1,0 +1,26 @@
+{
+  "name": "parrot-agent",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A simple parrot agent that repeats back what you say in a playful and enthusiastic way.",
+  "scripts": {
+    "dev": "bun --watch agent/index.ts",
+    "dev:ingest": "bun --watch ingestion/index.ts",
+    "start": "bun agent/index.ts",
+    "ingest": "bun ingestion/index.ts"
+  },
+  "main": "./agent/index.ts",
+  "dependencies": {
+    "@mastra/core": "latest",
+    "@mastra/memory": "latest",
+    "@mastra/libsql": "latest",
+    "@mastra/observability": "latest",
+    "@mastra/otel-exporter": "latest",
+    "@opentelemetry/exporter-trace-otlp-proto": "latest",
+    "@astropods/adapter-mastra": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.9.3"
+  }
+}

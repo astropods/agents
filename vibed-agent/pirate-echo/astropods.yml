@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://astropods.ai/schema/package.json
 spec: package/v1
-name: astro-companion
+name: pirate-echo
 
 meta:
   visibility: public
@@ -9,14 +9,18 @@ agent:
   build:
     context: .
     dockerfile: Dockerfile
+  distributed: false
+  interfaces:
+    frontend: false
+    messaging: true
 
 models:
-  anthropic:
+  main:
     provider: anthropic
+    models:
+      - claude-sonnet-4-5
 
 dev:
   interfaces:
     messaging:
       adapters: [web]
-  overrides:
-    messagingImage: messaging-local

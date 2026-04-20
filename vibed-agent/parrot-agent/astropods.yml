@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://astropods.ai/schema/package.json
 spec: package/v1
-name: astro-companion
+name: parrot-agent
 
 meta:
   visibility: public
@@ -9,14 +9,22 @@ agent:
   build:
     context: .
     dockerfile: Dockerfile
+  interfaces:
+    frontend: false
+    messaging: true
 
 models:
-  anthropic:
+  main:
     provider: anthropic
+    models:
+      - claude-sonnet-4-5
+    inputs:
+      - name: ANTHROPIC_API_KEY
+        datatype: string
+        secret: true
+        description: Anthropic API key for Claude models
 
 dev:
   interfaces:
     messaging:
       adapters: [web]
-  overrides:
-    messagingImage: messaging-local

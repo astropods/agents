@@ -1,13 +1,37 @@
 import { Agent } from '@mastra/core/agent';
+import { createTool } from '@mastra/core/tools';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
 import { serve } from '@astropods/adapter-mastra';
+import { z } from 'zod';
 
 const memory = new Memory({
   storage: new LibSQLStore({
     id: 'memory',
     url: ':memory:',
   }),
+});
+
+const scaffoldProject = createTool({
+  id: 'scaffold_project',
+  description:
+    'Scaffold a new Astro agent project. Call this tool with the full scaffold config once you have gathered all requirements. The CLI will create the project automatically.',
+  inputSchema: z.object({
+    name: z.string().describe('Kebab-case project name'),
+    description: z.string().optional().describe('1-2 sentence summary'),
+    lang: z.enum(['ts', 'py']).optional().default('ts'),
+    interfaces: z.array(z.string()).optional().default(['web']),
+    model_provider: z.string().optional(),
+    model: z.string().optional(),
+    integrations: z.array(z.string()).optional().default(['anthropic']),
+    knowledge: z.array(z.string()).optional().default([]),
+    ingestions: z.array(z.string()).optional().default([]),
+    file_overrides: z
+      .record(z.string(), z.string())
+      .optional()
+      .describe('Map of relative file paths to their full contents'),
+  }),
+  execute: async ({ context }) => context,
 });
 
 const INSTRUCTIONS = `You are a specialist in writing Astro agent specs for the Astropods platform. Your job is to help users go from a rough idea to a complete, valid \`astropods.yml\` file ready to publish to the registry.
@@ -173,25 +197,9 @@ serve(agent);
 
 ## Step 2 — Generate files
 
-After gathering enough information, produce all three artifacts mentally, then output them as a **single scaffold config JSON block**. This JSON block combines the project scaffold settings with the full file contents, so the user can scaffold and write all files in one step.
+After gathering enough information, produce all three artifacts mentally, then **call the \`scaffold_project\` tool** with the full scaffold config. This tool call scaffolds the project directly on the user's machine — no manual steps needed.
 
-First, briefly summarize what the agent does (2–3 sentences). Then output a single fenced \`json\` code block with this exact structure:
-
-\`\`\`json
-{
-  "name": "agent-name",
-  "description": "1-2 sentence summary",
-  "interfaces": ["web"],
-  "integrations": ["anthropic"],
-  "knowledge": [],
-  "ingestions": [],
-  "file_overrides": {
-    "astropods.yml": "...full astropods.yml content...",
-    "agent/index.ts": "...full agent/index.ts content...",
-    "AGENT.md": "...full AGENT.md content..."
-  }
-}
-\`\`\`
+Before calling the tool, briefly summarize what the agent does (2–3 sentences).
 
 ### Scaffold config field rules
 
@@ -212,23 +220,16 @@ First, briefly summarize what the agent does (2–3 sentences). Then output a si
 - The top-level fields (\`interfaces\`, \`integrations\`, \`knowledge\`, \`ingestions\`) drive the scaffold template engine — they determine which directories, dependencies, and boilerplate are generated.
 - The \`file_overrides\` replace the template-generated files with your custom content AFTER scaffolding.
 - Always keep the top-level fields consistent with what's in the \`astropods.yml\` you put in \`file_overrides\`.
-- The JSON must be valid — escape special characters in file contents properly (newlines as \\n, quotes as \\", backslashes as \\\\).
-
-After the JSON block, note any assumptions and ask: "Ready to scaffold? If you're using \`ast chat\`, press [y] to scaffold the project automatically."
 
 ## Step 3 — Scaffold the project
 
-If the user is chatting via \`ast chat\`, the scaffold config JSON block above will be detected automatically — they just press \`[y]\` in the action bar and the project is created with all custom files in place. No manual steps needed.
+The \`scaffold_project\` tool call creates the project automatically. After it completes, tell the user and ask: "Project scaffolded! Ready to configure credentials?"
 
-If the user is NOT using \`ast chat\`, tell them to save the JSON to a file and run:
+If the user is NOT using \`ast chat\` (e.g. the web playground), they can also save the config to a file and run:
 
 \`\`\`bash
 ast create --from-json scaffold.json --path ~/Dev/agents
 \`\`\`
-
-This scaffolds the project and writes all custom files in one step — no manual file replacement needed.
-
-Then ask: "Project scaffolded! Ready to configure credentials?"
 
 ## Step 4 — Configure credentials
 
@@ -313,6 +314,7 @@ const agent = new Agent({
   instructions: INSTRUCTIONS,
   model: 'anthropic/claude-sonnet-4-5',
   memory,
+  tools: { scaffold_project: scaffoldProject },
 });
 
 serve(agent);
