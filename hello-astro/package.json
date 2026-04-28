@@ -1,0 +1,20 @@
+{
+  "name": "hello-astro",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "hello-astro",
+  "scripts": {
+    "dev": "bun --watch agent/index.ts",
+    "dev:ingest": "bun --watch ingestion/index.ts",
+    "start": "bun agent/index.ts",
+    "ingest": "bun ingestion/index.ts"
+  },
+  "main": "./agent/index.ts",
+  "dependencies": {
+    "@astropods/adapter-core": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.9.3"
+  }
+}
