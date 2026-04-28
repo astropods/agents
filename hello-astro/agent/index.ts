@@ -1,9 +1,6 @@
 /**
- * hello-world — echoes every message and appends a random joke.
+ * Echoes every message and appends a random joke.
  * Uses @astropods/adapter-core directly — no LLM required.
- *
- * Environment variables (automatically injected by 'ast dev'):
- *   GRPC_SERVER_ADDR - injected by Astro messaging service
  */
 
 import { serve } from '@astropods/adapter-core';
