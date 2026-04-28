@@ -13,7 +13,7 @@ ast project start
 ```
 hello-astro/
 ├── agent/
-│   └── index.ts        # Agent entry point
+│   └── index.ts         # Agent entry point
 ├── astropods.yml        # Agent specification
 ├── Dockerfile           # Agent container
 └── package.json
