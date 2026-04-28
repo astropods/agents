@@ -1,8 +1,8 @@
 {
-  "name": "hello-world",
+  "name": "hello-astro",
   "version": "0.1.0",
   "type": "module",
-  "description": "hello-world",
+  "description": "hello-astro",
   "scripts": {
     "dev": "bun --watch agent/index.ts",
     "dev:ingest": "bun --watch ingestion/index.ts",
