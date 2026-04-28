@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://astropods.ai/schema/package.json
+spec: package/v1
+name: hello-astro
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+dev:
+  interfaces:
+    messaging:
+      adapters: [web]
