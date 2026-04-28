@@ -7,7 +7,7 @@ This is an Astropods agent project. The agent echoes messages and appends a rand
 ```
 hello-astro/
 ├── agent/
-│   └── index.ts        # Agent entry point — implement your logic here
+│   └── index.ts         # Agent entry point — implement your logic here
 ├── astropods.yml        # Agent spec: name, interfaces, inputs, dev config
 ├── Dockerfile           # Container build — usually needs no changes
 ├── AGENT.md             # Agent card: description, tags, capabilities for the catalog
