@@ -4,12 +4,13 @@ Pre-built agents packages as Astropods you can run locally with `ast dev`.
 
 - **CLI [docs](https://docs.astropods.com)**
 - **Read our [blog](https://blog.astropods.com)**
-- **[Request an invite](https://astropods.com)**
+- **Build and deploy to Astro [get started](https://astropods.com)**
 
 ## Agents
 
 | Agent | Description |
 |-------|-------------|
+| [hello-astro](./hello-astro) | Minimal starter agent that echoes a greeting. Use it as a template for building your own Astropod. |
 | [github-issue-analyzer](./github-issue-analyzer) | Ingests GitHub issues into a Neo4j knowledge graph, enriches with OpenAI analysis, and answers questions via Cypher and comment summarization. Requires `GITHUB_TOKEN` and `OPENAI_API_KEY`. |
 | [release-note-helper](./release-note-helper) | Queries Jira for completed issues, lets you curate candidates interactively, verifies linked GitHub PRs, and drafts a formatted release note matching your team's style. Remembers preferences across sessions via Redis. Requires `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_KEY`, `GITHUB_TOKEN`, and `ANTHROPIC_API_KEY`. |
 | [sales-research-agent](./sales-research-agent) | Researches customer accounts by searching Gong call transcripts (semantic vector search via Qdrant) and Salesforce data. Requires `GONG_ACCESS_KEY`, `GONG_ACCESS_KEY_SECRET`, and Salesforce OAuth credentials. |
@@ -21,8 +22,7 @@ Clone the repo and run an agent:
 
 ```bash
 git clone https://github.com/astropods/agents.git
-cd agents/github-issue-analyzer  # or replace with another agent
-ast configure                    # update required API keys
+cd agents/hello-astro            # or replace with another agent
 ast dev
 ```
 
