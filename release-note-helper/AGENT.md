@@ -1,9 +1,15 @@
 ---
 description: An agent that helps you craft release notes from Jira issues and GitHub PRs
-model: anthropic/claude-sonnet-4-5
-interfaces: [web, slack]
-integrations: [jira, github]
-knowledge: preferences (Redis)
+tags: ["release-notes", "jira", "github"]
+capabilities:
+  - "Search Jira for issues moved to Done in a date range"
+  - "Evaluate and recommend which issues belong in a release note"
+  - "Verify linked GitHub PRs are merged and tagged"
+  - "Draft formatted release notes matching your team's style"
+  - "Persist user preferences across sessions (project, repo, criteria, format)"
+integrations:
+  - "Jira"
+  - "GitHub"
 repository:
   type: git
   url: "https://github.com/astropods/agents"

@@ -1,14 +1,15 @@
 ---
 description: "Identifies feature flag code that can be removed and old feature flags to be deleted"
 tags: ["feature-flags", "launchdarkly", "cleanup"]
-authors: []
 capabilities:
   - "Identify LaunchDarkly flags fully rolled out to 100% in production for 2+ weeks"
   - "Identify LaunchDarkly flags with zero code references"
-  - "Provide actionable cleanup recommendations"
-  - "Send bi-weekly scheduled flag audit reports to Slack"
+  - "Search GitHub for code references to a specific flag"
+  - "Preview or manually send bi-weekly scheduled flag audit reports to Slack"
 integrations:
-  - "anthropic"
+  - "LaunchDarkly"
+  - "GitHub"
+  - "Slack"
 repository:
   type: git
   url: "https://github.com/astropods/agents"
