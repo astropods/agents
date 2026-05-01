@@ -1,9 +1,8 @@
 # yaml-language-server: $schema=https://astropods.ai/schema/package.json
 spec: astro/v1
-name: "@astropods/feature-flag-assistant"
+name: "feature-flag-assistant"
 
-meta:
-  visibility: public
+meta: {}
 
 agent:
   build:

@@ -1,9 +1,14 @@
 ---
 description: Understand what's happening in your GitHub repository — surface issue trends, categories, competitor mentions, and solutions without writing a single query
-model: openai/gpt-4o
-interfaces: [web, slack]
-integrations: [github, neo4j]
-knowledge: graph (Neo4j)
+tags: ["github", "issues", "knowledge-graph", "analytics"]
+capabilities:
+  - "Query GitHub issues using natural language via a Neo4j knowledge graph"
+  - "Surface issue trends, categories, competitor mentions, and workarounds"
+  - "Summarize comments on a specific issue"
+  - "Run incremental or full syncs of repository issues into the graph"
+integrations:
+  - "GitHub"
+  - "Neo4j"
 repository:
   type: git
   url: "https://github.com/astropods/agents"

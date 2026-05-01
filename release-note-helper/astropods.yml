@@ -1,8 +1,7 @@
 spec: package/v1
-name: "@astropods/release-note-helper"
+name: "release-note-helper"
 
-meta:
-  visibility: public
+meta: {}
 
 providers:
   jira:

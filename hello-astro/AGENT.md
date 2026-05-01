@@ -6,6 +6,10 @@ capabilities:
   - "Fetch and return a random safe joke from JokeAPI"
 integrations:
   - "JokeAPI"
+repository:
+  type: git
+  url: "https://github.com/astropods/agents"
+  directory: hello-astro
 ---
 
 # Hello Astro

@@ -1,9 +1,15 @@
 ---
 description: Account research assistant searches Gong call transcripts and Salesforce data to answer questions about customer accounts
-model: anthropic/claude-sonnet-4-5
-interfaces: [web]
-integrations: [gong, salesforce]
-knowledge: vectors (Qdrant)
+tags: ["sales", "gong", "salesforce", "crm", "research"]
+capabilities:
+  - "Semantic search over Gong call transcripts with account and date filtering"
+  - "Look up Salesforce account details with intent-based field filtering"
+  - "Look up Salesforce opportunities by account, ID, or name"
+  - "Cite every claim inline with speaker name, call title, and date"
+integrations:
+  - "Gong"
+  - "Salesforce"
+  - "Qdrant"
 repository:
   type: git
   url: "https://github.com/astropods/agents"

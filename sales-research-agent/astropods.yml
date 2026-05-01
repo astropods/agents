@@ -1,8 +1,7 @@
 spec: package/v1
-name: "@astropods/sales-research-agent"
+name: "sales-research-agent"
 
-meta:
-  visibility: public
+meta: {}
 
 providers:
   gong:

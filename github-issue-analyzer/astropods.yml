@@ -1,8 +1,7 @@
 spec: astro/v1
-name: "@astropods/github-issue-analyzer"
+name: "github-issue-analyzer"
 
-meta:
-  visibility: public
+meta: {}
 
 agent:
   build:
