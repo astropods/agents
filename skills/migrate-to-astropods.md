@@ -205,6 +205,19 @@ CMD ["node", "agent/index.js"]        # ← match the actual entry point
 
 If the agent uses a supported framework, replace the entry point with the adapter's `serve()` call. **No other agent code changes are needed.**
 
+Install the adapter for your framework first:
+
+```bash
+# Python / LangChain
+pip install astropods-adapter-langchain        # then add to requirements.txt
+
+# TypeScript / Mastra (Bun)
+bun add @astropods/adapter-mastra
+
+# TypeScript / Mastra (npm)
+npm install @astropods/adapter-mastra
+```
+
 #### LangChain (Python)
 
 Add `astropods-adapter-langchain` to `requirements.txt`, then update the entry point:
