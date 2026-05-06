@@ -1,17 +1,6 @@
----
-name: migrate-to-astropods
-description: Migration assistant to port applications to run on the Astropods platform.
----
-
 # Migrate Agent to Astropods
 
-There are two scenarios.
-
-1) This is a net new project that has not been migrated to Astropods. In that case, steps 1-4 below allply. Add the files needed to run an existing agent with `ast project start`: `astropods.yml`, `Dockerfile`, and optionally `AGENT.md`. **No agent logic is modified.**
-2) This project already adopts Astropods but is missing key components covered by step 4 (Adapters). Adapters allow the platform to record telemetry from the running agent.
-
-Assess which scenario applies to this project then determine which steps should be applied.
-Confirm the plan before performing any actions.
+Add the files needed to run an existing agent with `ast project start`: `astropods.yml`, `Dockerfile`, and optionally `AGENT.md`. **No agent logic is modified.**
 
 ---
 
@@ -30,12 +19,10 @@ Read the code to understand:
 
 ### 2. Create `astropods.yml`
 
-Link to the Astropods spec documentation: https://docs.astropods.com/astropods-package-spec
-Link to the Astropods spec schema: https://astropods.com/schema/package.json
-If the project alredy includes an `astropods.yml`, check if it needs to be updated.
+Link to the astropods spec: https://docs.astropods.com/astropods-package-spec
 
 ```yaml
-# yaml-language-server: $schema=https://astropods.com/schema/package.json
+# yaml-language-server: $schema=https://astropods.ai/schema/package.json
 spec: astro/v1
 name: "<agent-name>"         # kebab-case; org-scoped: "@postman/agent-name"
 
@@ -217,19 +204,6 @@ CMD ["node", "agent/index.js"]        # ← match the actual entry point
 ### 4. Wire up an adapter (if applicable)
 
 If the agent uses a supported framework, replace the entry point with the adapter's `serve()` call. **No other agent code changes are needed.**
-
-Install the adapter for your framework first:
-
-```bash
-# Python / LangChain
-pip install astropods-adapter-langchain        # then add to requirements.txt
-
-# TypeScript / Mastra (Bun)
-bun add @astropods/adapter-mastra
-
-# TypeScript / Mastra (npm)
-npm install @astropods/adapter-mastra
-```
 
 #### LangChain (Python)
 
