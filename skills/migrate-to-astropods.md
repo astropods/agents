@@ -22,7 +22,7 @@ Read the code to understand:
 Link to the astropods spec: https://docs.astropods.com/astropods-package-spec
 
 ```yaml
-# yaml-language-server: $schema=https://astropods.ai/schema/package.json
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
 spec: astro/v1
 name: "<agent-name>"         # kebab-case; org-scoped: "@postman/agent-name"
 
