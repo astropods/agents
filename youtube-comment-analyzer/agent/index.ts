@@ -23,8 +23,13 @@ const openai = new OpenAI();
 // YouTube helpers
 // ---------------------------------------------------------------------------
 
-async function fetchComments(videoId: string, maxComments: number): Promise<string[]> {
-  const comments: string[] = [];
+interface CommentThread {
+  text: string;
+  hasReplies: boolean;
+}
+
+async function fetchComments(videoId: string, maxComments: number): Promise<CommentThread[]> {
+  const comments: CommentThread[] = [];
   let pageToken: string | undefined;
 
   while (comments.length < maxComments) {
@@ -39,7 +44,12 @@ async function fetchComments(videoId: string, maxComments: number): Promise<stri
 
     for (const item of response.data.items ?? []) {
       const text = item.snippet?.topLevelComment?.snippet?.textDisplay;
-      if (text) comments.push(text);
+      if (text) {
+        comments.push({
+          text,
+          hasReplies: (item.snippet?.totalReplyCount ?? 0) > 0,
+        });
+      }
       if (comments.length >= maxComments) break;
     }
 
@@ -76,15 +86,19 @@ async function analyzeBatch(comments: string[]): Promise<Sentiment[]> {
   return parseJsonSentiments(raw);
 }
 
-async function analyzeAllComments(comments: string[]): Promise<SentimentResult[]> {
+async function analyzeAllComments(comments: CommentThread[]): Promise<SentimentResult[]> {
   const BATCH_SIZE = 30;
   const results: SentimentResult[] = [];
 
   for (let i = 0; i < comments.length; i += BATCH_SIZE) {
     const batch = comments.slice(i, i + BATCH_SIZE);
-    const sentiments = await analyzeBatch(batch);
+    const sentiments = await analyzeBatch(batch.map(c => c.text));
     for (let j = 0; j < batch.length; j++) {
-      results.push({ comment: batch[j], sentiment: sentiments[j] ?? 'neutral' });
+      results.push({
+        comment: batch[j].text,
+        sentiment: sentiments[j] ?? 'neutral',
+        hasReplies: batch[j].hasReplies,
+      });
     }
   }
 

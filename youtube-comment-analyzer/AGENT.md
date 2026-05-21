@@ -1,5 +1,5 @@
 ---
-description: "Fetches YouTube video comments and classifies each as positive, neutral, or negative using GPT-4o mini."
+description: "Classifies YouTube comments by sentiment and flags unreplied ones, helping creators triage audience feedback fast."
 tags:
   - youtube
   - sentiment-analysis
@@ -12,6 +12,7 @@ capabilities:
   - "Classify each comment as positive, neutral, or negative using GPT-4o mini"
   - "Process comments in batches of 30 to minimise API calls"
   - "Return a summary with counts, percentages, and representative examples"
+  - "Flag unreplied top-level comments to prioritise creator responses"
   - "Accept any YouTube URL format or bare video ID"
 repository:
   type: github
@@ -23,7 +24,7 @@ integrations:
 
 # YouTube Comment Analyzer
 
-You just published a video and the comments are piling up. YouTube Comment Analyzer reads them all — fetching in bulk, processing in batches — and tells you exactly how your audience feels: what percentage loved it, what frustrated them, and which comments best represent each camp.
+You just published a video and the comments are piling up. YouTube Comment Analyzer reads them all — fetching in bulk, processing in batches — and tells you exactly how your audience feels: what percentage loved it, what frustrated them, which comments best represent each camp, and crucially, which ones haven't been replied to yet so you know where to engage first.
 
 ## Usage
 
@@ -45,6 +46,7 @@ Send a message with a YouTube video URL or ID:
 
 - **Counts and percentages** — positive / neutral / negative breakdown across all analysed comments
 - **Representative examples** — up to 3 real comments shown per sentiment category
+- **Needs reply** — up to 5 unreplied top-level comments flagged for creator follow-up
 - **Total analysed** — exact count of comments fetched and classified
 
 ## Sentiment definitions
@@ -64,7 +66,7 @@ Send a message with a YouTube video URL or ID:
 
 ## Limitations
 
-- Fetches top-level comments only; replies to comments are not included.
+- Fetches top-level comments only; reply content is not analysed, only whether a reply exists.
 - Comments are sorted by relevance (YouTube default); chronological ordering is not supported.
 - Comment text is truncated at 300 characters per comment before sending to OpenAI.
 - Videos with disabled comments will return no results.

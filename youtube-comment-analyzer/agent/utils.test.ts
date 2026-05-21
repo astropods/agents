@@ -141,8 +141,8 @@ describe('parseJsonSentiments', () => {
 // formatReport
 // ---------------------------------------------------------------------------
 
-function makeResult(comment: string, sentiment: SentimentResult['sentiment']): SentimentResult {
-  return { comment, sentiment };
+function makeResult(comment: string, sentiment: SentimentResult['sentiment'], hasReplies = true): SentimentResult {
+  return { comment, sentiment, hasReplies };
 }
 
 describe('formatReport', () => {
@@ -211,5 +211,31 @@ describe('formatReport', () => {
     const report = formatReport([], 'abc');
     expect(report).toContain('0 comments analysed');
     expect(report).toContain('0%');
+  });
+
+  test('shows correct unreplied count', () => {
+    const results = [
+      makeResult('a', 'positive', false),
+      makeResult('b', 'positive', true),
+      makeResult('c', 'negative', false),
+    ];
+    const report = formatReport(results, 'abc');
+    expect(report).toContain('NEEDS REPLY  2 comments');
+  });
+
+  test('shows up to 5 unreplied examples', () => {
+    const results = Array.from({ length: 7 }, (_, i) =>
+      makeResult(`comment ${i}`, 'neutral', false),
+    );
+    const report = formatReport(results, 'abc');
+    const matches = report.match(/! "/g) ?? [];
+    expect(matches.length).toBe(5);
+  });
+
+  test('shows 0 needs reply when all comments have replies', () => {
+    const results = [makeResult('a', 'positive', true), makeResult('b', 'neutral', true)];
+    const report = formatReport(results, 'abc');
+    expect(report).toContain('NEEDS REPLY  0 comments');
+    expect(report).not.toContain('! "');
   });
 });

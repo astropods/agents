@@ -7,6 +7,7 @@ export type Sentiment = 'positive' | 'neutral' | 'negative';
 export interface SentimentResult {
   comment: string;
   sentiment: Sentiment;
+  hasReplies: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,15 +65,20 @@ export function parseJsonSentiments(raw: string): Sentiment[] {
 export function formatReport(results: SentimentResult[], videoId: string): string {
   const counts: Record<Sentiment, number> = { positive: 0, neutral: 0, negative: 0 };
   const examples: Record<Sentiment, string[]> = { positive: [], neutral: [], negative: [] };
+  const unrepliedExamples: string[] = [];
 
   for (const r of results) {
     counts[r.sentiment]++;
     if (examples[r.sentiment].length < 3) {
       examples[r.sentiment].push(r.comment.slice(0, 160).replace(/\n/g, ' '));
     }
+    if (!r.hasReplies && unrepliedExamples.length < 5) {
+      unrepliedExamples.push(r.comment.slice(0, 160).replace(/\n/g, ' '));
+    }
   }
 
   const total = results.length;
+  const unrepliedCount = results.filter(r => !r.hasReplies).length;
   const pct = (n: number) => total > 0 ? `${Math.round((n / total) * 100)}%` : '0%';
 
   const section = (label: string, prefix: string, sentiment: Sentiment) => [
@@ -91,6 +97,9 @@ export function formatReport(results: SentimentResult[], videoId: string): strin
     ...section('NEUTRAL ', '~', 'neutral'),
     '',
     ...section('NEGATIVE', '-', 'negative'),
+    '',
+    `NEEDS REPLY  ${unrepliedCount} comments`,
+    ...unrepliedExamples.map(e => `  ! "${e}"`),
     '',
     '='.repeat(65),
   ].join('\n');
