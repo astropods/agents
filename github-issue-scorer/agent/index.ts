@@ -1,11 +1,15 @@
 import { serve } from '@astropods/adapter-core';
-import type { AgentAdapter, StreamHooks, StreamOptions } from '@astropods/adapter-core';
+import { MastraAdapter } from '@astropods/adapter-mastra';
+import { Agent } from '@mastra/core/agent';
+import { Mastra } from '@mastra/core/mastra';
+import { Memory } from '@mastra/memory';
+import { LibSQLStore } from '@mastra/libsql';
+import { createTool } from '@mastra/core/tools';
+import { z } from 'zod';
 import { Octokit } from '@octokit/rest';
 import OpenAI from 'openai';
-import { WebClient as SlackClient } from '@slack/web-api';
 import {
   normalizeAnalysis,
-  splitIntoSlackChunks,
   formatFullReport,
   buildUserMessage,
 } from './utils';
@@ -106,136 +110,97 @@ async function analyzeIssue(title: string, body: string, comments: string[]) {
 }
 
 // ---------------------------------------------------------------------------
-// Slack
+// Issue pipeline helper
 // ---------------------------------------------------------------------------
 
-async function postToSlack(text: string): Promise<void> {
-  const token = process.env.SLACK_POSTING_TOKEN;
-  const channel = process.env.SLACK_CHANNEL;
-  if (!token || !channel) return;
-
-  const slack = new SlackClient(token);
-  for (const chunk of splitIntoSlackChunks(text)) {
-    await slack.chat.postMessage({ channel, text: chunk });
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Core pipeline
-// ---------------------------------------------------------------------------
-
-async function processIssue(
+async function buildAnalyzedIssue(
   owner: string,
   repo: string,
-  rawIssue: Awaited<ReturnType<typeof fetchIssues>>[number] | Awaited<ReturnType<typeof fetchSingleIssue>>,
-  hooks: StreamHooks,
+  raw: Awaited<ReturnType<typeof fetchSingleIssue>>,
 ): Promise<AnalyzedIssue> {
-  hooks.onChunk(`  Fetching comments for #${rawIssue.number}...\n`);
-  const comments = await fetchComments(owner, repo, rawIssue.number);
-
-  hooks.onChunk(`  Analysing #${rawIssue.number} (${comments.length} comment(s))...\n`);
-  const analysis = await analyzeIssue(rawIssue.title, rawIssue.body ?? '', comments);
-
-  const reactions = (rawIssue as { reactions?: Record<string, number> }).reactions ?? {};
-
+  const comments = await fetchComments(owner, repo, raw.number);
+  const analysis = await analyzeIssue(raw.title, raw.body ?? '', comments);
+  const reactions = (raw as { reactions?: Record<string, number> }).reactions ?? {};
   return {
-    number: rawIssue.number,
-    title: rawIssue.title,
-    url: rawIssue.html_url,
+    number: raw.number,
+    title: raw.title,
+    url: raw.html_url,
     upvotes: reactions['+1'] ?? 0,
     total_reactions: Object.entries(reactions)
       .filter(([k]) => k !== 'url' && k !== 'total_count')
       .reduce((sum, [, v]) => sum + (typeof v === 'number' ? v : 0), 0),
-    comment_count: rawIssue.comments,
+    comment_count: raw.comments,
     analysis,
   };
 }
 
 // ---------------------------------------------------------------------------
-// Adapter
+// Mastra tool
 // ---------------------------------------------------------------------------
 
-const adapter: AgentAdapter = {
-  name: 'github-issue-scorer',
+const scoreGithubIssues = createTool({
+  id: 'score_github_issues',
+  description:
+    'Fetch GitHub issues and score each by priority, sentiment, competitor mentions, and workarounds. ' +
+    'Call this whenever the user provides a GitHub repository in owner/repo format.',
+  inputSchema: z.object({
+    owner: z.string().describe('Repository owner or organisation'),
+    repo: z.string().describe('Repository name'),
+    issue_number: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe('Score a single issue by number; omit to score multiple issues'),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_ISSUES)
+      .optional()
+      .describe(`Max issues to score (default 5, max ${MAX_ISSUES})`),
+  }),
+  execute: async ({ owner, repo, issue_number, limit = 5 }: { owner: string; repo: string; issue_number?: number; limit?: number }) => {
+    const repoName = `${owner}/${repo}`;
+    const analyzed: AnalyzedIssue[] = [];
 
-  async stream(prompt: string, hooks: StreamHooks, _options: StreamOptions): Promise<void> {
-    try {
-      const repoMatch = prompt.match(/([\w.-]+\/[\w.-]+)/);
-      if (!repoMatch) {
-        hooks.onChunk(
-          'Please provide a GitHub repository in owner/repo format, e.g. `pallets/flask`.\n' +
-          'To analyse a single issue: `pallets/flask#123`',
-        );
-        hooks.onFinish();
-        return;
+    if (issue_number) {
+      const raw = await fetchSingleIssue(owner, repo, issue_number);
+      analyzed.push(await buildAnalyzedIssue(owner, repo, raw));
+    } else {
+      const maxIssues = Math.min(limit, MAX_ISSUES);
+      const issues = await fetchIssues(owner, repo, maxIssues);
+      for (const raw of issues) {
+        analyzed.push(await buildAnalyzedIssue(owner, repo, raw));
       }
-
-      const repoName = repoMatch[1];
-      const [owner, repo] = repoName.split('/');
-
-      // Single-issue mode: owner/repo#123
-      const singleIssueMatch = prompt.match(/[\w.-]+\/[\w.-]+#(\d+)/);
-
-      const analyzed: AnalyzedIssue[] = [];
-
-      if (singleIssueMatch) {
-        const issueNumber = parseInt(singleIssueMatch[1], 10);
-        hooks.onChunk(`Fetching issue #${issueNumber} from \`${repoName}\`...\n`);
-        const raw = await fetchSingleIssue(owner, repo, issueNumber);
-        analyzed.push(await processIssue(owner, repo, raw, hooks));
-      } else {
-        const numMatch = prompt.replace(repoName, '').match(/\btop\s+(\d+)\b|\blimit[: ]+(\d+)\b|\b(\d+)\s+issues?\b/i);
-        const requested = numMatch
-          ? parseInt(numMatch[1] ?? numMatch[2] ?? numMatch[3], 10)
-          : 5;
-        const maxIssues = Math.min(Math.max(1, requested), MAX_ISSUES);
-
-        if (requested > MAX_ISSUES) {
-          hooks.onChunk(`Note: capped at ${MAX_ISSUES} issues maximum.\n`);
-        }
-
-        hooks.onChunk(`Fetching up to ${maxIssues} open issues from \`${repoName}\`...\n`);
-        const issues = await fetchIssues(owner, repo, maxIssues);
-
-        if (issues.length === 0) {
-          hooks.onChunk(`No open issues found in \`${repoName}\`.`);
-          hooks.onFinish();
-          return;
-        }
-
-        hooks.onChunk(`Found ${issues.length} issue(s). Starting deep analysis...\n\n`);
-        for (const issue of issues) {
-          analyzed.push(await processIssue(owner, repo, issue, hooks));
-        }
-      }
-
-      const report = formatFullReport(analyzed, repoName);
-
-      hooks.onChunk('\n' + report);
-
-      if (process.env.SLACK_POSTING_TOKEN && process.env.SLACK_CHANNEL) {
-        hooks.onChunk(`\n\nPosting to Slack channel \`${process.env.SLACK_CHANNEL}\`...`);
-        try {
-          await postToSlack(report);
-          hooks.onChunk(' Done.');
-        } catch (err) {
-          hooks.onChunk(` Error: ${err instanceof Error ? err.message : String(err)}`);
-        }
-      }
-
-      hooks.onFinish();
-    } catch (error) {
-      hooks.onError(error instanceof Error ? error : new Error(String(error)));
     }
-  },
 
-  getConfig() {
-    return {
-      systemPrompt:
-        'Fetches GitHub issues with all comments, analyses sentiment, detects competitor mentions and workarounds, assigns priority, and posts results to Slack.',
-      tools: [],
-    };
+    return formatFullReport(analyzed, repoName);
   },
-};
+});
 
-serve(adapter);
+// ---------------------------------------------------------------------------
+// Mastra agent
+// ---------------------------------------------------------------------------
+
+const memory = new Memory({
+  storage: new LibSQLStore({ id: 'memory', url: ':memory:' }),
+});
+
+const agent = new Agent({
+  id: 'github-issue-scorer',
+  name: 'GitHub Issue Scorer',
+  instructions: `You are a GitHub issue scorer for product teams. When a user provides a GitHub repository, call the score_github_issues tool with the parsed owner, repo, and any optional limit or issue_number. Return the tool output verbatim without reformatting.
+
+Supported input formats:
+- "owner/repo"       → score top 5 open issues
+- "owner/repo 20"    → score top 20 issues (max 50)
+- "owner/repo#123"   → score a single issue by number`,
+  model: 'openai/gpt-4o-mini',
+  memory,
+  tools: { score_github_issues: scoreGithubIssues },
+});
+
+new Mastra({ agents: { 'github-issue-scorer': agent } });
+
+serve(new MastraAdapter(agent));

@@ -8,9 +8,13 @@
   },
   "dependencies": {
     "@astropods/adapter-core": "latest",
+    "@astropods/adapter-mastra": "latest",
+    "@mastra/core": "latest",
+    "@mastra/libsql": "latest",
+    "@mastra/memory": "latest",
     "@octokit/rest": "^21.0.0",
     "openai": "^4.0.0",
-"@slack/web-api": "^7.0.0"
+    "zod": "^3.0.0"
   },
   "devDependencies": {
     "@types/bun": "latest",

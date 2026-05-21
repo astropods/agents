@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
   normalizeAnalysis,
-  splitIntoSlackChunks,
   formatFullReport,
   buildUserMessage,
 } from './utils';
@@ -65,55 +64,6 @@ describe('normalizeAnalysis', () => {
     expect(() => normalizeAnalysis('string')).not.toThrow();
     expect(() => normalizeAnalysis(42)).not.toThrow();
     expect(normalizeAnalysis(null).priority).toBe('low');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// splitIntoSlackChunks
-// ---------------------------------------------------------------------------
-
-describe('splitIntoSlackChunks', () => {
-  test('returns single chunk for short text', () => {
-    const chunks = splitIntoSlackChunks('hello\nworld');
-    expect(chunks).toHaveLength(1);
-    expect(chunks[0]).toBe('hello\nworld');
-  });
-
-  test('splits on line boundaries, not mid-word', () => {
-    const line1 = 'a'.repeat(2800);
-    const line2 = 'b'.repeat(2800);
-    const text = `${line1}\n${line2}`;
-    const chunks = splitIntoSlackChunks(text, 2900);
-    expect(chunks).toHaveLength(2);
-    expect(chunks[0]).toBe(line1);
-    expect(chunks[1]).toBe(line2);
-  });
-
-  test('hard-splits a single line longer than limit', () => {
-    const longLine = 'x'.repeat(6000);
-    const chunks = splitIntoSlackChunks(longLine, 2900);
-    expect(chunks).toHaveLength(3); // 2900 + 2900 + 200
-    for (const chunk of chunks) {
-      expect(chunk.length).toBeLessThanOrEqual(2900);
-    }
-  });
-
-  test('no chunk exceeds the limit', () => {
-    const lines = Array.from({ length: 100 }, (_, i) => `Line ${i}: ${'x'.repeat(50)}`);
-    const chunks = splitIntoSlackChunks(lines.join('\n'), 2900);
-    for (const chunk of chunks) {
-      expect(chunk.length).toBeLessThanOrEqual(2900);
-    }
-  });
-
-  test('reassembling chunks preserves full content', () => {
-    const original = Array.from({ length: 50 }, (_, i) => `line-${i}`).join('\n');
-    const chunks = splitIntoSlackChunks(original, 100);
-    expect(chunks.join('\n')).toBe(original);
-  });
-
-  test('handles empty string', () => {
-    expect(splitIntoSlackChunks('')).toEqual([]);
   });
 });
 

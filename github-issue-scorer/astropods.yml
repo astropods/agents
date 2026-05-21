@@ -6,6 +6,8 @@ agent:
   build:
     context: .
     dockerfile: Dockerfile
+  interfaces:
+    messaging: true
 
 integrations:
   github:
@@ -15,22 +17,10 @@ models:
   openai:
     provider: openai
 
-inputs:
-  SLACK_POSTING_TOKEN:
-    name: SLACK_POSTING_TOKEN
-    datatype: string
-    secret: true
-    description: "Slack bot token (xoxb-...) for posting analysis results. Same token as your Slack Bot Token — use a separate variable name to avoid conflicts with the Astropods Slack adapter."
-    display-as: short-text
-    optional: true
-  SLACK_CHANNEL:
-    name: SLACK_CHANNEL
-    datatype: string
-    description: "Slack channel ID or name to post to (e.g. C1234567890 or #product-alerts)"
-    display-as: short-text
-    optional: true
-
 dev:
   interfaces:
     messaging:
-      adapters: [web]
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true

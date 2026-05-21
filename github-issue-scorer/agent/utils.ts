@@ -58,36 +58,6 @@ export function normalizeAnalysis(raw: unknown): IssueAnalysis {
 }
 
 // ---------------------------------------------------------------------------
-// Slack chunking
-// ---------------------------------------------------------------------------
-
-export function splitIntoSlackChunks(text: string, limit = 2900): string[] {
-  const chunks: string[] = [];
-  const lines = text.split('\n');
-  let current = '';
-
-  for (const line of lines) {
-    const candidate = current ? `${current}\n${line}` : line;
-    if (candidate.length > limit) {
-      if (current) chunks.push(current);
-      if (line.length > limit) {
-        for (let i = 0; i < line.length; i += limit) {
-          chunks.push(line.slice(i, i + limit));
-        }
-        current = '';
-      } else {
-        current = line;
-      }
-    } else {
-      current = candidate;
-    }
-  }
-
-  if (current) chunks.push(current);
-  return chunks;
-}
-
-// ---------------------------------------------------------------------------
 // Formatting
 // ---------------------------------------------------------------------------
 
