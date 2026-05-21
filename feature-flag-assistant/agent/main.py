@@ -18,16 +18,12 @@ Scheduled notifications (optional):
   (Scheduling is handled by the ingestion container configured in astropods.yml; runs bi-weekly)
 """
 import os
-import re
 from datetime import datetime, timezone
 import requests
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.tools import tool
 from langchain.agents import create_agent
 from astropods_adapter_langchain import LangChainAdapter, serve
-from astropods_adapter_langchain.adapter import _text_from_content
-from astropods_adapter_core.types import StreamHooks, StreamOptions
 
 from src.flags import (
     LD_API_KEY,
@@ -402,63 +398,8 @@ system_prompt = (
     "- Do not omit any flags or add extra commentary between list items."
 )
 
-class _PlatformAwareLangChainAdapter(LangChainAdapter):
-    """Overrides stream to inject a platform-specific SystemMessage and strip
-    code-block language identifiers for Slack before chunks are sent."""
-
-    async def stream(self, prompt: str, hooks: StreamHooks, options: StreamOptions) -> None:
-        # StreamOptions.platform isn't populated by the installed bridge version,
-        # so infer from conversation_id: Slack IDs are {channelID}-{threadTS}
-        # where channel IDs start with C (public), G (private), or D (DM).
-        platform = getattr(options, "platform", "web")
-        if platform == "web":
-            cid = options.conversation_id or ""
-            if re.match(r"^[CGD][A-Z0-9]", cid):
-                platform = "slack"
-
-        if platform == "slack":
-            platform_instruction = (
-                "You are responding in Slack. Use Slack mrkdwn formatting only: "
-                "*bold* (never **double asterisks**), _italic_, `inline code`, "
-                "``` for code blocks with NO language identifier (Slack does not "
-                "support syntax highlighting — never write ```javascript or ```python), "
-                "• for bullets, <url|text> for hyperlinks. Never use # headings."
-            )
-        else:
-            platform_instruction = (
-                "You are responding in a web chat. Use standard markdown: "
-                "**bold**, _italic_, `code`, fenced code blocks with language identifiers, "
-                "numbered or bulleted lists, [text](url) for links."
-            )
-
-        try:
-            async for chunk in self._executor.astream(
-                {"messages": [SystemMessage(content=platform_instruction), HumanMessage(content=prompt)]},
-                stream_mode="updates",
-            ):
-                if "model" in chunk:
-                    for msg in chunk["model"].get("messages", []):
-                        tool_calls = getattr(msg, "tool_calls", None) or []
-                        if tool_calls:
-                            for tc in tool_calls:
-                                tool_name = tc.get("name", "tool") if isinstance(tc, dict) else getattr(tc, "name", "tool")
-                                hooks.on_status_update({"status": "PROCESSING", "custom_message": f"Running {tool_name}"})
-                        else:
-                            text = _text_from_content(msg.content)
-                            if text:
-                                if platform == "slack":
-                                    text = re.sub(r"```[a-zA-Z]+\n", "```\n", text)
-                                hooks.on_chunk(text)
-                elif "tools" in chunk:
-                    for msg in chunk["tools"].get("messages", []):
-                        hooks.on_status_update({"status": "ANALYZING", "custom_message": f"Finished {getattr(msg, 'name', 'tool')}"})
-            hooks.on_finish()
-        except Exception as e:
-            hooks.on_error(e)
-
-
 agent = create_agent(llm, tools=tools, system_prompt=system_prompt)
 
-adapter = _PlatformAwareLangChainAdapter(agent, name="feature-flag-assistant", system_prompt=system_prompt, tools=tools)
+adapter = LangChainAdapter(agent, name="feature-flag-assistant", system_prompt=system_prompt, tools=tools)
 
 serve(adapter)
