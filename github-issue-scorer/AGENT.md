@@ -17,7 +17,7 @@ capabilities:
   - "Analyse a single issue by number (owner/repo#123)"
 repository:
   type: github
-  url: https://github.com/artur-malec-apptimia/agents
+  url: https://github.com/astropods/agents
   directory: github-issue-scorer
 integrations:
   - GitHub
