@@ -12,6 +12,21 @@ Confirm the plan before performing any actions.
 
 ---
 
+## Tips to remember
+
+These trip up nearly every migration. Read before writing any YAML.
+
+- **`agent.interfaces.frontend: true` requires the container to listen on port 80.** No other port works for the frontend interface.
+- **`ASTRO_EXTERNAL_AGENT_URL` is injected automatically.** Read it from env when the agent needs its own public URL (callbacks, redirects, links in emails). Do **not** declare your own `APP_URL` input.
+- **`agent.interfaces.messaging: true` is a boolean.** It is not the same field as `dev.interfaces.messaging.adapters: [web]` (which is an object — for local-dev playground). Both can coexist; don't confuse them.
+- **Decide "managed knowledge or BYO database?" before writing any YAML.** If the user already has a hosted DB (Supabase, Neon, RDS), declare it as a secret input and skip the `knowledge:` block entirely. Don't sink time into local postgres debugging when an external option exists.
+- **`ast dev` on Docker Desktop (macOS) cannot reach IPv6-only DB hosts.** vpnkit routes only IPv4 to the internet, regardless of daemon IPv6 settings. Supabase's direct connection URL (`db.*.supabase.co`) is IPv6-only and will fail with `gaierror`. Use the IPv4 Session/Transaction Pooler endpoints.
+- *(Python)* **Use `os.environ["KEY"]` (subscript) for required env vars.** `.get()` returns `None` silently when the var is missing; subscript crashes loudly so you find misconfig immediately instead of debugging a `NoneType` error five layers deep.
+- *(Postgres drivers)* **Don't log raw exception messages from `asyncpg`/`psycopg`.** They embed the full DSN, password included. Log `type(e).__name__` instead.
+- *(Postgres URLs)* **`.strip()` connection strings copied from dashboards.** A trailing newline causes `gaierror: No address associated with hostname` — a real time-waster because the URL looks correct in logs.
+
+---
+
 ## Steps
 
 ### 1. Explore the existing agent
@@ -29,7 +44,7 @@ Read the code to understand:
 
 Link to the Astropods spec documentation: https://docs.astropods.com/astropods-package-spec
 Link to the Astropods spec schema: https://astropods.com/schema/package.json
-If the project alredy includes an `astropods.yml`, check if it needs to be updated.
+If the project already includes an `astropods.yml`, check if it needs to be updated.
 
 ```yaml
 # yaml-language-server: $schema=https://astropods.com/schema/package.json
@@ -81,6 +96,39 @@ dev:
 - Model provider keys (openai, anthropic) inject the corresponding API key automatically.
 - Built-in integrations (firecrawl, github) inject their credentials automatically. Anything else goes in `inputs`.
 - `meta.description` does NOT go in `astropods.yml` — put it in `AGENT.md` frontmatter (see step 5).
+
+#### Interfaces (`agent.interfaces` vs `dev.interfaces`)
+
+`agent.interfaces` declares what the **platform** exposes in production. `dev.interfaces` (shown above) controls what `ast project start` spins up locally. They are different fields with different shapes — easy to confuse.
+
+```yaml
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    frontend: true        # public frontend served from the container's port 80
+    messaging: true       # boolean — NOT { adapters: [...] }
+```
+
+When `frontend: true`:
+- The container **must** listen on port 80. Other ports will not be reachable as the frontend.
+- The platform injects `ASTRO_EXTERNAL_AGENT_URL` with the public URL. Read this for any callback/redirect/link-in-email need — do not declare your own `APP_URL`.
+
+#### External database (bring your own)
+
+If the agent already uses a hosted database (Supabase, Neon, RDS, etc.), skip the `knowledge:` block entirely and declare the connection string as a secret input. The container reads it from env and connects directly. This is by far the simplest path when an external DB is available.
+
+```yaml
+inputs:
+  POSTGRES_URL:
+    name: POSTGRES_URL
+    datatype: string
+    secret: true
+    description: "PostgreSQL connection string"
+```
+
+See the troubleshooting table below for the IPv6 caveat when the host name is IPv6-only.
 
 #### Adding a database (`knowledge`)
 
@@ -262,3 +310,5 @@ Once running, the agent works end-to-end but the platform records no run telemet
 | Native module missing (e.g. `tokenizers-linux-arm64-gnu`) | Add `--platform=linux/amd64` to both Dockerfile `FROM` lines to force x86_64 if the package has no ARM64 binary |
 | `secret: true` input default not applied by platform | Remove `secret: true` for internal service credentials (like postgres password) where the default should always apply; use `secret: true` only for user-supplied credentials |
 | Container mode postgres host unknown | Platform injects `KNOWLEDGE_{UPPER(name)}_HOST/PORT` (e.g. `KNOWLEDGE_PG_HOST`). If not injected, use the knowledge key name as the hostname (e.g. `knowledge-pg`) |
+| `ast dev` can't reach external DB host (`gaierror`, "No address associated with hostname") | (1) Check for trailing whitespace in the connection URL — strip it. (2) If the host is IPv6-only (e.g. Supabase's `db.*.supabase.co` direct URL), Docker Desktop on macOS cannot route it via vpnkit even with daemon IPv6 enabled. Switch to an IPv4 endpoint (Supabase Session Pooler on port 5432 or Transaction Pooler on 6543). |
+| `provider: postgres` starts the container but `POSTGRES_HOST/USER/PASSWORD/DB` never reach the agent | Provider mode injection has been observed to silently fail in some environments. Fall back to container mode using the `image: postgres:16` recipe above with `POSTGRES_HOST_AUTH_METHOD: trust` and a `PGDATA` subdirectory. |
