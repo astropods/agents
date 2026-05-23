@@ -1,5 +1,7 @@
 # Sales Research Agent
 
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/deploy/simon/sales-research-agent)
+
 An AI agent that researches customer accounts using Gong call transcripts and Salesforce data. It runs on the Astro platform using the Mastra framework with Claude Sonnet 4.5.
 
 ## Architecture
