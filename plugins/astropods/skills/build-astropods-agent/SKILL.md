@@ -1,5 +1,4 @@
 ---
-name: build-astropods-agent
 description: Recipes for building an AI agent for the Astropods platform.
 ---
 

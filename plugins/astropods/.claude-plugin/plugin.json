@@ -1,0 +1,12 @@
+{
+  "name": "astropods",
+  "description": "Skills for building, migrating, and documenting agents on the Astropods platform.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Astropods"
+  },
+  "homepage": "https://astropods.com",
+  "repository": "https://github.com/astropods/agents",
+  "license": "Apache-2.0",
+  "keywords": ["astropods", "agents", "mastra", "langchain"]
+}
