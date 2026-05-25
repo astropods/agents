@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://astropods.ai/schema/package.json
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
 spec: package/v1
 name: "youtube-comment-analyzer"
 
