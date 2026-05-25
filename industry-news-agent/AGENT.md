@@ -50,12 +50,12 @@ Send a topic — optionally append a format keyword:
 
 ## Sources
 
-| Source | Key required |
-|--------|-------------|
-| NewsAPI | `NEWS_API_KEY` |
-| GNews | `GNEWS_API_KEY` |
-| The Guardian | `GUARDIAN_API_KEY` |
-| MediaStack | `MEDIASTACK_API_KEY` |
+| Source | Key required | Get a key |
+|--------|-------------|-----------|
+| NewsAPI | `NEWS_API_KEY` | [newsapi.org](https://newsapi.org) |
+| GNews | `GNEWS_API_KEY` | [gnews.io](https://gnews.io) |
+| The Guardian | `GUARDIAN_API_KEY` | [open-platform.theguardian.com](https://open-platform.theguardian.com/access/) |
+| MediaStack | `MEDIASTACK_API_KEY` | [mediastack.com](https://mediastack.com) |
 
 All four are queried in parallel. If a source fails (quota, invalid key, outage), it is skipped and the remaining results are used.
 

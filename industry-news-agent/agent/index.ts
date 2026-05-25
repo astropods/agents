@@ -219,7 +219,9 @@ const agent = new Agent({
 The tool automatically detects output format from keywords in the query:
 - "AI news" → summary (default)
 - "startup funding analysis" → deep analytical breakdown
-- "fintech key insights" → actionable bullet points`,
+- "fintech key insights" → actionable bullet points
+
+Use conversation history to resolve ambiguous follow-ups. If the user says "give me analysis on that" after asking about "AI funding", call fetch_industry_news with "AI funding analysis". If they say "now key insights", reuse the last topic with the new format keyword.`,
   model: 'openai/gpt-4o-mini',
   memory,
   tools: { fetch_industry_news: fetchIndustryNews },
