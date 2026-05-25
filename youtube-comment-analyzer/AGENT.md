@@ -20,6 +20,7 @@ repository:
   directory: youtube-comment-analyzer
 integrations:
   - OpenAI
+  - YouTube
 ---
 
 # YouTube Comment Analyzer
