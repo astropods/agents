@@ -1,5 +1,7 @@
 # feature-flag-helper-agent
 
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/deploy/astropods/feature-flag-assistant)
+
 Identifies stale LaunchDarkly feature flags eligible for cleanup: flags fully rolled out to production for 2+ weeks (code can be removed and hardcoded) and flags with no code references (safe to delete from LaunchDarkly). Sends scheduled audit reports to Slack and answers on-demand questions via web or Slack chat.
 
 ## Quick start

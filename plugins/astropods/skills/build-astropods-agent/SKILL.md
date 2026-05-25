@@ -1,5 +1,4 @@
 ---
-name: build-astropods-agent
 description: Recipes for building an AI agent for the Astropods platform.
 ---
 
@@ -158,8 +157,8 @@ export const myTool = createTool({
   inputSchema: z.object({
     name: z.string().describe('Per-argument description shown to the LLM.'),
   }),
-  execute: async ({ context }) => {
-    // context = the parsed input
+  execute: async ({ name }) => {
+    // input fields are passed directly — no { context } wrapper (Mastra ≥ 1.x)
     return { ok: true, result: '...' };
   },
 });

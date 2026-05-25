@@ -29,3 +29,14 @@ ast dev
 Open http://localhost:3000 to chat with the agent.
 
 See each agent's README for setup details and prerequisites.
+
+## Claude Code plugin
+
+This repository is also a [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces). Add it and install the bundled skills:
+
+```
+/plugin marketplace add astropods/agents
+/plugin install astropods@astroai
+```
+
+See [`plugins/astropods/README.md`](./plugins/astropods/README.md) for what's included.
