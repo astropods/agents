@@ -1,7 +1,7 @@
 import { createTool } from '@mastra/core/tools';
-import { z } from 'zod';
 import neo4j from 'neo4j-driver';
 import OpenAI from 'openai';
+import { z } from 'zod';
 import { getDriver } from '../../src/services/neo4j';
 
 export const summarizeCommentsTool = createTool({
@@ -29,9 +29,7 @@ export const summarizeCommentsTool = createTool({
 
     let comments: { author: string; date: string; text: string }[];
     try {
-      console.log(
-        `  [summarizeComments] fetching comments for issue #${input.issueNumber}`,
-      );
+      console.log(`  [summarizeComments] fetching comments for issue #${input.issueNumber}`);
       const result = await session.run(
         `MATCH (i:Issue {number: $n})-[:HAS_COMMENT]->(c:Comment)
          OPTIONAL MATCH (c)-[:AUTHORED_BY]->(u:User)
@@ -46,9 +44,7 @@ export const summarizeCommentsTool = createTool({
         text: (r.get('text') as string) ?? '',
       }));
 
-      console.log(
-        `  [summarizeComments] found ${comments.length} comments`,
-      );
+      console.log(`  [summarizeComments] found ${comments.length} comments`);
     } finally {
       await session.close();
     }
@@ -71,9 +67,7 @@ export const summarizeCommentsTool = createTool({
 - Proposed solutions
 - Overall emotional tone (frustrated, neutral, positive)`;
 
-    const formatted = comments
-      .map((c) => `[${c.author} — ${c.date}]: ${c.text}`)
-      .join('\n\n');
+    const formatted = comments.map((c) => `[${c.author} — ${c.date}]: ${c.text}`).join('\n\n');
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -90,13 +84,10 @@ export const summarizeCommentsTool = createTool({
       temperature: 0.2,
     });
 
-    console.log(
-      `  [summarizeComments] summarised ${comments.length} comments`,
-    );
+    console.log(`  [summarizeComments] summarised ${comments.length} comments`);
 
     return {
-      summary:
-        completion.choices[0].message.content ?? 'Unable to generate summary.',
+      summary: completion.choices[0].message.content ?? 'Unable to generate summary.',
       commentCount: comments.length,
     };
   },

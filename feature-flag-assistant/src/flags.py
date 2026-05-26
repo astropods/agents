@@ -2,9 +2,11 @@
 Shared LaunchDarkly flag logic used by both the agent (tools, on-demand reports)
 and the ingestion container (scheduled Slack notifications).
 """
+
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 import requests
 
 LD_API_KEY = os.environ.get("LAUNCHDARKLY_API_KEY", "")
@@ -19,7 +21,9 @@ GITHUB_REPO = os.environ.get("GITHUB_REPO", "")
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
 SLACK_NOTIFY_CHANNEL = os.environ.get("SLACK_NOTIFY_CHANNEL", "")
 
-REPORT_WINDOW_HOURS = 336  # 2 weeks — flags that crossed the threshold within this window are "newly eligible"
+REPORT_WINDOW_HOURS = (
+    336  # 2 weeks — flags that crossed the threshold within this window are "newly eligible"
+)
 
 
 def _interval_label() -> str:
@@ -131,9 +135,9 @@ def _fetch_eligible_flags() -> tuple[list, list, str]:
 
 def _format_flag_entry(f: dict, ld_base: str) -> str:
     """Format a single flag entry for a Slack report section."""
-    last_modified = datetime.fromtimestamp(
-        f["last_modified_ms"] / 1000, tz=timezone.utc
-    ).strftime("%Y-%m-%d")
+    last_modified = datetime.fromtimestamp(f["last_modified_ms"] / 1000, tz=UTC).strftime(
+        "%Y-%m-%d"
+    )
     n = f["code_refs"]
     if n == 0:
         ref_str = ":white_check_mark: no code references — safe to delete from LaunchDarkly"

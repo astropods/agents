@@ -34,7 +34,9 @@ async function ghFetch<T = unknown>(path: string, params?: Record<string, string
 
     if (attempt < MAX_RETRIES && RETRY_STATUS_CODES.has(res.status)) {
       const backoff = Math.min(1000 * 2 ** attempt, 30_000);
-      console.warn(`  GitHub API ${res.status}, retrying in ${backoff / 1000}s (${attempt + 1}/${MAX_RETRIES})...`);
+      console.warn(
+        `  GitHub API ${res.status}, retrying in ${backoff / 1000}s (${attempt + 1}/${MAX_RETRIES})...`,
+      );
       await new Promise((r) => setTimeout(r, backoff));
       continue;
     }
@@ -145,9 +147,7 @@ export async function findVersionForCommit(
         if (compare.status === 'identical' || compare.status === 'ahead') {
           return tag.name;
         }
-      } catch {
-        continue;
-      }
+      } catch {}
     }
   } catch (err) {
     console.warn(`  [github] tag lookup failed: ${err instanceof Error ? err.message : err}`);

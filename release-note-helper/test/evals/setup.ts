@@ -1,5 +1,5 @@
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const envPath = resolve(import.meta.dirname, '..', '..', '.env');
 

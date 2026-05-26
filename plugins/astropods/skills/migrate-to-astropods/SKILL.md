@@ -1,17 +1,29 @@
 ---
-name: migrate-to-astropods
-description: Migration assistant to port applications to run on the Astropods platform.
+description: Port a net-new project to the Astropods platform by adding astropods.yml, Dockerfile, and AGENT.md. No agent logic is modified.
 ---
 
 # Migrate Agent to Astropods
 
-There are two scenarios.
+Use this skill to port a project that does not yet run on Astropods. It adds the files needed to run an existing agent with `ast project start`: `astropods.yml`, `Dockerfile`, and optionally `AGENT.md`. **No agent logic is modified.**
 
-1) This is a net new project that has not been migrated to Astropods. In that case, steps 1-4 below allply. Add the files needed to run an existing agent with `ast project start`: `astropods.yml`, `Dockerfile`, and optionally `AGENT.md`. **No agent logic is modified.**
-2) This project already adopts Astropods but is missing key components covered by step 4 (Adapters). Adapters allow the platform to record telemetry from the running agent.
+If the project already runs on Astropods but is missing the platform's telemetry adapter, use [`wire-astropods-telemetry`](../wire-astropods-telemetry/SKILL.md) instead — that skill installs the adapter and wires up `serve()` so OpenTelemetry traces flow back to the platform.
 
-Assess which scenario applies to this project then determine which steps should be applied.
 Confirm the plan before performing any actions.
+
+---
+
+## Tips to remember
+
+These trip up nearly every migration. Read before writing any YAML.
+
+- **`agent.interfaces.frontend: true` requires the container to listen on port 80.** No other port works for the frontend interface.
+- **`ASTRO_EXTERNAL_AGENT_URL` is injected automatically.** Read it from env when the agent needs its own public URL (callbacks, redirects, links in emails). Do **not** declare your own `APP_URL` input.
+- **`agent.interfaces.messaging: true` is a boolean.** It is not the same field as `dev.interfaces.messaging.adapters: [web]` (which is an object — for local-dev playground). Both can coexist; don't confuse them.
+- **Decide "managed knowledge or BYO database?" before writing any YAML.** If the user already has a hosted DB (Supabase, Neon, RDS), declare it as a secret input and skip the `knowledge:` block entirely. Don't sink time into local postgres debugging when an external option exists.
+- **`ast dev` on Docker Desktop (macOS) cannot reach IPv6-only DB hosts.** vpnkit routes only IPv4 to the internet, regardless of daemon IPv6 settings. Supabase's direct connection URL (`db.*.supabase.co`) is IPv6-only and will fail with `gaierror`. Use the IPv4 Session/Transaction Pooler endpoints.
+- *(Python)* **Use `os.environ["KEY"]` (subscript) for required env vars.** `.get()` returns `None` silently when the var is missing; subscript crashes loudly so you find misconfig immediately instead of debugging a `NoneType` error five layers deep.
+- *(Postgres drivers)* **Don't log raw exception messages from `asyncpg`/`psycopg`.** They embed the full DSN, password included. Log `type(e).__name__` instead.
+- *(Postgres URLs)* **`.strip()` connection strings copied from dashboards.** A trailing newline causes `gaierror: No address associated with hostname` — a real time-waster because the URL looks correct in logs.
 
 ---
 
@@ -32,7 +44,7 @@ Read the code to understand:
 
 Link to the Astropods spec documentation: https://docs.astropods.com/astropods-package-spec
 Link to the Astropods spec schema: https://astropods.com/schema/package.json
-If the project alredy includes an `astropods.yml`, check if it needs to be updated.
+If the project already includes an `astropods.yml`, check if it needs to be updated.
 
 ```yaml
 # yaml-language-server: $schema=https://astropods.com/schema/package.json
@@ -84,6 +96,39 @@ dev:
 - Model provider keys (openai, anthropic) inject the corresponding API key automatically.
 - Built-in integrations (firecrawl, github) inject their credentials automatically. Anything else goes in `inputs`.
 - `meta.description` does NOT go in `astropods.yml` — put it in `AGENT.md` frontmatter (see step 5).
+
+#### Interfaces (`agent.interfaces` vs `dev.interfaces`)
+
+`agent.interfaces` declares what the **platform** exposes in production. `dev.interfaces` (shown above) controls what `ast project start` spins up locally. They are different fields with different shapes — easy to confuse.
+
+```yaml
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    frontend: true        # public frontend served from the container's port 80
+    messaging: true       # boolean — NOT { adapters: [...] }
+```
+
+When `frontend: true`:
+- The container **must** listen on port 80. Other ports will not be reachable as the frontend.
+- The platform injects `ASTRO_EXTERNAL_AGENT_URL` with the public URL. Read this for any callback/redirect/link-in-email need — do not declare your own `APP_URL`.
+
+#### External database (bring your own)
+
+If the agent already uses a hosted database (Supabase, Neon, RDS, etc.), skip the `knowledge:` block entirely and declare the connection string as a secret input. The container reads it from env and connects directly. This is by far the simplest path when an external DB is available.
+
+```yaml
+inputs:
+  POSTGRES_URL:
+    name: POSTGRES_URL
+    datatype: string
+    secret: true
+    description: "PostgreSQL connection string"
+```
+
+See the troubleshooting table below for the IPv6 caveat when the host name is IPv6-only.
 
 #### Adding a database (`knowledge`)
 
@@ -214,80 +259,7 @@ USER node
 CMD ["node", "agent/index.js"]        # ← match the actual entry point
 ```
 
-### 4. Wire up an adapter (if applicable)
-
-If the agent uses a supported framework, replace the entry point with the adapter's `serve()` call. **No other agent code changes are needed.**
-
-Install the adapter for your framework first:
-
-```bash
-# Python / LangChain
-pip install astropods-adapter-langchain        # then add to requirements.txt
-
-# TypeScript / Mastra (Bun)
-bun add @astropods/adapter-mastra
-
-# TypeScript / Mastra (npm)
-npm install @astropods/adapter-mastra
-```
-
-#### LangChain (Python)
-
-Add `astropods-adapter-langchain` to `requirements.txt`, then update the entry point:
-
-```python
-from astropods_adapter_langchain import LangChainAdapter, serve
-
-# existing agent setup stays untouched
-agent = create_agent(llm, tools=tools, system_prompt=system_prompt)
-
-adapter = LangChainAdapter(agent, name="my-agent", system_prompt=system_prompt, tools=tools)
-serve(adapter)
-```
-
-Notes:
-- Uses `astream(stream_mode="updates")` — responses arrive as complete messages, not token-by-token
-- `options.conversation_id` is passed as `thread_id` automatically — LangGraph memory/checkpointing works across turns
-- `tools` passed to `LangChainAdapter` is only for playground display; actual tool wiring stays in `create_agent`
-
-#### Mastra (TypeScript/Bun)
-
-Add `@astropods/adapter-mastra` to `package.json`. For a simple agent, update the entry point:
-
-```typescript
-import { Agent } from '@mastra/core/agent';
-import { serve } from '@astropods/adapter-mastra';
-
-const agent = new Agent({
-  name: 'My Agent',
-  instructions: 'You are a helpful assistant.',
-  model: openai('gpt-4o'),
-  tools: { ... },
-});
-
-serve(agent);
-```
-
-For a full Mastra app (`new Mastra({...})`), pass the agent to `serve()` and ensure storage is initialized **before** the Mastra instance is constructed — Mastra queries storage on construction and will race ahead of any lazy init:
-
-```typescript
-import { Mastra } from '@mastra/core/mastra';
-import { serve } from '@astropods/adapter-mastra';
-
-// Initialize storage first — Mastra queries it immediately on construction
-await storage.init();
-
-export const mastra = new Mastra({ agents: { myAgent }, storage, ... });
-
-serve(myAgent);
-```
-
-Notes:
-- Uses `fullStream` — responses stream token-by-token
-- `options.conversationId` is passed as the memory `thread` automatically
-- OTEL tracing is auto-configured when `OTEL_EXPORTER_OTLP_ENDPOINT` is set
-
-### 5. Create `AGENT.md` (recommended)
+### 4. Create `AGENT.md` (recommended)
 
 `AGENT.md` populates the agent's catalog card for discovery. Use YAML frontmatter:
 
@@ -317,9 +289,11 @@ How to interact with it. Example prompts.
 Known gaps or constraints.
 ```
 
-### 6. Verify
+### 5. Verify
 
 Run `ast project start` in the agent directory. It should build the container, start all services, and expose a messaging interface.
+
+Once running, the agent works end-to-end but the platform records no run telemetry. To enable OpenTelemetry traces, follow up with [`wire-astropods-telemetry`](../wire-astropods-telemetry/SKILL.md).
 
 ---
 
@@ -333,7 +307,8 @@ Run `ast project start` in the agent directory. It should build the container, s
 | Agent can't find `GRPC_SERVER_ADDR` | Normal outside `ast project start` — it's injected automatically by the runner |
 | Postgres container fails: `POSTGRES_PASSWORD not specified` | Add `POSTGRES_HOST_AUTH_METHOD: trust` and `PGDATA: /var/lib/postgresql/data/pgdata` to knowledge inputs; avoid `secret: true` on inputs that need defaults |
 | Postgres container fails: `chmod Operation not permitted` | Set `PGDATA` to a subdirectory (e.g. `/var/lib/postgresql/data/pgdata`) so postgres creates it with correct ownership instead of chmod-ing the mount root |
-| Agent can't connect to postgres after storage init | Storage must be initialized before `new Mastra()` is constructed — use top-level await on `storage.init()` |
 | Native module missing (e.g. `tokenizers-linux-arm64-gnu`) | Add `--platform=linux/amd64` to both Dockerfile `FROM` lines to force x86_64 if the package has no ARM64 binary |
 | `secret: true` input default not applied by platform | Remove `secret: true` for internal service credentials (like postgres password) where the default should always apply; use `secret: true` only for user-supplied credentials |
 | Container mode postgres host unknown | Platform injects `KNOWLEDGE_{UPPER(name)}_HOST/PORT` (e.g. `KNOWLEDGE_PG_HOST`). If not injected, use the knowledge key name as the hostname (e.g. `knowledge-pg`) |
+| `ast dev` can't reach external DB host (`gaierror`, "No address associated with hostname") | (1) Check for trailing whitespace in the connection URL — strip it. (2) If the host is IPv6-only (e.g. Supabase's `db.*.supabase.co` direct URL), Docker Desktop on macOS cannot route it via vpnkit even with daemon IPv6 enabled. Switch to an IPv4 endpoint (Supabase Session Pooler on port 5432 or Transaction Pooler on 6543). |
+| `provider: postgres` starts the container but `POSTGRES_HOST/USER/PASSWORD/DB` never reach the agent | Provider mode injection has been observed to silently fail in some environments. Fall back to container mode using the `image: postgres:16` recipe above with `POSTGRES_HOST_AUTH_METHOD: trust` and a `PGDATA` subdirectory. |

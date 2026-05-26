@@ -9,23 +9,29 @@ export const checkGithubPRsTool = createTool({
     'Returns merge status, target branch, and release version for each PR found. ' +
     'Uses the issue key to search PR titles and branch names.',
   inputSchema: z.object({
-    issueKeys: z.array(z.string()).describe('Jira issue keys to look up, e.g. ["ACME-123", "ACME-456"]'),
+    issueKeys: z
+      .array(z.string())
+      .describe('Jira issue keys to look up, e.g. ["ACME-123", "ACME-456"]'),
     owner: z.string().describe('GitHub repository owner/org'),
     repo: z.string().describe('GitHub repository name'),
   }),
   outputSchema: z.object({
-    results: z.array(z.object({
-      issueKey: z.string(),
-      prs: z.array(z.object({
-        number: z.number(),
-        title: z.string(),
-        url: z.string(),
-        merged: z.boolean(),
-        targetBranch: z.string(),
-        mergeCommitSha: z.string().nullable(),
-        version: z.string().nullable(),
-      })),
-    })),
+    results: z.array(
+      z.object({
+        issueKey: z.string(),
+        prs: z.array(
+          z.object({
+            number: z.number(),
+            title: z.string(),
+            url: z.string(),
+            merged: z.boolean(),
+            targetBranch: z.string(),
+            mergeCommitSha: z.string().nullable(),
+            version: z.string().nullable(),
+          }),
+        ),
+      }),
+    ),
     error: z.string().optional(),
   }),
   execute: async (input) => {

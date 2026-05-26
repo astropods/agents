@@ -1,0 +1,108 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  discover:
+    name: discover agents
+    runs-on: ubuntu-latest
+    outputs:
+      agents: ${{ steps.list.outputs.agents }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: list
+        name: list agent directories
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.event.after }}
+        run: |
+          set -euo pipefail
+
+          # Files whose change should re-check every agent (shared infra).
+          SHARED_RE='^(scripts/|biome\.json$|pyproject\.toml$|\.github/workflows/lint\.yml$)'
+
+          case "$EVENT_NAME" in
+            pull_request)
+              changed="$(git diff --name-only "$PR_BASE_SHA" "$PR_HEAD_SHA")"
+              ;;
+            push)
+              if [[ "$PUSH_BEFORE" =~ ^0+$ ]]; then
+                changed=""  # first push to branch, no diff base — check all
+              else
+                changed="$(git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER")"
+              fi
+              ;;
+            *)
+              changed=""  # workflow_dispatch etc. — check all
+              ;;
+          esac
+
+          all_agents=()
+          while IFS= read -r line; do all_agents+=("$line"); done < <(./scripts/list-agents.sh)
+
+          to_json() {
+            if [[ $# -eq 0 ]]; then echo '[]'; return; fi
+            printf '%s\n' "$@" | jq -R . | jq -sc .
+          }
+
+          if [[ -z "$changed" ]] || echo "$changed" | grep -qE "$SHARED_RE"; then
+            echo "Triggering full re-check (shared infra changed or no diff context)."
+            agents=$(to_json "${all_agents[@]}")
+          else
+            touched=()
+            for agent in "${all_agents[@]}"; do
+              if echo "$changed" | grep -q "^$agent/"; then
+                touched+=("$agent")
+              fi
+            done
+            if [[ ${#touched[@]} -eq 0 ]]; then
+              echo "No agent directories changed."
+              agents='[]'
+            else
+              echo "Changed agents: ${touched[*]}"
+              agents=$(to_json "${touched[@]}")
+            fi
+          fi
+
+          echo "agents=$agents" >> "$GITHUB_OUTPUT"
+
+  check:
+    name: check (${{ matrix.agent }})
+    needs: discover
+    if: needs.discover.outputs.agents != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: ${{ fromJSON(needs.discover.outputs.agents) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: install ruff
+        run: pip install ruff
+
+      - name: install ast CLI
+        run: |
+          curl -fsSL https://astropods.com/install | sh
+          echo "$HOME/.ast/bin" >> "$GITHUB_PATH"
+
+      - name: check ${{ matrix.agent }}
+        run: ./scripts/check-agent.sh "${{ matrix.agent }}"

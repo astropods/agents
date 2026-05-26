@@ -1,6 +1,6 @@
 import { createTool } from '@mastra/core/tools';
-import { z } from 'zod';
 import neo4j from 'neo4j-driver';
+import { z } from 'zod';
 import { getDriver } from '../../src/services/neo4j';
 
 export const queryNeo4jTool = createTool({
@@ -22,17 +22,15 @@ export const queryNeo4jTool = createTool({
       defaultAccessMode: neo4j.session.READ,
     });
     try {
-      console.log(
-        `  [queryNeo4j] ${input.cypher.replace(/\n/g, ' ').slice(0, 120)}…`,
-      );
+      console.log(`  [queryNeo4j] ${input.cypher.replace(/\n/g, ' ').slice(0, 120)}…`);
       const result = await session.run(input.cypher);
       const rows = result.records.map((r) => {
         const obj: Record<string, unknown> = {};
-        r.keys.forEach((key) => {
+        for (const key of r.keys) {
           const k = String(key);
           const val = r.get(k);
           obj[k] = neo4j.isInt(val) ? val.toNumber() : val;
-        });
+        }
         return obj;
       });
       console.log(`  [queryNeo4j] returned ${rows.length} rows`);

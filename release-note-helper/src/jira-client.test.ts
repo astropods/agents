@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { searchIssues, getIssue } from './jira-client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getIssue, searchIssues } from './jira-client';
 
 const JIRA_ENV = {
   JIRA_BASE_URL: 'https://test.atlassian.net',
@@ -132,9 +132,7 @@ describe('jira-client', () => {
     it('retries on 429 then succeeds', async () => {
       fetchSpy
         .mockResolvedValueOnce(mockFetchResponse({}, 429))
-        .mockResolvedValueOnce(
-          mockFetchResponse({ issues: [{ key: 'PROJ-1', fields: {} }] }),
-        );
+        .mockResolvedValueOnce(mockFetchResponse({ issues: [{ key: 'PROJ-1', fields: {} }] }));
 
       const issues = await searchIssues('project = "PROJ"');
       expect(issues).toHaveLength(1);
@@ -260,13 +258,11 @@ describe('jira-client', () => {
 
   describe('config validation', () => {
     it('throws when env vars are missing', async () => {
-      delete process.env.JIRA_BASE_URL;
-      delete process.env.JIRA_EMAIL;
-      delete process.env.JIRA_API_KEY;
+      process.env.JIRA_BASE_URL = '';
+      process.env.JIRA_EMAIL = '';
+      process.env.JIRA_API_KEY = '';
 
-      await expect(searchIssues('project = "X"')).rejects.toThrow(
-        'Missing Jira env vars',
-      );
+      await expect(searchIssues('project = "X"')).rejects.toThrow('Missing Jira env vars');
     });
   });
 });
