@@ -1,11 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../src/github-client', () => ({
   checkPRsForIssues: vi.fn(),
 }));
 
-import { checkGithubPRsTool } from './github';
 import { checkPRsForIssues } from '../../src/github-client';
+import { checkGithubPRsTool } from './github';
 
 const mockCheckPRs = vi.mocked(checkPRsForIssues);
 

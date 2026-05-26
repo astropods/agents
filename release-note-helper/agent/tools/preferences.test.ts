@@ -1,15 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../src/preferences-store', () => ({
   loadPreferences: vi.fn(),
   savePreferences: vi.fn(),
 }));
 
+import { loadPreferences, savePreferences } from '../../src/preferences-store';
 import { loadPreferencesTool, savePreferencesTool } from './preferences';
-import {
-  loadPreferences,
-  savePreferences,
-} from '../../src/preferences-store';
 
 const mockLoad = vi.mocked(loadPreferences);
 const mockSave = vi.mocked(savePreferences);

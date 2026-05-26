@@ -15,13 +15,13 @@
  *   JIRA_API_KEY     — injected by custom jira provider
  */
 
-import { Agent } from '@mastra/core/agent';
-import { Memory } from '@mastra/memory';
-import { LibSQLStore } from '@mastra/libsql';
 import { serve } from '@astropods/adapter-mastra';
+import { Agent } from '@mastra/core/agent';
+import { LibSQLStore } from '@mastra/libsql';
+import { Memory } from '@mastra/memory';
 
-import { searchJiraIssuesTool, getJiraIssueDetailsTool } from './tools/jira';
 import { checkGithubPRsTool } from './tools/github';
+import { getJiraIssueDetailsTool, searchJiraIssuesTool } from './tools/jira';
 import { loadPreferencesTool, savePreferencesTool } from './tools/preferences';
 
 function buildInstructions(): string {

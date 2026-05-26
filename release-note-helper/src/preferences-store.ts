@@ -25,7 +25,7 @@ let client: Redis | null = null;
 function getClient(): Redis {
   if (!client) {
     const host = process.env.REDIS_HOST || 'localhost';
-    const port = parseInt(process.env.REDIS_PORT || '6379', 10);
+    const port = Number.parseInt(process.env.REDIS_PORT || '6379', 10);
     client = new Redis({ host, port, lazyConnect: true });
     client.on('error', (err) => console.error('[preferences] Redis error:', err.message));
   }
