@@ -11,6 +11,22 @@ import { getJiraIssueDetailsTool, searchJiraIssuesTool } from './jira';
 const mockSearchIssues = vi.mocked(searchIssues);
 const mockGetIssue = vi.mocked(getIssue);
 
+const searchCtx = {} as Parameters<NonNullable<typeof searchJiraIssuesTool.execute>>[1];
+const getCtx = {} as Parameters<NonNullable<typeof getJiraIssueDetailsTool.execute>>[1];
+
+type SearchResult = {
+  issues: unknown[];
+  total: number;
+  error?: string;
+};
+
+type IssueDetailResult = {
+  key: string;
+  summary: string;
+  error?: string;
+  [k: string]: unknown;
+};
+
 describe('searchJiraIssuesTool', () => {
   it('builds JQL and returns issues with total', async () => {
     const fakeIssues = [
@@ -27,15 +43,10 @@ describe('searchJiraIssuesTool', () => {
     ];
     mockSearchIssues.mockResolvedValueOnce(fakeIssues);
 
-    const result = await searchJiraIssuesTool.execute!(
-      {
-        projectKey: 'PROJ',
-        startDate: '2026-02-01',
-        endDate: '2026-03-01',
-      } as any,
-      {} as any,
-      {} as any,
-    );
+    const result = (await searchJiraIssuesTool.execute!(
+      { projectKey: 'PROJ', startDate: '2026-02-01', endDate: '2026-03-01' },
+      searchCtx,
+    )) as SearchResult;
 
     expect(result).toEqual({ issues: fakeIssues, total: 1 });
     expect(mockSearchIssues).toHaveBeenCalledWith(expect.stringContaining('project = "PROJ"'));
@@ -46,13 +57,8 @@ describe('searchJiraIssuesTool', () => {
     mockSearchIssues.mockResolvedValueOnce([]);
 
     await searchJiraIssuesTool.execute!(
-      {
-        projectKey: 'PROJ"; DROP TABLE',
-        startDate: '2026-01-01',
-        endDate: '2026-02-01',
-      } as any,
-      {} as any,
-      {} as any,
+      { projectKey: 'PROJ"; DROP TABLE', startDate: '2026-01-01', endDate: '2026-02-01' },
+      searchCtx,
     );
 
     const jql = mockSearchIssues.mock.calls[0][0];
@@ -63,15 +69,10 @@ describe('searchJiraIssuesTool', () => {
   it('returns error envelope on failure', async () => {
     mockSearchIssues.mockRejectedValueOnce(new Error('Network timeout'));
 
-    const result = await searchJiraIssuesTool.execute!(
-      {
-        projectKey: 'PROJ',
-        startDate: '2026-01-01',
-        endDate: '2026-02-01',
-      } as any,
-      {} as any,
-      {} as any,
-    );
+    const result = (await searchJiraIssuesTool.execute!(
+      { projectKey: 'PROJ', startDate: '2026-01-01', endDate: '2026-02-01' },
+      searchCtx,
+    )) as SearchResult;
 
     expect(result).toEqual({
       issues: [],
@@ -102,11 +103,10 @@ describe('getJiraIssueDetailsTool', () => {
     };
     mockGetIssue.mockResolvedValueOnce(fakeDetail);
 
-    const result = await getJiraIssueDetailsTool.execute!(
-      { issueKey: 'PROJ-42' } as any,
-      {} as any,
-      {} as any,
-    );
+    const result = (await getJiraIssueDetailsTool.execute!(
+      { issueKey: 'PROJ-42' },
+      getCtx,
+    )) as IssueDetailResult;
 
     expect(result).toEqual(fakeDetail);
     expect(mockGetIssue).toHaveBeenCalledWith('PROJ-42');
@@ -115,11 +115,10 @@ describe('getJiraIssueDetailsTool', () => {
   it('returns error envelope on failure', async () => {
     mockGetIssue.mockRejectedValueOnce(new Error('404 Not Found'));
 
-    const result = await getJiraIssueDetailsTool.execute!(
-      { issueKey: 'PROJ-999' } as any,
-      {} as any,
-      {} as any,
-    );
+    const result = (await getJiraIssueDetailsTool.execute!(
+      { issueKey: 'PROJ-999' },
+      getCtx,
+    )) as IssueDetailResult;
 
     expect(result.error).toBe('404 Not Found');
     expect(result.key).toBe('PROJ-999');
