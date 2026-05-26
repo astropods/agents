@@ -116,6 +116,7 @@ const completenessScorer = createScorer({
 
 beforeAll(() => {
   agent = new Agent({
+    id: 'release-note-helper-eval',
     name: 'release-note-helper-eval',
     instructions: INSTRUCTIONS,
     model: 'anthropic/claude-sonnet-4-5',
