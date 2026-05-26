@@ -10,6 +10,7 @@
 #   SKIP_INSTALL=1    skip `bun install` (useful in pre-commit, where deps
 #                     are assumed present)
 #   SKIP_TYPECHECK=1  skip `tsc --noEmit`
+#   SKIP_TESTS=1      skip `bun run test:unit`
 
 set -uo pipefail
 
@@ -82,6 +83,12 @@ if [[ -f "$agent/package.json" ]]; then
       (cd "$agent" && bun run typecheck >/dev/null 2>&1) \
         && report pass "tsc --noEmit" \
         || { report fail "tsc --noEmit"; (cd "$agent" && bun run typecheck) || true; }
+    fi
+    if [[ "${SKIP_TESTS:-0}" != "1" ]] \
+      && jq -e '.scripts."test:unit"' "$agent/package.json" >/dev/null 2>&1; then
+      (cd "$agent" && bun run test:unit >/dev/null 2>&1) \
+        && report pass "test:unit" \
+        || { report fail "test:unit"; (cd "$agent" && bun run test:unit) || true; }
     fi
   fi
 elif [[ -f "$agent/requirements.txt" || -f "$agent/pyproject.toml" ]]; then

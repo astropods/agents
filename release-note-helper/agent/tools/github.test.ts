@@ -9,6 +9,13 @@ import { checkGithubPRsTool } from './github';
 
 const mockCheckPRs = vi.mocked(checkPRsForIssues);
 
+const ctx = {} as Parameters<NonNullable<typeof checkGithubPRsTool.execute>>[1];
+
+type PRsResult = {
+  results: { issueKey: string; prs: unknown[] }[];
+  error?: string;
+};
+
 describe('checkGithubPRsTool', () => {
   it('passes args through and wraps results', async () => {
     const fakeResults = [
@@ -29,11 +36,10 @@ describe('checkGithubPRsTool', () => {
     ];
     mockCheckPRs.mockResolvedValueOnce(fakeResults);
 
-    const result = await checkGithubPRsTool.execute!(
-      { issueKeys: ['PROJ-1'], owner: 'org', repo: 'repo' } as any,
-      {} as any,
-      {} as any,
-    );
+    const result = (await checkGithubPRsTool.execute!(
+      { issueKeys: ['PROJ-1'], owner: 'org', repo: 'repo' },
+      ctx,
+    )) as PRsResult;
 
     expect(result).toEqual({ results: fakeResults });
     expect(mockCheckPRs).toHaveBeenCalledWith(['PROJ-1'], 'org', 'repo');
@@ -42,11 +48,10 @@ describe('checkGithubPRsTool', () => {
   it('returns error envelope on failure', async () => {
     mockCheckPRs.mockRejectedValueOnce(new Error('Token expired'));
 
-    const result = await checkGithubPRsTool.execute!(
-      { issueKeys: ['PROJ-1'], owner: 'org', repo: 'repo' } as any,
-      {} as any,
-      {} as any,
-    );
+    const result = (await checkGithubPRsTool.execute!(
+      { issueKeys: ['PROJ-1'], owner: 'org', repo: 'repo' },
+      ctx,
+    )) as PRsResult;
 
     expect(result).toEqual({ results: [], error: 'Token expired' });
   });
@@ -57,11 +62,10 @@ describe('checkGithubPRsTool', () => {
       { issueKey: 'PROJ-2', prs: [] },
     ]);
 
-    const result = await checkGithubPRsTool.execute!(
-      { issueKeys: ['PROJ-1', 'PROJ-2'], owner: 'org', repo: 'repo' } as any,
-      {} as any,
-      {} as any,
-    );
+    const result = (await checkGithubPRsTool.execute!(
+      { issueKeys: ['PROJ-1', 'PROJ-2'], owner: 'org', repo: 'repo' },
+      ctx,
+    )) as PRsResult;
 
     expect(result.results).toHaveLength(2);
   });

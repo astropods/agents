@@ -258,9 +258,9 @@ describe('jira-client', () => {
 
   describe('config validation', () => {
     it('throws when env vars are missing', async () => {
-      process.env.JIRA_BASE_URL = undefined;
-      process.env.JIRA_EMAIL = undefined;
-      process.env.JIRA_API_KEY = undefined;
+      process.env.JIRA_BASE_URL = '';
+      process.env.JIRA_EMAIL = '';
+      process.env.JIRA_API_KEY = '';
 
       await expect(searchIssues('project = "X"')).rejects.toThrow('Missing Jira env vars');
     });
