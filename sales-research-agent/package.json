@@ -7,7 +7,10 @@
   "scripts": {
     "dev": "bun --watch agent/index.ts",
     "start": "bun agent/index.ts",
-    "ingest": "bun ingestion/startup/index.ts"
+    "ingest": "bun ingestion/startup/index.ts",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit"
   },
   "main": "./agent/index.ts",
   "dependencies": {
@@ -20,6 +23,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/bun": "^1.1.14",
     "typescript": "^5.9.3"
   }
