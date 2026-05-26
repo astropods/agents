@@ -9,8 +9,8 @@
  *   NEO4J_HTTP_URL=http://localhost:7474 bun test/dump-fixtures.ts
  */
 
-import { writeFileSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 const ISSUE_LIMIT = 50;
 const OUTPUT_PATH = join(dirname(import.meta.path), 'fixtures', 'seed.cypher');
@@ -23,8 +23,7 @@ function getHttpUrl(): string {
 }
 
 function getAuthHeader(): Record<string, string> {
-  const authEnabled =
-    process.env.NEO4J_AUTH !== undefined && process.env.NEO4J_AUTH !== 'none';
+  const authEnabled = process.env.NEO4J_AUTH !== undefined && process.env.NEO4J_AUTH !== 'none';
   if (!authEnabled) return {};
   const user = process.env.NEO4J_USERNAME || 'neo4j';
   const pass = process.env.NEO4J_PASSWORD || '';
@@ -103,9 +102,7 @@ function propsToString(props: Record<string, unknown>): string {
     } else if (typeof v === 'boolean') {
       parts.push(`${k}: ${v}`);
     } else if (Array.isArray(v)) {
-      const items = v.map((i) =>
-        typeof i === 'string' ? escapeStr(i) : String(i),
-      );
+      const items = v.map((i) => (typeof i === 'string' ? escapeStr(i) : String(i)));
       parts.push(`${k}: [${items.join(', ')}]`);
     } else {
       parts.push(`${k}: ${escapeStr(v)}`);
@@ -140,17 +137,14 @@ function nodeKey(props: Record<string, unknown>): string {
   );
 }
 
-async function dumpNodes(
-  label: string,
-  issueIds: string[],
-): Promise<NodeExport[]> {
+async function dumpNodes(label: string, issueIds: string[]): Promise<NodeExport[]> {
   const queries: Record<string, { q: string; p: Record<string, unknown> }> = {
     Issue: {
-      q: `MATCH (n:Issue) WHERE n.issueId IN $ids RETURN properties(n) AS props, labels(n) AS lbls`,
+      q: 'MATCH (n:Issue) WHERE n.issueId IN $ids RETURN properties(n) AS props, labels(n) AS lbls',
       p: { ids: issueIds },
     },
     Comment: {
-      q: `MATCH (i:Issue)-[:HAS_COMMENT]->(n:Comment) WHERE i.issueId IN $ids RETURN properties(n) AS props, labels(n) AS lbls`,
+      q: 'MATCH (i:Issue)-[:HAS_COMMENT]->(n:Comment) WHERE i.issueId IN $ids RETURN properties(n) AS props, labels(n) AS lbls',
       p: { ids: issueIds },
     },
     User: {
@@ -160,7 +154,7 @@ async function dumpNodes(
       p: { ids: issueIds },
     },
     Label: {
-      q: `MATCH (i:Issue)-[:HAS_LABEL]->(n:Label) WHERE i.issueId IN $ids RETURN DISTINCT properties(n) AS props, labels(n) AS lbls`,
+      q: 'MATCH (i:Issue)-[:HAS_LABEL]->(n:Label) WHERE i.issueId IN $ids RETURN DISTINCT properties(n) AS props, labels(n) AS lbls',
       p: { ids: issueIds },
     },
     Reaction: {
@@ -170,7 +164,7 @@ async function dumpNodes(
       p: { ids: issueIds },
     },
     Category: {
-      q: `MATCH (i:Issue)-[:BELONGS_TO_CATEGORY]->(n:Category) WHERE i.issueId IN $ids RETURN DISTINCT properties(n) AS props, labels(n) AS lbls`,
+      q: 'MATCH (i:Issue)-[:BELONGS_TO_CATEGORY]->(n:Category) WHERE i.issueId IN $ids RETURN DISTINCT properties(n) AS props, labels(n) AS lbls',
       p: { ids: issueIds },
     },
     Competitor: {
@@ -192,11 +186,11 @@ async function dumpNodes(
       p: { ids: issueIds },
     },
     Keyword: {
-      q: `MATCH (i:Issue)-[*1..2]->(w)-[:HAS_KEYWORD]->(n:Keyword) WHERE i.issueId IN $ids RETURN DISTINCT properties(n) AS props, labels(n) AS lbls`,
+      q: 'MATCH (i:Issue)-[*1..2]->(w)-[:HAS_KEYWORD]->(n:Keyword) WHERE i.issueId IN $ids RETURN DISTINCT properties(n) AS props, labels(n) AS lbls',
       p: { ids: issueIds },
     },
     Meta: {
-      q: `MATCH (n:Meta) RETURN properties(n) AS props, labels(n) AS lbls`,
+      q: 'MATCH (n:Meta) RETURN properties(n) AS props, labels(n) AS lbls',
       p: {},
     },
   };
@@ -230,21 +224,21 @@ async function dumpRelationships(
   nodeMap: Map<string, string>,
 ): Promise<RelExport[]> {
   const relQueries = [
-    `MATCH (a:Issue)-[r:AUTHORED_BY]->(b:User) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (a:Issue)-[r:HAS_LABEL]->(b:Label) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (a:Issue)-[r:HAS_COMMENT]->(b:Comment) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (a:Issue)-[r:HAS_REACTION]->(b:Reaction) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:AUTHORED_BY]->(b:User) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:HAS_REACTION]->(b:Reaction) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (a:Issue)-[r:BELONGS_TO_CATEGORY]->(b:Category) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (a:Issue)-[r:MENTIONS_COMPETITOR]->(b:Competitor) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (a:Issue)-[r:HAS_WORKAROUND]->(b:Workaround) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (a:Issue)-[r:HAS_SOLUTION]->(b:Solution) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:MENTIONS_COMPETITOR]->(b:Competitor) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:HAS_WORKAROUND]->(b:Workaround) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:HAS_SOLUTION]->(b:Solution) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (a:Workaround)-[r:HAS_KEYWORD]->(b:Keyword) WHERE EXISTS { MATCH (i:Issue)-[*1..2]->(a) WHERE i.issueId IN $ids } RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
-    `MATCH (a:Solution)-[r:HAS_KEYWORD]->(b:Keyword) WHERE EXISTS { MATCH (i:Issue)-[*1..2]->(a) WHERE i.issueId IN $ids } RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t`,
+    'MATCH (a:Issue)-[r:AUTHORED_BY]->(b:User) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (a:Issue)-[r:HAS_LABEL]->(b:Label) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (a:Issue)-[r:HAS_COMMENT]->(b:Comment) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (a:Issue)-[r:HAS_REACTION]->(b:Reaction) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:AUTHORED_BY]->(b:User) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:HAS_REACTION]->(b:Reaction) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (a:Issue)-[r:BELONGS_TO_CATEGORY]->(b:Category) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (a:Issue)-[r:MENTIONS_COMPETITOR]->(b:Competitor) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (a:Issue)-[r:HAS_WORKAROUND]->(b:Workaround) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (a:Issue)-[r:HAS_SOLUTION]->(b:Solution) WHERE a.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:MENTIONS_COMPETITOR]->(b:Competitor) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:HAS_WORKAROUND]->(b:Workaround) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (i:Issue)-[:HAS_COMMENT]->(a:Comment)-[r:HAS_SOLUTION]->(b:Solution) WHERE i.issueId IN $ids RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (a:Workaround)-[r:HAS_KEYWORD]->(b:Keyword) WHERE EXISTS { MATCH (i:Issue)-[*1..2]->(a) WHERE i.issueId IN $ids } RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
+    'MATCH (a:Solution)-[r:HAS_KEYWORD]->(b:Keyword) WHERE EXISTS { MATCH (i:Issue)-[*1..2]->(a) WHERE i.issueId IN $ids } RETURN properties(a) AS ap, properties(b) AS bp, type(r) AS t',
   ];
 
   const rels: RelExport[] = [];
@@ -273,16 +267,14 @@ async function main() {
   console.log(`Connecting to Neo4j HTTP API at ${httpUrl}...`);
 
   const issueRows = await runCypher(
-    `MATCH (i:Issue) RETURN i.issueId AS id ORDER BY i.number ASC LIMIT $limit`,
+    'MATCH (i:Issue) RETURN i.issueId AS id ORDER BY i.number ASC LIMIT $limit',
     { limit: ISSUE_LIMIT },
   );
   const issueIds = issueRows.map((r) => r.id as string);
   console.log(`Found ${issueIds.length} issues to export`);
 
   if (issueIds.length === 0) {
-    console.error(
-      'No issues found in database. Is ast dev running with ingested data?',
-    );
+    console.error('No issues found in database. Is ast dev running with ingested data?');
     process.exit(1);
   }
 
@@ -324,18 +316,14 @@ async function main() {
   lines.push(`// Exported: ${new Date().toISOString()}`);
   lines.push(`// Issues: ${issueIds.length}`);
   lines.push('//');
-  lines.push(
-    '// Regenerate: bun test/dump-fixtures.ts (while ast dev is running)',
-  );
+  lines.push('// Regenerate: bun test/dump-fixtures.ts (while ast dev is running)');
   lines.push('');
 
   lines.push('// --- Nodes ---');
   for (const node of allNodes) {
     const fid = `_fid: ${escapeStr(node.varName)}`;
     const props = propsToString(node.props);
-    lines.push(
-      `CREATE (:${node.label} {${fid}, ${props}});`,
-    );
+    lines.push(`CREATE (:${node.label} {${fid}, ${props}});`);
   }
 
   lines.push('');
