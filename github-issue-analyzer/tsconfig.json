@@ -12,5 +12,5 @@
     "outDir": "./dist"
   },
   "include": ["agent/**/*", "ingestion/**/*", "src/**/*"],
-  "exclude": ["node_modules", "dist", "agent/tools/__tests__/**"]
+  "exclude": ["node_modules", "dist"]
 }
