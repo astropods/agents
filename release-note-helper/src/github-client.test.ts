@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { searchPRsByKey, findVersionForCommit, checkPRsForIssues } from './github-client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { checkPRsForIssues, findVersionForCommit, searchPRsByKey } from './github-client';
 
 function mockFetchResponse(body: unknown, status = 200) {
   return {
@@ -33,7 +33,7 @@ describe('github-client', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    delete process.env.GITHUB_TOKEN;
+    process.env.GITHUB_TOKEN = undefined;
   });
 
   describe('searchPRsByKey', () => {
@@ -68,9 +68,7 @@ describe('github-client', () => {
     });
 
     it('returns empty array when no PRs found', async () => {
-      fetchSpy.mockResolvedValueOnce(
-        mockFetchResponse({ total_count: 0, items: [] }),
-      );
+      fetchSpy.mockResolvedValueOnce(mockFetchResponse({ total_count: 0, items: [] }));
 
       const prs = await searchPRsByKey('PROJ-999', 'org', 'repo');
       expect(prs).toHaveLength(0);
@@ -85,7 +83,9 @@ describe('github-client', () => {
           }),
         )
         .mockResolvedValueOnce(
-          mockFetchResponse(prDetailResponse({ number: 5, merged: false, merge_commit_sha: 'should_be_null' })),
+          mockFetchResponse(
+            prDetailResponse({ number: 5, merged: false, merge_commit_sha: 'should_be_null' }),
+          ),
         );
 
       const prs = await searchPRsByKey('PROJ-2', 'org', 'repo');
@@ -98,13 +98,9 @@ describe('github-client', () => {
     it('returns tag name when commit is identical', async () => {
       fetchSpy
         .mockResolvedValueOnce(
-          mockFetchResponse([
-            { name: 'v1.0.0', commit: { sha: 'tag_sha_1' } },
-          ]),
+          mockFetchResponse([{ name: 'v1.0.0', commit: { sha: 'tag_sha_1' } }]),
         )
-        .mockResolvedValueOnce(
-          mockFetchResponse({ status: 'identical' }),
-        );
+        .mockResolvedValueOnce(mockFetchResponse({ status: 'identical' }));
 
       const version = await findVersionForCommit('org', 'repo', 'abc123');
       expect(version).toBe('v1.0.0');
@@ -113,13 +109,9 @@ describe('github-client', () => {
     it('returns tag name when commit is behind (tag is ahead)', async () => {
       fetchSpy
         .mockResolvedValueOnce(
-          mockFetchResponse([
-            { name: 'v2.0.0', commit: { sha: 'tag_sha_2' } },
-          ]),
+          mockFetchResponse([{ name: 'v2.0.0', commit: { sha: 'tag_sha_2' } }]),
         )
-        .mockResolvedValueOnce(
-          mockFetchResponse({ status: 'ahead' }),
-        );
+        .mockResolvedValueOnce(mockFetchResponse({ status: 'ahead' }));
 
       const version = await findVersionForCommit('org', 'repo', 'abc123');
       expect(version).toBe('v2.0.0');
@@ -128,13 +120,9 @@ describe('github-client', () => {
     it('returns null when no tag contains the commit', async () => {
       fetchSpy
         .mockResolvedValueOnce(
-          mockFetchResponse([
-            { name: 'v1.0.0', commit: { sha: 'tag_sha_1' } },
-          ]),
+          mockFetchResponse([{ name: 'v1.0.0', commit: { sha: 'tag_sha_1' } }]),
         )
-        .mockResolvedValueOnce(
-          mockFetchResponse({ status: 'behind' }),
-        );
+        .mockResolvedValueOnce(mockFetchResponse({ status: 'behind' }));
 
       const version = await findVersionForCommit('org', 'repo', 'abc123');
       expect(version).toBeNull();
@@ -161,13 +149,13 @@ describe('github-client', () => {
         .mockResolvedValueOnce(
           mockFetchResponse({
             total_count: 1,
-            items: [{ number: 10, title: 'PROJ-1', html_url: 'https://github.com/org/repo/pull/10' }],
+            items: [
+              { number: 10, title: 'PROJ-1', html_url: 'https://github.com/org/repo/pull/10' },
+            ],
           }),
         )
         .mockResolvedValueOnce(mockFetchResponse(prDetailResponse()))
-        .mockResolvedValueOnce(
-          mockFetchResponse([{ name: 'v3.0.0', commit: { sha: 'tag_sha' } }]),
-        )
+        .mockResolvedValueOnce(mockFetchResponse([{ name: 'v3.0.0', commit: { sha: 'tag_sha' } }]))
         .mockResolvedValueOnce(mockFetchResponse({ status: 'identical' }))
         // PROJ-2: no PRs
         .mockResolvedValueOnce(mockFetchResponse({ total_count: 0, items: [] }));
@@ -185,7 +173,7 @@ describe('github-client', () => {
 
   describe('config validation', () => {
     it('throws when GITHUB_TOKEN is missing', async () => {
-      delete process.env.GITHUB_TOKEN;
+      process.env.GITHUB_TOKEN = undefined;
       await expect(searchPRsByKey('X-1', 'o', 'r')).rejects.toThrow(
         'GITHUB_TOKEN environment variable is required',
       );
@@ -196,9 +184,7 @@ describe('github-client', () => {
     it('retries on 502 then succeeds', async () => {
       fetchSpy
         .mockResolvedValueOnce(mockFetchResponse({}, 502))
-        .mockResolvedValueOnce(
-          mockFetchResponse({ total_count: 0, items: [] }),
-        );
+        .mockResolvedValueOnce(mockFetchResponse({ total_count: 0, items: [] }));
 
       const prs = await searchPRsByKey('PROJ-1', 'org', 'repo');
       expect(prs).toHaveLength(0);
@@ -208,9 +194,7 @@ describe('github-client', () => {
     it('throws on non-retryable 404', async () => {
       fetchSpy.mockResolvedValue(mockFetchResponse({ message: 'Not Found' }, 404));
 
-      await expect(searchPRsByKey('PROJ-1', 'org', 'repo')).rejects.toThrow(
-        'GitHub API HTTP 404',
-      );
+      await expect(searchPRsByKey('PROJ-1', 'org', 'repo')).rejects.toThrow('GitHub API HTTP 404');
       expect(fetchSpy).toHaveBeenCalledTimes(1);
     });
   });

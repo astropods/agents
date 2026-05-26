@@ -1,6 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
-import { searchIssues, getIssue } from '../../src/jira-client';
+import { getIssue, searchIssues } from '../../src/jira-client';
 
 export const searchJiraIssuesTool = createTool({
   id: 'searchJiraIssues',
@@ -13,16 +13,18 @@ export const searchJiraIssuesTool = createTool({
     endDate: z.string().describe('End of date range in YYYY-MM-DD format'),
   }),
   outputSchema: z.object({
-    issues: z.array(z.object({
-      key: z.string(),
-      summary: z.string(),
-      issueType: z.string(),
-      priority: z.string(),
-      status: z.string(),
-      assignee: z.string().nullable(),
-      labels: z.array(z.string()),
-      resolutionDate: z.string().nullable(),
-    })),
+    issues: z.array(
+      z.object({
+        key: z.string(),
+        summary: z.string(),
+        issueType: z.string(),
+        priority: z.string(),
+        status: z.string(),
+        assignee: z.string().nullable(),
+        labels: z.array(z.string()),
+        resolutionDate: z.string().nullable(),
+      }),
+    ),
     total: z.number(),
     error: z.string().optional(),
   }),
@@ -65,11 +67,13 @@ export const getJiraIssueDetailsTool = createTool({
     description: z.string().nullable(),
     components: z.array(z.string()),
     fixVersions: z.array(z.string()),
-    linkedIssues: z.array(z.object({
-      type: z.string(),
-      key: z.string(),
-      summary: z.string(),
-    })),
+    linkedIssues: z.array(
+      z.object({
+        type: z.string(),
+        key: z.string(),
+        summary: z.string(),
+      }),
+    ),
     error: z.string().optional(),
   }),
   execute: async (input) => {
@@ -79,10 +83,22 @@ export const getJiraIssueDetailsTool = createTool({
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`  [getJiraIssueDetails] error: ${msg}`);
       return {
-        key: input.issueKey, summary: '', issueType: '', priority: '', status: '',
-        assignee: null, labels: [], resolutionDate: null, resolution: null,
-        created: '', updated: '', description: null, components: [],
-        fixVersions: [], linkedIssues: [], error: msg,
+        key: input.issueKey,
+        summary: '',
+        issueType: '',
+        priority: '',
+        status: '',
+        assignee: null,
+        labels: [],
+        resolutionDate: null,
+        resolution: null,
+        created: '',
+        updated: '',
+        description: null,
+        components: [],
+        fixVersions: [],
+        linkedIssues: [],
+        error: msg,
       };
     }
   },

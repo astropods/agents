@@ -1,7 +1,7 @@
-import { Agent } from '@mastra/core/agent';
-import { Memory } from '@mastra/memory';
-import { LibSQLStore } from '@mastra/libsql';
 import { serve } from '@astropods/adapter-mastra';
+import { Agent } from '@mastra/core/agent';
+import { LibSQLStore } from '@mastra/libsql';
+import { Memory } from '@mastra/memory';
 
 import { gongSemanticSearchTool } from './tools/gong-search';
 import { salesforceAccountLookupTool } from './tools/salesforce-account';
@@ -136,6 +136,7 @@ const memory = new Memory({
 });
 
 const agent = new Agent({
+  id: 'sales-research-agent',
   name: 'sales-research-agent',
   instructions: INSTRUCTIONS,
   model: 'anthropic/claude-sonnet-4-5',

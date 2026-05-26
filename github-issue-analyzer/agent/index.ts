@@ -12,10 +12,10 @@
  *   NEO4J_AUTH        — Set to enable auth (default: disabled)
  */
 
-import { Agent } from '@mastra/core/agent';
-import { Memory } from '@mastra/memory';
-import { LibSQLStore } from '@mastra/libsql';
 import { serve } from '@astropods/adapter-mastra';
+import { Agent } from '@mastra/core/agent';
+import { LibSQLStore } from '@mastra/libsql';
+import { Memory } from '@mastra/memory';
 import { queryNeo4jTool } from './tools/query-neo4j';
 import { summarizeCommentsTool } from './tools/summarize-comments';
 
@@ -87,6 +87,7 @@ const memory = new Memory({
 });
 
 const agent = new Agent({
+  id: 'github-issue-analyzer',
   name: 'github-issue-analyzer',
   instructions: INSTRUCTIONS,
   model: 'openai/gpt-4o',

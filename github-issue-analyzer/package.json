@@ -11,7 +11,10 @@
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:evals": "vitest run --project evals",
-    "test:dump": "bun test/dump-fixtures.ts"
+    "test:dump": "bun test/dump-fixtures.ts",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit"
   },
   "main": "./agent/index.ts",
   "dependencies": {
@@ -24,6 +27,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@mastra/evals": "latest",
     "@testcontainers/neo4j": "^10.0.0",
     "@types/bun": "^1.1.14",

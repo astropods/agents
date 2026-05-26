@@ -81,7 +81,11 @@ export async function fetchIssueDetails(issueNumber: number): Promise<DbIssueDet
         state: issue.properties.state,
         authorLogin: issue.properties.authorLogin,
         author: issueAuthor
-          ? { login: issueAuthor.properties.login, name: issueAuthor.properties.name, company: issueAuthor.properties.company }
+          ? {
+              login: issueAuthor.properties.login,
+              name: issueAuthor.properties.name,
+              company: issueAuthor.properties.company,
+            }
           : null,
       },
       labels,
@@ -114,4 +118,3 @@ export async function fetchMultipleIssueDetails(
 
   return { results, errors };
 }
-

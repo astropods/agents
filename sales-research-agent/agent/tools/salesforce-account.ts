@@ -20,8 +20,13 @@ Always call this FIRST when a company name is mentioned. Detect query intent fro
 - "sales": Sales context (pipeline, expansion potential, health score)
 - "account_info": Business info (industry, website, employee count)`,
   inputSchema: z.object({
-    accountNameFromQuery: z.string().describe('Account name from user query (e.g. "microsoft", "cvs")'),
-    queryIntent: z.enum(['general', 'metrics', 'arr', 'usage', 'team', 'sales', 'account_info']).optional().default('general'),
+    accountNameFromQuery: z
+      .string()
+      .describe('Account name from user query (e.g. "microsoft", "cvs")'),
+    queryIntent: z
+      .enum(['general', 'metrics', 'arr', 'usage', 'team', 'sales', 'account_info'])
+      .optional()
+      .default('general'),
   }),
   outputSchema: z.record(z.unknown()),
   execute: async (input) => {
@@ -29,7 +34,7 @@ Always call this FIRST when a company name is mentioned. Detect query intent fro
     try {
       return await getClient().lookupAccount(input.accountNameFromQuery, 10, input.queryIntent);
     } catch (err) {
-      console.error(`  [sfAccount] error:`, err);
+      console.error('  [sfAccount] error:', err);
       return {
         error: String(err),
         matched_accounts: [],
