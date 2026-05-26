@@ -59,7 +59,6 @@ integrations:
 knowledge:
   vectors:
     provider: qdrant
-    persistent: true
 
 inputs:
   MAX_CALLS:
