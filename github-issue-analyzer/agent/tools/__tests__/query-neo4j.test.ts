@@ -1,7 +1,7 @@
 import neo4j from 'neo4j-driver';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../../src/services/neo4j', () => {
+const { mockSession, mockDriver } = vi.hoisted(() => {
   const mockSession = {
     run: vi.fn(),
     close: vi.fn(),
@@ -9,19 +9,22 @@ vi.mock('../../../src/services/neo4j', () => {
   const mockDriver = {
     session: vi.fn(() => mockSession),
   };
-  return {
-    getDriver: vi.fn(() => mockDriver),
-    __mockSession: mockSession,
-  };
+  return { mockSession, mockDriver };
 });
 
-import { __mockSession as mockSession } from '../../../src/services/neo4j';
+vi.mock('../../../src/services/neo4j', () => ({
+  getDriver: vi.fn(() => mockDriver),
+}));
+
 import { queryNeo4jTool } from '../query-neo4j';
 
-const session = mockSession as unknown as {
-  run: ReturnType<typeof vi.fn>;
-  close: ReturnType<typeof vi.fn>;
+type QueryResult = {
+  rows: Record<string, unknown>[];
+  count: number;
+  error?: string;
 };
+
+const ctx = {} as Parameters<NonNullable<typeof queryNeo4jTool.execute>>[1];
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -37,16 +40,17 @@ function fakeRecord(data: Record<string, unknown>) {
 
 describe('queryNeo4jTool', () => {
   it('returns rows and count from a successful query', async () => {
-    session.run.mockResolvedValueOnce({
+    mockSession.run.mockResolvedValueOnce({
       records: [
         fakeRecord({ name: 'bug', count: neo4j.int(42) }),
         fakeRecord({ name: 'feature', count: neo4j.int(10) }),
       ],
     });
 
-    const result = await queryNeo4jTool.execute!({
-      cypher: 'MATCH (l:Label) RETURN l.name AS name, count(*) AS count LIMIT 5',
-    });
+    const result = (await queryNeo4jTool.execute!(
+      { cypher: 'MATCH (l:Label) RETURN l.name AS name, count(*) AS count LIMIT 5' },
+      ctx,
+    )) as QueryResult;
 
     expect(result).toEqual({
       rows: [
@@ -55,26 +59,32 @@ describe('queryNeo4jTool', () => {
       ],
       count: 2,
     });
-    expect(session.run).toHaveBeenCalledWith(
+    expect(mockSession.run).toHaveBeenCalledWith(
       'MATCH (l:Label) RETURN l.name AS name, count(*) AS count LIMIT 5',
     );
   });
 
   it('converts neo4j integers to numbers', async () => {
-    session.run.mockResolvedValueOnce({
+    mockSession.run.mockResolvedValueOnce({
       records: [fakeRecord({ total: neo4j.int(999) })],
     });
 
-    const result = await queryNeo4jTool.execute!({ cypher: 'RETURN 999 AS total' });
+    const result = (await queryNeo4jTool.execute!(
+      { cypher: 'RETURN 999 AS total' },
+      ctx,
+    )) as QueryResult;
 
     expect(result.rows[0].total).toBe(999);
     expect(typeof result.rows[0].total).toBe('number');
   });
 
   it('returns empty rows on Cypher error', async () => {
-    session.run.mockRejectedValueOnce(new Error('Invalid Cypher syntax'));
+    mockSession.run.mockRejectedValueOnce(new Error('Invalid Cypher syntax'));
 
-    const result = await queryNeo4jTool.execute!({ cypher: 'INVALID QUERY' });
+    const result = (await queryNeo4jTool.execute!(
+      { cypher: 'INVALID QUERY' },
+      ctx,
+    )) as QueryResult;
 
     expect(result).toEqual({
       rows: [],
@@ -84,17 +94,20 @@ describe('queryNeo4jTool', () => {
   });
 
   it('always closes the session', async () => {
-    session.run.mockRejectedValueOnce(new Error('fail'));
+    mockSession.run.mockRejectedValueOnce(new Error('fail'));
 
-    await queryNeo4jTool.execute!({ cypher: 'FAIL' });
+    await queryNeo4jTool.execute!({ cypher: 'FAIL' }, ctx);
 
-    expect(session.close).toHaveBeenCalledTimes(1);
+    expect(mockSession.close).toHaveBeenCalledTimes(1);
   });
 
   it('returns empty rows when query has no results', async () => {
-    session.run.mockResolvedValueOnce({ records: [] });
+    mockSession.run.mockResolvedValueOnce({ records: [] });
 
-    const result = await queryNeo4jTool.execute!({ cypher: 'MATCH (n:Nothing) RETURN n LIMIT 5' });
+    const result = (await queryNeo4jTool.execute!(
+      { cypher: 'MATCH (n:Nothing) RETURN n LIMIT 5' },
+      ctx,
+    )) as QueryResult;
 
     expect(result).toEqual({ rows: [], count: 0 });
   });
