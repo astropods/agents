@@ -17,31 +17,31 @@ Scheduled notifications (optional):
   SLACK_NOTIFY_CHANNEL - Slack channel ID or name to post scheduled reports to
   (Scheduling is handled by the ingestion container configured in astropods.yml; runs bi-weekly)
 """
-import os
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
+
 import requests
+from astropods_adapter_langchain import LangChainAdapter, serve
+from langchain.agents import create_agent
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import tool
-from langchain.agents import create_agent
-from astropods_adapter_langchain import LangChainAdapter, serve
-
 from src.flags import (
-    LD_API_KEY,
-    LD_PROJECT_KEY,
-    LD_PROD_ENV,
-    LD_BASE_URL,
-    ROLLOUT_THRESHOLD_DAYS,
-    GITHUB_TOKEN,
     GITHUB_REPO,
+    GITHUB_TOKEN,
+    LD_API_KEY,
+    LD_BASE_URL,
+    LD_PROD_ENV,
+    LD_PROJECT_KEY,
+    ROLLOUT_THRESHOLD_DAYS,
     SLACK_BOT_TOKEN,
     SLACK_NOTIFY_CHANNEL,
-    _ld_headers,
     _days_ago,
-    _is_fully_rolled_out,
     _fetch_eligible_flags,
     _format_flag_entry,
-    _post_to_slack,
     _interval_label,
+    _is_fully_rolled_out,
+    _ld_headers,
+    _post_to_slack,
 )
 
 
@@ -100,12 +100,11 @@ def list_oldest_rolled_out_flags() -> str:
         f"{ROLLOUT_THRESHOLD_DAYS}+ days (oldest first):\n"
     ]
     for f in top10:
-        last_modified_str = datetime.fromtimestamp(
-            f["last_modified_ms"] / 1000, tz=timezone.utc
-        ).strftime("%Y-%m-%d")
+        last_modified_str = datetime.fromtimestamp(f["last_modified_ms"] / 1000, tz=UTC).strftime(
+            "%Y-%m-%d"
+        )
         ld_url = (
-            f"https://app.launchdarkly.com/projects/{LD_PROJECT_KEY}"
-            f"/flags/{f['key']}/targeting"
+            f"https://app.launchdarkly.com/projects/{LD_PROJECT_KEY}/flags/{f['key']}/targeting"
         )
         lines.append(
             f"- {f['key']} ({f['name']})\n"
@@ -132,10 +131,7 @@ def list_flags_with_no_code_references() -> str:
     flags_url = f"{LD_BASE_URL}/flags/{LD_PROJECT_KEY}"
     try:
         flags_resp = requests.get(
-            flags_url,
-            headers=_ld_headers(),
-            params={"summary": "true"},
-            timeout=15,
+            flags_url, headers=_ld_headers(), params={"summary": "true"}, timeout=15
         )
         if not flags_resp.ok:
             return f"Error fetching flags from LaunchDarkly ({flags_resp.status_code}): {flags_resp.text}"
@@ -160,17 +156,12 @@ def list_flags_with_no_code_references() -> str:
         )
 
     stats = stats_resp.json().get("flags", {})
-    no_refs = [
-        key for key, data in stats.items() if data.get("numCodeRefs", 0) == 0
-    ]
+    no_refs = [key for key, data in stats.items() if data.get("numCodeRefs", 0) == 0]
 
     if not no_refs:
         return "No flags with zero code references found."
 
-    lines = [
-        f"- {key} ({flag_names.get(key, 'unknown name')})"
-        for key in sorted(no_refs)
-    ]
+    lines = [f"- {key} ({flag_names.get(key, 'unknown name')})" for key in sorted(no_refs)]
     header = f"Found {len(lines)} flag(s) with no code references (safe to delete from LaunchDarkly):\n\n"
     return header + "\n".join(lines)
 
@@ -199,9 +190,7 @@ def get_flag_details(flag_key: str) -> str:
     env = flag.get("environments", {}).get(LD_PROD_ENV, {})
     last_modified_ms = env.get("lastModified", 0)
     last_modified_str = (
-        datetime.fromtimestamp(last_modified_ms / 1000, tz=timezone.utc).strftime(
-            "%Y-%m-%d %H:%M UTC"
-        )
+        datetime.fromtimestamp(last_modified_ms / 1000, tz=UTC).strftime("%Y-%m-%d %H:%M UTC")
         if last_modified_ms
         else "unknown"
     )
@@ -236,8 +225,7 @@ def search_github_for_flag(flag_key: str) -> str:
         return "Error: GITHUB_REPO environment variable is not set (expected format: owner/repo)."
 
     ld_flag_url = (
-        f"https://app.launchdarkly.com/projects/{LD_PROJECT_KEY}"
-        f"/flags/{flag_key}/targeting"
+        f"https://app.launchdarkly.com/projects/{LD_PROJECT_KEY}/flags/{flag_key}/targeting"
     )
 
     headers = {
@@ -248,10 +236,7 @@ def search_github_for_flag(flag_key: str) -> str:
 
     try:
         resp = requests.get(
-            "https://api.github.com/search/code",
-            headers=headers,
-            params=params,
-            timeout=15,
+            "https://api.github.com/search/code", headers=headers, params=params, timeout=15
         )
         if not resp.ok:
             return f"Error searching GitHub ({resp.status_code}): {resp.text}"
@@ -311,7 +296,9 @@ def preview_scheduled_report() -> str:
         for f in newly_eligible:
             lines.append(_format_flag_entry(f, ld_base))
     else:
-        lines.append(f"_No flags newly crossed the {ROLLOUT_THRESHOLD_DAYS}-day threshold this interval._")
+        lines.append(
+            f"_No flags newly crossed the {ROLLOUT_THRESHOLD_DAYS}-day threshold this interval._"
+        )
 
     backlog = [f for f in all_eligible if f not in newly_eligible][:5]
     if backlog:
@@ -319,7 +306,9 @@ def preview_scheduled_report() -> str:
         for f in backlog:
             lines.append(_format_flag_entry(f, ld_base))
 
-    lines.append("\nDates reflect last modified in LaunchDarkly — verify actual rollout date before deprecating. Ask me about a specific flag to see code references.")
+    lines.append(
+        "\nDates reflect last modified in LaunchDarkly — verify actual rollout date before deprecating. Ask me about a specific flag to see code references."
+    )
     return "\n".join(lines)
 
 
@@ -342,14 +331,18 @@ def send_report_to_slack() -> str:
         return f"Error building report: {error}"
 
     ld_base = f"https://app.launchdarkly.com/projects/{LD_PROJECT_KEY}/flags"
-    lines = [f":triangular_flag_on_post: *{_interval_label().capitalize()} LaunchDarkly Flag Report*\n"]
+    lines = [
+        f":triangular_flag_on_post: *{_interval_label().capitalize()} LaunchDarkly Flag Report*\n"
+    ]
 
     if newly_eligible:
         lines.append(f"*{len(newly_eligible)} new flags eligible for deprecation:*")
         for f in newly_eligible:
             lines.append(_format_flag_entry(f, ld_base))
     else:
-        lines.append(f"_No flags newly crossed the {ROLLOUT_THRESHOLD_DAYS}-day threshold this interval._")
+        lines.append(
+            f"_No flags newly crossed the {ROLLOUT_THRESHOLD_DAYS}-day threshold this interval._"
+        )
 
     backlog = [f for f in all_eligible if f not in newly_eligible][:5]
     if backlog:
@@ -357,7 +350,9 @@ def send_report_to_slack() -> str:
         for f in backlog:
             lines.append(_format_flag_entry(f, ld_base))
 
-    lines.append("\n_Dates reflect last modified in LaunchDarkly — verify actual rollout date before deprecating. Ask me about a specific flag to see code references._")
+    lines.append(
+        "\n_Dates reflect last modified in LaunchDarkly — verify actual rollout date before deprecating. Ask me about a specific flag to see code references._"
+    )
     report = "\n".join(lines)
 
     _post_to_slack(report)
@@ -400,6 +395,8 @@ system_prompt = (
 
 agent = create_agent(llm, tools=tools, system_prompt=system_prompt)
 
-adapter = LangChainAdapter(agent, name="feature-flag-assistant", system_prompt=system_prompt, tools=tools)
+adapter = LangChainAdapter(
+    agent, name="feature-flag-assistant", system_prompt=system_prompt, tools=tools
+)
 
 serve(adapter)

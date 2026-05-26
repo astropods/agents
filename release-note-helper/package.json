@@ -8,7 +8,10 @@
     "start": "bun agent/index.ts",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
-    "test:evals": "vitest run --project evals"
+    "test:evals": "vitest run --project evals",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit"
   },
   "main": "./agent/index.ts",
   "dependencies": {
@@ -20,6 +23,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@mastra/evals": "latest",
     "@types/bun": "^1.1.14",
     "typescript": "^5.9.3",

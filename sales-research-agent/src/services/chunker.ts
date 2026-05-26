@@ -1,4 +1,4 @@
-import type { Utterance, Transcript, GongCall } from './gong';
+import type { GongCall, Transcript, Utterance } from './gong';
 
 export interface Chunk {
   chunkId: string;
@@ -63,7 +63,6 @@ function hasSpeakerTransition(utterances: Utterance[]): boolean {
   }
   return false;
 }
-
 
 export function chunkTranscript(transcript: Transcript, call: GongCall): Chunk[] {
   const { callId, utterances } = transcript;

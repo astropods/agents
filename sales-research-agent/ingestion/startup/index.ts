@@ -2,7 +2,7 @@ import { runPipeline } from '../../src/services/pipeline';
 
 const startDate = process.env.GONG_START_DATE || '2024-07-22';
 const endDate = process.env.GONG_END_DATE || new Date().toISOString().slice(0, 10);
-const maxCalls = process.env.MAX_CALLS ? parseInt(process.env.MAX_CALLS, 10) : undefined;
+const maxCalls = process.env.MAX_CALLS ? Number.parseInt(process.env.MAX_CALLS, 10) : undefined;
 
 async function main() {
   console.log('Sales Research Agent — Ingestion Startup');

@@ -1,21 +1,25 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import {
+  type UserPreferences,
   loadPreferences as load,
   savePreferences as save,
-  type UserPreferences,
 } from '../../src/preferences-store';
 
 const preferencesSchema = z.object({
   defaultProject: z.string().optional().describe('Default Jira project key'),
   githubOwner: z.string().optional().describe('Default GitHub org/owner'),
   githubRepo: z.string().optional().describe('Default GitHub repo name'),
-  selectionCriteria: z.string().optional().describe(
-    'Criteria for selecting release-note-worthy issues, e.g. "Include bug fixes and new features, skip internal refactors and chores"',
-  ),
-  releaseNoteExample: z.string().optional().describe(
-    'An example release note the user provided to use as a formatting reference',
-  ),
+  selectionCriteria: z
+    .string()
+    .optional()
+    .describe(
+      'Criteria for selecting release-note-worthy issues, e.g. "Include bug fixes and new features, skip internal refactors and chores"',
+    ),
+  releaseNoteExample: z
+    .string()
+    .optional()
+    .describe('An example release note the user provided to use as a formatting reference'),
 });
 
 export const loadPreferencesTool = createTool({
