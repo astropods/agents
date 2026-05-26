@@ -12,5 +12,12 @@
     "outDir": "./dist"
   },
   "include": ["agent/**/*", "src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "agent/tools/github.test.ts",
+    "agent/tools/jira.test.ts",
+    "agent/tools/preferences.test.ts",
+    "test/evals/**"
+  ]
 }
