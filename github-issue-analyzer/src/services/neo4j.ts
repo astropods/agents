@@ -6,7 +6,7 @@
  *   Rels:   AUTHORED_BY, HAS_LABEL, HAS_COMMENT, HAS_REACTION
  */
 
-import neo4j, { type Driver, type Session } from 'neo4j-driver';
+import neo4j, { type Driver, type Integer, type Session } from 'neo4j-driver';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,9 +84,7 @@ export function getDriver(): Driver {
   const password = process.env.NEO4J_PASSWORD;
   const authEnabled = process.env.NEO4J_AUTH !== undefined && process.env.NEO4J_AUTH !== 'none';
 
-  const auth = authEnabled
-    ? neo4j.auth.basic(username, password || '')
-    : undefined;
+  const auth = authEnabled ? neo4j.auth.basic(username, password || '') : undefined;
 
   _driver = neo4j.driver(uri, auth);
   return _driver;
@@ -150,7 +148,7 @@ async function insertReactions(
       commentId,
     },
   );
-  return (result.records[0].get('reactionCount') as neo4j.Integer).toNumber();
+  return (result.records[0].get('reactionCount') as Integer).toNumber();
 }
 
 // ---------------------------------------------------------------------------
@@ -220,7 +218,11 @@ async function insertIssue(session: Session, issue: GitHubIssue): Promise<void> 
   }
 }
 
-async function insertComments(session: Session, issue: GitHubIssue, comments: GitHubComment[]): Promise<number> {
+async function insertComments(
+  session: Session,
+  issue: GitHubIssue,
+  comments: GitHubComment[],
+): Promise<number> {
   if (comments.length === 0) return 0;
 
   // 1. Upsert Comment nodes + link to Issue
@@ -244,7 +246,7 @@ async function insertComments(session: Session, issue: GitHubIssue, comments: Gi
       })),
     },
   );
-  const count = (result.records[0].get('cnt') as neo4j.Integer).toNumber();
+  const count = (result.records[0].get('cnt') as Integer).toNumber();
 
   // 2. Comment authors
   const authors = comments.filter((c) => c.author?.login).map((c) => c.author!);
@@ -283,7 +285,10 @@ async function insertComments(session: Session, issue: GitHubIssue, comments: Gi
 // Public API
 // ---------------------------------------------------------------------------
 
-export async function ingestIssueData(issue: GitHubIssue, comments: GitHubComment[]): Promise<IngestionResult> {
+export async function ingestIssueData(
+  issue: GitHubIssue,
+  comments: GitHubComment[],
+): Promise<IngestionResult> {
   const session = getDriver().session();
   try {
     console.log(`  Ingesting issue #${issue.number}: ${issue.title}`);
@@ -303,7 +308,10 @@ export async function ingestIssueData(issue: GitHubIssue, comments: GitHubCommen
         issueReactions: issue.reactions?.nodes?.length ?? 0,
         commentReactions: comments.reduce((s, c) => s + (c.reactions?.nodes?.length ?? 0), 0),
         uniqueUsers: new Set(
-          [issue.author?.login, ...comments.filter((c) => c.author?.login).map((c) => c.author!.login)].filter(Boolean),
+          [
+            issue.author?.login,
+            ...comments.filter((c) => c.author?.login).map((c) => c.author!.login),
+          ].filter(Boolean),
         ).size,
       },
     };
@@ -319,9 +327,7 @@ export async function ingestIssueData(issue: GitHubIssue, comments: GitHubCommen
 export async function getLastSyncTimestamp(): Promise<string | null> {
   const session = getDriver().session();
   try {
-    const result = await session.run(
-      `MATCH (m:Meta {key: 'lastSync'}) RETURN m.value AS ts`,
-    );
+    const result = await session.run(`MATCH (m:Meta {key: 'lastSync'}) RETURN m.value AS ts`);
     if (result.records.length === 0) return null;
     return result.records[0].get('ts') as string | null;
   } finally {
@@ -332,10 +338,7 @@ export async function getLastSyncTimestamp(): Promise<string | null> {
 export async function setLastSyncTimestamp(iso: string): Promise<void> {
   const session = getDriver().session();
   try {
-    await session.run(
-      `MERGE (m:Meta {key: 'lastSync'}) SET m.value = $ts`,
-      { ts: iso },
-    );
+    await session.run(`MERGE (m:Meta {key: 'lastSync'}) SET m.value = $ts`, { ts: iso });
   } finally {
     await session.close();
   }
@@ -348,10 +351,9 @@ export async function setLastSyncTimestamp(iso: string): Promise<void> {
 export async function getIssueUpdatedAt(issueNumber: number): Promise<string | null> {
   const session = getDriver().session();
   try {
-    const result = await session.run(
-      `MATCH (i:Issue {number: $n}) RETURN i.updatedAt AS ts`,
-      { n: issueNumber },
-    );
+    const result = await session.run('MATCH (i:Issue {number: $n}) RETURN i.updatedAt AS ts', {
+      n: issueNumber,
+    });
     if (result.records.length === 0) return null;
     return result.records[0].get('ts') as string | null;
   } finally {

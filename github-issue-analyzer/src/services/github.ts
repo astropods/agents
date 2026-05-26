@@ -2,7 +2,7 @@
  * GitHub GraphQL API — fetches issue data (issue + comments + reactions + labels).
  */
 
-import type { GitHubIssue, GitHubComment, IssueData } from './neo4j';
+import type { GitHubComment, GitHubIssue, IssueData } from './neo4j';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -92,7 +92,9 @@ async function graphql<T = unknown>(query: string, variables: Record<string, unk
 
     if (attempt < MAX_RETRIES && RETRY_STATUS_CODES.has(res.status)) {
       const backoff = Math.min(1000 * 2 ** attempt, 30000);
-      console.warn(`  GitHub API ${res.status}, retrying in ${backoff / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+      console.warn(
+        `  GitHub API ${res.status}, retrying in ${backoff / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`,
+      );
       await new Promise((r) => setTimeout(r, backoff));
       continue;
     }
@@ -107,7 +109,11 @@ async function graphql<T = unknown>(query: string, variables: Record<string, unk
 // Fetch single issue with pagination
 // ---------------------------------------------------------------------------
 
-async function fetchCompleteIssue(owner: string, repo: string, issueNumber: number): Promise<IssueData> {
+async function fetchCompleteIssue(
+  owner: string,
+  repo: string,
+  issueNumber: number,
+): Promise<IssueData> {
   let allComments: GitHubComment[] = [];
   let hasNextPage = true;
   let commentsAfter: string | null = null;
@@ -117,18 +123,25 @@ async function fetchCompleteIssue(owner: string, repo: string, issueNumber: numb
 
   // Paginate through comments
   while (hasNextPage) {
-    const data = await graphql<{ repository: { issue: Record<string, unknown> } }>(COMPLETE_ISSUE_DATA_QUERY, {
-      owner,
-      repo,
-      issueNumber,
-      commentsAfter,
-    });
+    const data = await graphql<{ repository: { issue: Record<string, unknown> } }>(
+      COMPLETE_ISSUE_DATA_QUERY,
+      {
+        owner,
+        repo,
+        issueNumber,
+        commentsAfter,
+      },
+    );
 
     const issue = data.repository?.issue;
     if (!issue) throw new Error(`Issue #${issueNumber} not found`);
 
     if (!issueData) {
-      const comments = issue.comments as { nodes: GitHubComment[]; pageInfo: { hasNextPage: boolean; endCursor: string }; totalCount: number };
+      const comments = issue.comments as {
+        nodes: GitHubComment[];
+        pageInfo: { hasNextPage: boolean; endCursor: string };
+        totalCount: number;
+      };
       issueData = {
         id: issue.id as string,
         number: issue.number as number,
@@ -145,7 +158,10 @@ async function fetchCompleteIssue(owner: string, repo: string, issueNumber: numb
       };
     }
 
-    const commentsPage = issue.comments as { nodes: GitHubComment[]; pageInfo: { hasNextPage: boolean; endCursor: string } };
+    const commentsPage = issue.comments as {
+      nodes: GitHubComment[];
+      pageInfo: { hasNextPage: boolean; endCursor: string };
+    };
     allComments = allComments.concat(commentsPage.nodes);
     hasNextPage = commentsPage.pageInfo.hasNextPage;
     commentsAfter = commentsPage.pageInfo.endCursor;
@@ -157,13 +173,16 @@ async function fetchCompleteIssue(owner: string, repo: string, issueNumber: numb
   let reactionsAfter: string | null = null;
 
   while (reactionsHasNextPage) {
-    const data = await graphql<{ repository: { issue: Record<string, unknown> } }>(COMPLETE_ISSUE_DATA_QUERY, {
-      owner,
-      repo,
-      issueNumber,
-      commentsAfter: null,
-      reactionsAfter,
-    });
+    const data = await graphql<{ repository: { issue: Record<string, unknown> } }>(
+      COMPLETE_ISSUE_DATA_QUERY,
+      {
+        owner,
+        repo,
+        issueNumber,
+        commentsAfter: null,
+        reactionsAfter,
+      },
+    );
 
     const reactions = data.repository.issue.reactions as {
       nodes: { content: string; user: { login: string } | null }[];
@@ -205,7 +224,7 @@ export async function getAllIssueNumbers(
   owner: string,
   repo: string,
   state: IssueState = 'open',
-  limit: number = 0,
+  limit = 0,
   since?: string | null,
 ): Promise<{ issueNumbers: number[]; issues: IssueListing[]; total: number }> {
   const states = STATE_MAP[state];
@@ -216,13 +235,28 @@ export async function getAllIssueNumbers(
   let after: string | null = null;
 
   const sinceLabel = since ? ` (since: ${since})` : '';
-  console.log(`Fetching ${state} issues from ${owner}/${repo}${limit > 0 ? ` (limit: ${limit})` : ''}${sinceLabel}...`);
+  console.log(
+    `Fetching ${state} issues from ${owner}/${repo}${limit > 0 ? ` (limit: ${limit})` : ''}${sinceLabel}...`,
+  );
+
+  type IssueNumbersResponse = {
+    repository: {
+      issues: {
+        nodes: IssueListing[];
+        pageInfo: { hasNextPage: boolean; endCursor: string };
+        totalCount: number;
+      };
+    };
+  };
 
   while (hasNextPage) {
-    const data = await graphql<{ repository: { issues: { nodes: IssueListing[]; pageInfo: { hasNextPage: boolean; endCursor: string }; totalCount: number } } }>(
-      ISSUE_NUMBERS_QUERY,
-      { owner, repo, after, states, since: since ?? null },
-    );
+    const data: IssueNumbersResponse = await graphql<IssueNumbersResponse>(ISSUE_NUMBERS_QUERY, {
+      owner,
+      repo,
+      after,
+      states,
+      since: since ?? null,
+    });
 
     const page = data.repository.issues;
     allIssues = allIssues.concat(page.nodes);

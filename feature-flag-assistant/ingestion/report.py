@@ -4,6 +4,7 @@ Ingestion container entrypoint — builds and posts the flag audit report to Sla
 Runs on a platform-managed schedule configured in astropods.yml.
 Environment variables are injected by the Astro platform from inputs.
 """
+
 import sys
 
 from src.flags import (
@@ -39,7 +40,9 @@ def build_report() -> str:
         for f in backlog:
             lines.append(_format_flag_entry(f, ld_base))
 
-    lines.append("\n_Dates reflect last modified in LaunchDarkly — verify actual rollout date before deprecating. Ask me about a specific flag to see code references._")
+    lines.append(
+        "\n_Dates reflect last modified in LaunchDarkly — verify actual rollout date before deprecating. Ask me about a specific flag to see code references._"
+    )
     return "\n".join(lines)
 
 

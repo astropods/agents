@@ -1,9 +1,9 @@
-import { getAllCallsExtensive, getTranscript, type GongCall, type Transcript } from './gong';
-import { chunkTranscript, type Chunk } from './chunker';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { type Chunk, chunkTranscript } from './chunker';
 import { generateEmbeddingsBatch } from './embeddings';
+import { type GongCall, type Transcript, getAllCallsExtensive, getTranscript } from './gong';
 import { upsertVectors } from './vectors';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const CHECKPOINT_DIR = 'data';
 const CHECKPOINT_FILE = path.join(CHECKPOINT_DIR, 'ingestion_checkpoint.json');
@@ -77,7 +77,10 @@ function toVectorMetadata(chunk: Chunk): Record<string, unknown> {
       if (p.name) names.push(p.name);
       if (p.emailAddress) {
         emails.push(p.emailAddress);
-        if (p.emailAddress.includes('@') && !['gmail.com', 'outlook.com', 'yahoo.com'].some((d) => p.emailAddress.includes(d))) {
+        if (
+          p.emailAddress.includes('@') &&
+          !['gmail.com', 'outlook.com', 'yahoo.com'].some((d) => p.emailAddress.includes(d))
+        ) {
           companies.add(p.emailAddress.split('@')[1]);
         }
       }
@@ -167,7 +170,11 @@ async function processCallBatch(
   stats.chunksUploaded += upserted;
 }
 
-export async function runPipeline(startDate: string, endDate: string, maxCalls?: number): Promise<Stats> {
+export async function runPipeline(
+  startDate: string,
+  endDate: string,
+  maxCalls?: number,
+): Promise<Stats> {
   const stats: Stats = {
     callsDiscovered: 0,
     callsProcessed: 0,
@@ -205,7 +212,9 @@ export async function runPipeline(startDate: string, endDate: string, maxCalls?:
       const remaining = maxCalls - stats.callsProcessed;
       if (remaining > 0) {
         batchNum++;
-        console.log(`\nStep 2-3/4: Processing final batch ${batchNum} (capped at ${remaining} calls)...`);
+        console.log(
+          `\nStep 2-3/4: Processing final batch ${batchNum} (capped at ${remaining} calls)...`,
+        );
         await processCallBatch(callBatch.slice(0, remaining), processedCalls, stats);
         saveCheckpoint(processedCalls, stats);
       }
@@ -222,7 +231,9 @@ export async function runPipeline(startDate: string, endDate: string, maxCalls?:
       console.log(`\nStep 2-3/4: Processing batch ${batchNum} (${callBatch.length} calls)...`);
       await processCallBatch(callBatch, processedCalls, stats);
       saveCheckpoint(processedCalls, stats);
-      console.log(`  Progress: ${stats.callsProcessed} processed, ${stats.chunksUploaded} chunks uploaded`);
+      console.log(
+        `  Progress: ${stats.callsProcessed} processed, ${stats.chunksUploaded} chunks uploaded`,
+      );
       callBatch.length = 0;
       await new Promise((r) => setTimeout(r, 500));
     }

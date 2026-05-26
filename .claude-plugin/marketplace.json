@@ -1,0 +1,16 @@
+{
+  "name": "astroai",
+  "description": "Skills and tooling for building agents on the Astropods platform.",
+  "owner": {
+    "name": "Astropods"
+  },
+  "plugins": [
+    {
+      "name": "astropods",
+      "source": "./plugins/astropods",
+      "description": "Bundle of skills for building, migrating, and documenting Astropods agents.",
+      "category": "agents",
+      "keywords": ["astropods", "agents", "mastra", "langchain"]
+    }
+  ]
+}

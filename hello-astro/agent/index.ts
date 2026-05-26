@@ -8,7 +8,7 @@ import type { AgentAdapter, StreamHooks, StreamOptions } from '@astropods/adapte
 
 async function fetchJoke(): Promise<string> {
   const response = await fetch('https://v2.jokeapi.dev/joke/Any?type=single&safe-mode');
-  const data = await response.json() as { joke?: string; setup?: string; delivery?: string };
+  const data = (await response.json()) as { joke?: string; setup?: string; delivery?: string };
   return data.joke ?? `${data.setup} ... ${data.delivery}`;
 }
 

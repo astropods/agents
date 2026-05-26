@@ -8,17 +8,17 @@
  *   - ANTHROPIC_API_KEY set in .env (for the agent model and LLM-based scorers)
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
 import { Agent } from '@mastra/core/agent';
-import { createScorer, type MastraScorer } from '@mastra/core/evals';
+import { type MastraScorer, createScorer } from '@mastra/core/evals';
 import { runEvals } from '@mastra/core/evals';
 import { createAnswerRelevancyScorer } from '@mastra/evals/scorers/prebuilt';
+import { beforeAll, describe, expect, it } from 'vitest';
 import {
-  mockSearchJiraIssues,
-  mockGetJiraIssueDetails,
   mockCheckGithubPRs,
+  mockGetJiraIssueDetails,
   mockLoadPreferences,
   mockSavePreferences,
+  mockSearchJiraIssues,
 } from './fixtures';
 
 const RELEVANCY_THRESHOLD = 0.5;
@@ -56,23 +56,26 @@ const toolUsageScorer = createScorer({
   id: 'tool-usage',
   description: 'Checks that the agent called at least one tool',
   type: 'agent',
-}).generateScore(({ run }) => {
-  const output = run.output;
-  if (!Array.isArray(output)) return 0;
-  const hasToolCall = output.some((msg: any) => {
-    if (msg.role === 'tool') return true;
-    if (msg.toolCalls?.length > 0) return true;
-    if (msg.toolInvocations?.length > 0) return true;
-    const parts = msg.content?.parts ?? [];
-    if (parts.some((p: any) => p.type === 'tool-invocation' || p.type === 'tool-result')) return true;
-    return false;
+})
+  .generateScore(({ run }) => {
+    const output = run.output;
+    if (!Array.isArray(output)) return 0;
+    const hasToolCall = output.some((msg: any) => {
+      if (msg.role === 'tool') return true;
+      if (msg.toolCalls?.length > 0) return true;
+      if (msg.toolInvocations?.length > 0) return true;
+      const parts = msg.content?.parts ?? [];
+      if (parts.some((p: any) => p.type === 'tool-invocation' || p.type === 'tool-result'))
+        return true;
+      return false;
+    });
+    return hasToolCall ? 1 : 0;
+  })
+  .generateReason(({ score }) => {
+    return score === 1
+      ? 'Agent used tools to query data before responding.'
+      : 'Agent responded without using any tools — possible hallucination.';
   });
-  return hasToolCall ? 1 : 0;
-}).generateReason(({ score }) => {
-  return score === 1
-    ? 'Agent used tools to query data before responding.'
-    : 'Agent responded without using any tools — possible hallucination.';
-});
 
 /**
  * Custom scorer: checks that the agent's release note output mentions
@@ -84,31 +87,36 @@ const completenessScorer = createScorer({
   id: 'completeness',
   description: 'Checks that all accepted Jira issue keys appear in the agent output',
   type: 'agent',
-}).generateScore(({ run }) => {
-  const output = run.output;
-  const text = Array.isArray(output)
-    ? output.map((m: any) => {
-        if (typeof m.content === 'string') return m.content;
-        if (m.content?.parts) {
-          return m.content.parts
-            .filter((p: any) => p.type === 'text')
-            .map((p: any) => p.text)
-            .join(' ');
-        }
-        return '';
-      }).join(' ')
-    : String(output);
+})
+  .generateScore(({ run }) => {
+    const output = run.output;
+    const text = Array.isArray(output)
+      ? output
+          .map((m: any) => {
+            if (typeof m.content === 'string') return m.content;
+            if (m.content?.parts) {
+              return m.content.parts
+                .filter((p: any) => p.type === 'text')
+                .map((p: any) => p.text)
+                .join(' ');
+            }
+            return '';
+          })
+          .join(' ')
+      : String(output);
 
-  const found = EXPECTED_ISSUE_KEYS.filter((k) => text.includes(k));
-  return found.length / EXPECTED_ISSUE_KEYS.length;
-}).generateReason(({ score }) => {
-  if (score === 1) return 'All expected issue keys appear in the output.';
-  const pct = Math.round(score * 100);
-  return `Only ${pct}% of expected issue keys found in the output.`;
-});
+    const found = EXPECTED_ISSUE_KEYS.filter((k) => text.includes(k));
+    return found.length / EXPECTED_ISSUE_KEYS.length;
+  })
+  .generateReason(({ score }) => {
+    if (score === 1) return 'All expected issue keys appear in the output.';
+    const pct = Math.round(score * 100);
+    return `Only ${pct}% of expected issue keys found in the output.`;
+  });
 
 beforeAll(() => {
   agent = new Agent({
+    id: 'release-note-helper-eval',
     name: 'release-note-helper-eval',
     instructions: INSTRUCTIONS,
     model: 'anthropic/claude-sonnet-4-5',
@@ -187,13 +195,13 @@ describe('agent evals', () => {
       concurrency: 1,
       onItemComplete: ({ item, scorerResults }) => {
         const input = typeof item.input === 'string' ? item.input : JSON.stringify(item.input);
-        const score = scorerResults['completeness']?.score ?? 'N/A';
-        const reason = scorerResults['completeness']?.reason ?? '';
+        const score = scorerResults.completeness?.score ?? 'N/A';
+        const reason = scorerResults.completeness?.reason ?? '';
         console.log(`  "${input.slice(0, 60)}..." → ${score}  ${reason}`);
       },
     });
 
-    const avgScore = result.scores['completeness'];
+    const avgScore = result.scores.completeness;
     console.log(`\n  Average completeness score: ${avgScore}`);
     expect(avgScore).toBeGreaterThanOrEqual(0.66);
   }, 120_000);
