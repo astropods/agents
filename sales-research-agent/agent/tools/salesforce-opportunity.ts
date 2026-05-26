@@ -24,12 +24,17 @@ Detect query intent:
     accountId: z.string().optional().describe('Account ID to find opportunities for'),
     opportunityId: z.string().optional().describe('Specific Opportunity ID'),
     opportunityName: z.string().optional().describe('Opportunity name to search for'),
-    queryIntent: z.enum(['general', 'win', 'loss', 'arr', 'competitors', 'deal_details']).optional().default('general'),
+    queryIntent: z
+      .enum(['general', 'win', 'loss', 'arr', 'competitors', 'deal_details'])
+      .optional()
+      .default('general'),
     includeContactRoles: z.boolean().optional().default(true),
   }),
   outputSchema: z.record(z.unknown()),
   execute: async (input) => {
-    console.log(`  [sfOpportunity] account=${input.accountId ?? ''} opp=${input.opportunityId ?? ''} name=${input.opportunityName ?? ''} intent=${input.queryIntent}`);
+    console.log(
+      `  [sfOpportunity] account=${input.accountId ?? ''} opp=${input.opportunityId ?? ''} name=${input.opportunityName ?? ''} intent=${input.queryIntent}`,
+    );
     try {
       return await getClient().lookupOpportunity(
         input.opportunityId,
@@ -39,7 +44,7 @@ Detect query intent:
         input.queryIntent,
       );
     } catch (err) {
-      console.error(`  [sfOpportunity] error:`, err);
+      console.error('  [sfOpportunity] error:', err);
       return {
         error: String(err),
         opportunity: null,

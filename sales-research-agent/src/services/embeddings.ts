@@ -20,7 +20,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       return res.data[0].embedding;
     } catch (err: unknown) {
       if (attempt < MAX_RETRIES) {
-        const wait = Math.pow(2, attempt) * 1000;
+        const wait = 2 ** attempt * 1000;
         console.warn(`Embedding failed, retrying in ${wait / 1000}s...`);
         await new Promise((r) => setTimeout(r, wait));
         continue;
@@ -51,7 +51,7 @@ export async function generateEmbeddingsBatch(texts: string[]): Promise<number[]
       return res.data.map((d) => d.embedding);
     } catch (err: unknown) {
       if (attempt < MAX_RETRIES) {
-        const wait = Math.pow(2, attempt) * 1000 + 5000;
+        const wait = 2 ** attempt * 1000 + 5000;
         console.warn(`Batch embedding failed, retrying in ${wait / 1000}s...`);
         await new Promise((r) => setTimeout(r, wait));
         continue;

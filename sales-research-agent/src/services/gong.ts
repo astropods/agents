@@ -4,13 +4,15 @@ export interface GongCall {
   startTime: Date;
   durationSeconds: number;
   accountName: string | null;
-  participants: {
-    name: string;
-    emailAddress: string;
-    affiliation: string;
-    title: string;
-    speakerId: string;
-  }[] | null;
+  participants:
+    | {
+        name: string;
+        emailAddress: string;
+        affiliation: string;
+        title: string;
+        speakerId: string;
+      }[]
+    | null;
   callUrl: string | null;
 }
 
@@ -45,10 +47,7 @@ function getBaseUrl(): string {
 
 let lastRequestTime = 0;
 
-async function rateLimitedFetch(
-  url: string,
-  options: RequestInit
-): Promise<Response> {
+async function rateLimitedFetch(url: string, options: RequestInit): Promise<Response> {
   const now = Date.now();
   const elapsed = now - lastRequestTime;
   if (elapsed < RATE_LIMIT_MS) {
@@ -59,8 +58,8 @@ async function rateLimitedFetch(
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const res = await fetch(url, options);
     if (res.status === 429) {
-      const retryAfter = parseInt(res.headers.get('Retry-After') || '60', 10);
-      const wait = Math.min(retryAfter * 1000, Math.pow(2, attempt) * 1000);
+      const retryAfter = Number.parseInt(res.headers.get('Retry-After') || '60', 10);
+      const wait = Math.min(retryAfter * 1000, 2 ** attempt * 1000);
       console.warn(`Gong rate limited, retrying in ${wait / 1000}s...`);
       await new Promise((r) => setTimeout(r, wait));
       continue;
@@ -89,8 +88,14 @@ function extractAccountName(context: unknown[]): string | null {
 
 function parseCall(
   metaData: Record<string, unknown>,
-  parties: { speakerId?: string; name?: string; emailAddress?: string; affiliation?: string; title?: string }[],
-  accountName: string | null
+  parties: {
+    speakerId?: string;
+    name?: string;
+    emailAddress?: string;
+    affiliation?: string;
+    title?: string;
+  }[],
+  accountName: string | null,
 ): GongCall {
   const callId = String(metaData.id ?? '');
   const title = String(metaData.title ?? '');
@@ -120,7 +125,7 @@ function parseCall(
 
 export async function* getAllCallsExtensive(
   fromDate: Date,
-  toDate: Date
+  toDate: Date,
 ): AsyncGenerator<GongCall> {
   const baseUrl = getBaseUrl();
   const auth = getAuthHeader();
@@ -164,7 +169,13 @@ export async function* getAllCallsExtensive(
     for (const callData of calls) {
       const metaData = callData.metaData || {};
       const context = (callData.context || []) as unknown[];
-      const parties = (callData.parties || []) as { speakerId?: string; name?: string; emailAddress?: string; affiliation?: string; title?: string }[];
+      const parties = (callData.parties || []) as {
+        speakerId?: string;
+        name?: string;
+        emailAddress?: string;
+        affiliation?: string;
+        title?: string;
+      }[];
       const accountName = extractAccountName(context);
       yield parseCall(metaData, parties, accountName);
     }
@@ -225,7 +236,9 @@ export async function getTranscript(callId: string): Promise<Transcript> {
     const transcript = ct.transcript || [];
     for (const seg of transcript) {
       const speakerId = seg.speakerId ?? null;
-      const speaker = speakerId ? speakersMap.get(speakerId) ?? `Speaker ${speakerId}` : 'Unknown';
+      const speaker = speakerId
+        ? (speakersMap.get(speakerId) ?? `Speaker ${speakerId}`)
+        : 'Unknown';
       const sentences = seg.sentences || [];
       for (const sent of sentences) {
         const text = String(sent.text ?? '').trim();
