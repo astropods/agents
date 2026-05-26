@@ -79,7 +79,11 @@ const JSON_SCHEMA = {
   type: 'object' as const,
   properties: {
     summary: { type: 'string' as const, description: 'One-sentence summary of the issue' },
-    categories: { type: 'array' as const, items: { type: 'string' as const }, description: 'Relevant categories' },
+    categories: {
+      type: 'array' as const,
+      items: { type: 'string' as const },
+      description: 'Relevant categories',
+    },
     competitors: {
       type: 'array' as const,
       items: {
@@ -97,7 +101,10 @@ const JSON_SCHEMA = {
       items: {
         type: 'object' as const,
         properties: {
-          solutionText: { type: 'string' as const, description: 'AI-generated description of the solution' },
+          solutionText: {
+            type: 'string' as const,
+            description: 'AI-generated description of the solution',
+          },
           source: { type: 'string' as const, description: 'commentId where mentioned' },
           keywords: { type: 'array' as const, items: { type: 'string' as const } },
         },
@@ -110,7 +117,10 @@ const JSON_SCHEMA = {
       items: {
         type: 'object' as const,
         properties: {
-          workaroundText: { type: 'string' as const, description: 'AI-generated description of the workaround' },
+          workaroundText: {
+            type: 'string' as const,
+            description: 'AI-generated description of the workaround',
+          },
           source: { type: 'string' as const, description: 'commentId where mentioned' },
           keywords: { type: 'array' as const, items: { type: 'string' as const } },
         },

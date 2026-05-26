@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import neo4j from 'neo4j-driver';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../src/services/neo4j', () => {
   const mockSession = {
@@ -15,8 +15,8 @@ vi.mock('../../../src/services/neo4j', () => {
   };
 });
 
-import { queryNeo4jTool } from '../query-neo4j';
 import { __mockSession as mockSession } from '../../../src/services/neo4j';
+import { queryNeo4jTool } from '../query-neo4j';
 
 const session = mockSession as unknown as {
   run: ReturnType<typeof vi.fn>;
@@ -44,7 +44,9 @@ describe('queryNeo4jTool', () => {
       ],
     });
 
-    const result = await queryNeo4jTool.execute!({ cypher: 'MATCH (l:Label) RETURN l.name AS name, count(*) AS count LIMIT 5' });
+    const result = await queryNeo4jTool.execute!({
+      cypher: 'MATCH (l:Label) RETURN l.name AS name, count(*) AS count LIMIT 5',
+    });
 
     expect(result).toEqual({
       rows: [

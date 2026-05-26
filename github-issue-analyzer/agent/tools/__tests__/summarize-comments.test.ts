@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../src/services/neo4j', () => {
   const mockSession = {
@@ -24,9 +24,9 @@ vi.mock('openai', () => {
   };
 });
 
-import { summarizeCommentsTool } from '../summarize-comments';
-import { __mockSession as mockSession } from '../../../src/services/neo4j';
 import { __mockCreate as mockCreate } from 'openai';
+import { __mockSession as mockSession } from '../../../src/services/neo4j';
+import { summarizeCommentsTool } from '../summarize-comments';
 
 const session = mockSession as unknown as {
   run: ReturnType<typeof vi.fn>;
@@ -110,9 +110,7 @@ describe('summarizeCommentsTool', () => {
 
   it('handles null author gracefully', async () => {
     session.run.mockResolvedValueOnce({
-      records: [
-        fakeRecord({ text: 'Anonymous feedback', date: '2025-02-01', author: null }),
-      ],
+      records: [fakeRecord({ text: 'Anonymous feedback', date: '2025-02-01', author: null })],
     });
     openaiCreate.mockResolvedValueOnce({
       choices: [{ message: { content: 'Summary of anonymous feedback.' } }],
@@ -128,9 +126,9 @@ describe('summarizeCommentsTool', () => {
   it('always closes the session even when Neo4j fails', async () => {
     session.run.mockRejectedValueOnce(new Error('connection lost'));
 
-    await expect(
-      summarizeCommentsTool.execute!({ issueNumber: 1 }),
-    ).rejects.toThrow('connection lost');
+    await expect(summarizeCommentsTool.execute!({ issueNumber: 1 })).rejects.toThrow(
+      'connection lost',
+    );
 
     expect(session.close).toHaveBeenCalledTimes(1);
   });
