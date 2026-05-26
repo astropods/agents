@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGet = vi.fn();
 const mockSet = vi.fn();
@@ -22,8 +22,8 @@ describe('preferences-store', () => {
   });
 
   afterEach(() => {
-    delete process.env.REDIS_HOST;
-    delete process.env.REDIS_PORT;
+    process.env.REDIS_HOST = undefined;
+    process.env.REDIS_PORT = undefined;
   });
 
   describe('loadPreferences', () => {
@@ -92,9 +92,9 @@ describe('preferences-store', () => {
       mockGet.mockResolvedValueOnce(null);
       mockSet.mockRejectedValueOnce(new Error('Write failed'));
 
-      await expect(
-        savePreferences('user-1', { defaultProject: 'X' }),
-      ).rejects.toThrow('Write failed');
+      await expect(savePreferences('user-1', { defaultProject: 'X' })).rejects.toThrow(
+        'Write failed',
+      );
     });
   });
 });

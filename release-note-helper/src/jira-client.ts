@@ -44,7 +44,9 @@ async function jiraFetch<T = unknown>(path: string, params?: Record<string, stri
 
     if (attempt < MAX_RETRIES && RETRY_STATUS_CODES.has(res.status)) {
       const backoff = Math.min(1000 * 2 ** attempt, 30_000);
-      console.warn(`  Jira API ${res.status}, retrying in ${backoff / 1000}s (${attempt + 1}/${MAX_RETRIES})...`);
+      console.warn(
+        `  Jira API ${res.status}, retrying in ${backoff / 1000}s (${attempt + 1}/${MAX_RETRIES})...`,
+      );
       await new Promise((r) => setTimeout(r, backoff));
       continue;
     }
@@ -82,8 +84,14 @@ export interface JiraIssueDetail extends JiraIssueSummary {
 // ── Public API ─────────────────────────────────────────────────────────
 
 const SEARCH_FIELDS = [
-  'summary', 'issuetype', 'priority', 'status', 'assignee',
-  'labels', 'resolutiondate', 'resolution',
+  'summary',
+  'issuetype',
+  'priority',
+  'status',
+  'assignee',
+  'labels',
+  'resolutiondate',
+  'resolution',
 ].join(',');
 
 interface JiraSearchResponse {
@@ -135,9 +143,20 @@ export async function searchIssues(jql: string): Promise<JiraIssueSummary[]> {
 }
 
 const DETAIL_FIELDS = [
-  'summary', 'issuetype', 'priority', 'status', 'assignee',
-  'labels', 'resolutiondate', 'resolution', 'description',
-  'created', 'updated', 'components', 'fixVersions', 'issuelinks',
+  'summary',
+  'issuetype',
+  'priority',
+  'status',
+  'assignee',
+  'labels',
+  'resolutiondate',
+  'resolution',
+  'description',
+  'created',
+  'updated',
+  'components',
+  'fixVersions',
+  'issuelinks',
 ].join(',');
 
 interface JiraIssueResponse {
@@ -153,7 +172,13 @@ export async function getIssue(issueKey: string): Promise<JiraIssueDetail> {
 
   const f = data.fields;
 
-  const linkedIssues = ((f.issuelinks as { type: { name: string }; outwardIssue?: { key: string; fields: { summary: string } }; inwardIssue?: { key: string; fields: { summary: string } } }[]) ?? []).map((link) => {
+  const linkedIssues = (
+    (f.issuelinks as {
+      type: { name: string };
+      outwardIssue?: { key: string; fields: { summary: string } };
+      inwardIssue?: { key: string; fields: { summary: string } };
+    }[]) ?? []
+  ).map((link) => {
     const target = link.outwardIssue ?? link.inwardIssue;
     return {
       type: link.type.name,
@@ -164,7 +189,11 @@ export async function getIssue(issueKey: string): Promise<JiraIssueDetail> {
 
   const descField = f.description;
   let description: string | null = null;
-  if (descField && typeof descField === 'object' && 'content' in (descField as Record<string, unknown>)) {
+  if (
+    descField &&
+    typeof descField === 'object' &&
+    'content' in (descField as Record<string, unknown>)
+  ) {
     description = extractTextFromAdf(descField as AdfNode);
   } else if (typeof descField === 'string') {
     description = descField;
