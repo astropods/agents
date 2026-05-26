@@ -81,10 +81,7 @@ describe('queryNeo4jTool', () => {
   it('returns empty rows on Cypher error', async () => {
     mockSession.run.mockRejectedValueOnce(new Error('Invalid Cypher syntax'));
 
-    const result = (await queryNeo4jTool.execute!(
-      { cypher: 'INVALID QUERY' },
-      ctx,
-    )) as QueryResult;
+    const result = (await queryNeo4jTool.execute!({ cypher: 'INVALID QUERY' }, ctx)) as QueryResult;
 
     expect(result).toEqual({
       rows: [],

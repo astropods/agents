@@ -116,10 +116,7 @@ describe('summarizeCommentsTool', () => {
       choices: [{ message: { content: 'Summary of anonymous feedback.' } }],
     });
 
-    const result = (await summarizeCommentsTool.execute!(
-      { issueNumber: 5 },
-      ctx,
-    )) as SummaryResult;
+    const result = (await summarizeCommentsTool.execute!({ issueNumber: 5 }, ctx)) as SummaryResult;
 
     expect(result.commentCount).toBe(1);
     const prompt = mockOpenAICreate.mock.calls[0][0].messages[1].content as string;
@@ -129,9 +126,9 @@ describe('summarizeCommentsTool', () => {
   it('always closes the session even when Neo4j fails', async () => {
     mockSession.run.mockRejectedValueOnce(new Error('connection lost'));
 
-    await expect(
-      summarizeCommentsTool.execute!({ issueNumber: 1 }, ctx),
-    ).rejects.toThrow('connection lost');
+    await expect(summarizeCommentsTool.execute!({ issueNumber: 1 }, ctx)).rejects.toThrow(
+      'connection lost',
+    );
 
     expect(mockSession.close).toHaveBeenCalledTimes(1);
   });
