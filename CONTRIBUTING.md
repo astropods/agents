@@ -1,12 +1,12 @@
 # Contributing to Astropods Agents
 
-Thanks for your interest in contributing to the `astropods/agents` repository — the home of pre-built agents you can run with the Astropods CLI (`ast`). This document outlines the process for contributing and provides specific guidance for code contributions.
+Thanks for your interest in contributing to the `astropods/agents` repository. This is the home of pre-built agents you can run on the Astro AI platform, with either the Astropods CLI (`ast`) or from astropods.com. This document outlines the process for contributing and provides specific guidance for code contributions.
 
 ---
 
 ## Issues
 
-The easiest way to contribute is to open an issue with a bug report or a suggestion for improvement. We do not have a prescriptive issue template. We merely request that you take the time to communicate clearly so that we can understand what is being requested and respond appropriately.
+The easiest way to contribute is to open an issue with a bug report or a suggestion for improvement. We do not have a prescriptive issue template at this time. We request that you take the time to communicate clearly so that we can understand what is being requested and respond appropriately.
 
 - For bug reports, give as much detail as you can about exactly what you were doing when the problem occurred and use transcripts or screenshots to show the problematic behavior. Include the agent you were running, the `ast` version (`ast --version`), and your platform.
 - For enhancement requests, give the context. Ideally, explain why the Astropods community would be interested in the improvement. Then, be as explicit as you can about how you see the change looking and behaving.
@@ -18,8 +18,9 @@ The easiest way to contribute is to open an issue with a bug report or a suggest
 
 1. **Fork** the repository
 2. **Create a branch** for your changes
-3. **Add or update an agent** — each agent lives in its own directory with an `astropods.yml` spec
-4. **Open a pull request** with a description of your agent and how to run it
+3. **Open a pull request** with a description of your agent and how to run it
+
+If you are contributing a new agent, refer to the **[dedicated section below](#adding-a-new-agent)** — each agent lives in its own directory with an `astropods.yml` spec.
 
 ---
 
@@ -41,11 +42,14 @@ By opening a pull request
   - For Python agents, run the agent's configured formatter and linter (e.g. `ruff check`, `ruff format`).
   - Verify the agent still starts with `ast dev` from its directory.
 
+---
+
 ### Adding a new agent
 
 - Create a new top-level directory (e.g. `my-agent/`) containing the agent's source.
 - Add an `astropods.yml` spec describing the agent's containers, interfaces, models, knowledge, and inputs.
 - Include an `AGENT.md` (see the [agent-card skill](skills/agent-card.md)) and a `README.md` covering setup, required secrets, and how to run it.
+- Include tests for your agent.
 - Add the agent to the table in the top-level [`README.md`](README.md).
 
 ---
