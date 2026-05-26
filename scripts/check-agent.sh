@@ -53,9 +53,12 @@ done
 
 # --- ast spec validate -------------------------------------------------------
 if command -v ast >/dev/null 2>&1; then
-  (cd "$agent" && ast spec validate >/dev/null 2>&1) \
-    && report pass "ast spec validate" \
-    || report fail "ast spec validate"
+  if (cd "$agent" && ast spec validate >/dev/null 2>&1); then
+    report pass "ast spec validate"
+  else
+    report fail "ast spec validate"
+    (cd "$agent" && ast spec validate) || true
+  fi
 else
   report warn "ast CLI not installed — skipping spec validation"
   echo "    install with: curl -fsSL https://astropods.com/install | sh"
