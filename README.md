@@ -30,6 +30,26 @@ Open http://localhost:3000 to chat with the agent.
 
 See each agent's README for setup details and prerequisites.
 
+## Pre-commit hook
+
+The repo ships an opt-in pre-commit hook at `.githooks/pre-commit` that runs the same lint, typecheck, and test checks as CI — but only for the agent directories with staged changes. Non-agent paths (`plugins/`, `skills/`, etc.) are skipped automatically.
+
+Enable it once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+You'll need `bun`, `ruff`, and `ast` on your `PATH` for the checks to run. A missing `ast` produces a warning with install instructions; missing `bun` or `ruff` fails the affected agent's checks.
+
+**Escape hatches** for when you need to commit fast:
+
+```bash
+SKIP_TYPECHECK=1 git commit ...   # skip tsc --noEmit
+SKIP_TESTS=1     git commit ...   # skip bun run test:unit
+git commit --no-verify ...        # bypass the hook entirely
+```
+
 ## Claude Code plugin
 
 This repository is also a [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces). Add it and install the bundled skills:

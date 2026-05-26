@@ -33,7 +33,7 @@ describe('github-client', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    process.env.GITHUB_TOKEN = undefined;
+    process.env.GITHUB_TOKEN = '';
   });
 
   describe('searchPRsByKey', () => {
@@ -173,7 +173,7 @@ describe('github-client', () => {
 
   describe('config validation', () => {
     it('throws when GITHUB_TOKEN is missing', async () => {
-      process.env.GITHUB_TOKEN = undefined;
+      process.env.GITHUB_TOKEN = '';
       await expect(searchPRsByKey('X-1', 'o', 'r')).rejects.toThrow(
         'GITHUB_TOKEN environment variable is required',
       );
