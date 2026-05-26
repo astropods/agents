@@ -1,5 +1,5 @@
+import { createHash } from 'node:crypto';
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { createHash } from 'crypto';
 
 const COLLECTION = 'gong-calls';
 const VECTOR_SIZE = 1536; // text-embedding-3-small dimension
@@ -48,7 +48,7 @@ export interface SearchResult {
 
 export async function searchVectors(
   queryVector: number[],
-  topK: number = 10,
+  topK = 10,
   filter?: Record<string, unknown>,
 ): Promise<SearchResult[]> {
   await ensureCollection();
