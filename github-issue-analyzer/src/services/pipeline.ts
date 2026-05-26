@@ -7,11 +7,16 @@
  * re-analyzed. The first run always does a full sync.
  */
 
-import { getAllIssueNumbers, getIssuesData, type IssueState } from './github';
-import { ingestMultipleIssues, getLastSyncTimestamp, setLastSyncTimestamp, getIssueUpdatedAt } from './neo4j';
+import { type AnalysisData, ingestAnalysisResults } from './analysis';
 import { fetchMultipleIssueDetails } from './database';
+import { type IssueState, getAllIssueNumbers, getIssuesData } from './github';
+import {
+  getIssueUpdatedAt,
+  getLastSyncTimestamp,
+  ingestMultipleIssues,
+  setLastSyncTimestamp,
+} from './neo4j';
 import { analyzeIssueWithOpenAI, transformIssueDataForAnalysis } from './openai';
-import { ingestAnalysisResults, type AnalysisData } from './analysis';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,7 +79,13 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
 
   // 1. Discover issue numbers
   console.log('Step 1/5: Discovering issues...');
-  const listing = await getAllIssueNumbers(config.owner, config.repo, config.state, config.limit, since);
+  const listing = await getAllIssueNumbers(
+    config.owner,
+    config.repo,
+    config.state,
+    config.limit,
+    since,
+  );
   const numbers = listing.issueNumbers;
   console.log(`  Will process ${numbers.length} issues\n`);
 
@@ -83,19 +94,27 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
       console.log('  No issues updated since last sync — nothing to do.\n');
       await setLastSyncTimestamp(runTimestamp);
     }
-    return { issuesFetched: 0, issuesIngested: 0, issuesAnalyzed: 0, issuesSkipped: 0, errors: [], durationMs: Date.now() - start, incremental };
+    return {
+      issuesFetched: 0,
+      issuesIngested: 0,
+      issuesAnalyzed: 0,
+      issuesSkipped: 0,
+      errors: [],
+      durationMs: Date.now() - start,
+      incremental,
+    };
   }
 
   // 2. Fetch full issue data from GitHub
   console.log('Step 2/5: Fetching issue data from GitHub...');
   const fetched = await getIssuesData(config.owner, config.repo, numbers);
-  fetched.errors.forEach((e) => errors.push(`fetch #${e.issueNumber}: ${e.error}`));
+  for (const e of fetched.errors) errors.push(`fetch #${e.issueNumber}: ${e.error}`);
   console.log(`  Fetched ${fetched.results.length} issues\n`);
 
   // 3. Ingest into Neo4j
   console.log('Step 3/5: Ingesting into Neo4j...');
   const ingested = await ingestMultipleIssues(fetched.results);
-  ingested.errors.forEach((e) => errors.push(`ingest #${e.issueNumber}: ${e.error}`));
+  for (const e of ingested.errors) errors.push(`ingest #${e.issueNumber}: ${e.error}`);
   console.log(`  Ingested ${ingested.results.length} issues\n`);
 
   let analysisCount = 0;
@@ -104,10 +123,12 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
   if (config.analyze) {
     // 4. Run OpenAI analysis — skip issues whose updatedAt hasn't changed
     console.log('Step 4/5: Running OpenAI analysis...');
-    const ingestedNumbers = ingested.results.map((r) => {
-      const match = fetched.results.find((f) => f.issue.id === r.issueId);
-      return match?.issue.number;
-    }).filter((n): n is number => n !== undefined);
+    const ingestedNumbers = ingested.results
+      .map((r) => {
+        const match = fetched.results.find((f) => f.issue.id === r.issueId);
+        return match?.issue.number;
+      })
+      .filter((n): n is number => n !== undefined);
 
     // Build a map of issue number -> new updatedAt from the fetched data
     const updatedAtMap = new Map<number, string>();
@@ -151,7 +172,9 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
     if (analysisResults.length > 0) {
       console.log('\nStep 5/5: Ingesting analysis results...');
       const analysisIngested = await ingestAnalysisResults(analysisResults);
-      analysisIngested.errors.forEach((e) => errors.push(`analysis-ingest #${e.issueNumber}: ${e.error}`));
+      for (const e of analysisIngested.errors) {
+        errors.push(`analysis-ingest #${e.issueNumber}: ${e.error}`);
+      }
     }
   } else {
     console.log('Step 4/5: Skipped (analysis disabled)');
@@ -187,4 +210,3 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
     incremental,
   };
 }
-

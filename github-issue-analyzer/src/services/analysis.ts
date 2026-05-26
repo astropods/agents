@@ -8,7 +8,12 @@
 
 import type { Session } from 'neo4j-driver';
 import { getDriver } from './neo4j';
-import type { IssueAnalysis, SolutionAnalysis, WorkaroundAnalysis, CompetitorAnalysis } from './openai';
+import type {
+  CompetitorAnalysis,
+  IssueAnalysis,
+  SolutionAnalysis,
+  WorkaroundAnalysis,
+} from './openai';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -100,11 +105,19 @@ async function ingestWorkaround(session: Session, workaround: WorkaroundAnalysis
      UNWIND $keywords AS kw
      MERGE (k:Keyword {name: kw})
      MERGE (w)-[:HAS_KEYWORD]->(k)`,
-    { text: workaround.workaroundText, source: workaround.source, keywords: workaround.keywords ?? [] },
+    {
+      text: workaround.workaroundText,
+      source: workaround.source,
+      keywords: workaround.keywords ?? [],
+    },
   );
 }
 
-async function ingestCompetitors(session: Session, competitors: CompetitorAnalysis[], issueNumber: number): Promise<number> {
+async function ingestCompetitors(
+  session: Session,
+  competitors: CompetitorAnalysis[],
+  issueNumber: number,
+): Promise<number> {
   if (competitors.length === 0) return 0;
 
   const result = await session.run(
@@ -121,7 +134,11 @@ async function ingestCompetitors(session: Session, competitors: CompetitorAnalys
   return result.records[0]?.get('cnt')?.toNumber?.() ?? 0;
 }
 
-async function ingestCategories(session: Session, categories: string[], issueNumber: number): Promise<number> {
+async function ingestCategories(
+  session: Session,
+  categories: string[],
+  issueNumber: number,
+): Promise<number> {
   if (categories.length === 0) return 0;
 
   const result = await session.run(
@@ -174,7 +191,9 @@ export async function ingestAnalysisResults(analysisData: AnalysisData[]): Promi
     for (let i = 0; i < analysisData.length; i++) {
       const data = analysisData[i];
       try {
-        console.log(`[${i + 1}/${analysisData.length}] Ingesting analysis for issue #${data.issueNumber}...`);
+        console.log(
+          `[${i + 1}/${analysisData.length}] Ingesting analysis for issue #${data.issueNumber}...`,
+        );
         const stats = await processIssueAnalysis(session, data);
         results.push({ issueNumber: data.issueNumber, stats });
       } catch (err: unknown) {

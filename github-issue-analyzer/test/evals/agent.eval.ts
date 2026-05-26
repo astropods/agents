@@ -10,15 +10,15 @@
  *   - OPENAI_API_KEY set in env (for the agent + LLM-based scorers)
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
-import { Neo4jContainer, type StartedNeo4jContainer } from '@testcontainers/neo4j';
-import neo4j, { type Driver } from 'neo4j-driver';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Agent } from '@mastra/core/agent';
-import { createScorer, type MastraScorer } from '@mastra/core/evals';
+import { type MastraScorer, createScorer } from '@mastra/core/evals';
 import { runEvals } from '@mastra/core/evals';
 import { createAnswerRelevancyScorer } from '@mastra/evals/scorers/prebuilt';
+import { Neo4jContainer, type StartedNeo4jContainer } from '@testcontainers/neo4j';
+import neo4j, { type Driver } from 'neo4j-driver';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { queryNeo4jTool } from '../../agent/tools/query-neo4j';
 import { summarizeCommentsTool } from '../../agent/tools/summarize-comments';
 
@@ -37,23 +37,26 @@ const toolUsageScorer = createScorer({
   id: 'tool-usage',
   description: 'Checks that the agent called at least one tool',
   type: 'agent',
-}).generateScore(({ run }) => {
-  const output = run.output;
-  if (!Array.isArray(output)) return 0;
-  const hasToolCall = output.some((msg: any) => {
-    if (msg.role === 'tool') return true;
-    if (msg.toolCalls?.length > 0) return true;
-    if (msg.toolInvocations?.length > 0) return true;
-    const parts = msg.content?.parts ?? [];
-    if (parts.some((p: any) => p.type === 'tool-invocation' || p.type === 'tool-result')) return true;
-    return false;
+})
+  .generateScore(({ run }) => {
+    const output = run.output;
+    if (!Array.isArray(output)) return 0;
+    const hasToolCall = output.some((msg: any) => {
+      if (msg.role === 'tool') return true;
+      if (msg.toolCalls?.length > 0) return true;
+      if (msg.toolInvocations?.length > 0) return true;
+      const parts = msg.content?.parts ?? [];
+      if (parts.some((p: any) => p.type === 'tool-invocation' || p.type === 'tool-result'))
+        return true;
+      return false;
+    });
+    return hasToolCall ? 1 : 0;
+  })
+  .generateReason(({ score }) => {
+    return score === 1
+      ? 'Agent used tools to query data before responding.'
+      : 'Agent responded without using any tools — possible hallucination.';
   });
-  return hasToolCall ? 1 : 0;
-}).generateReason(({ score }) => {
-  return score === 1
-    ? 'Agent used tools to query data before responding.'
-    : 'Agent responded without using any tools — possible hallucination.';
-});
 
 async function seedDatabase(driver: Driver, cypherPath: string) {
   const raw = readFileSync(cypherPath, 'utf-8');
@@ -76,8 +79,7 @@ async function seedDatabase(driver: Driver, cypherPath: string) {
 beforeAll(async () => {
   if (!existsSync(FIXTURE_PATH)) {
     throw new Error(
-      `Fixture file not found: ${FIXTURE_PATH}\n` +
-        'Run `bun test/dump-fixtures.ts` while ast dev is running to generate it.',
+      `Fixture file not found: ${FIXTURE_PATH}\nRun \`bun test/dump-fixtures.ts\` while ast dev is running to generate it.`,
     );
   }
 

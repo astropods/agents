@@ -6,7 +6,7 @@
  *
  * Required environment variables:
  *   GITHUB_TOKEN    — GitHub API token
- *   GITHUB_OWNER    — Repo owner 
+ *   GITHUB_OWNER    — Repo owner
  *   GITHUB_REPO     — Repo name
  *   OPENAI_API_KEY  — OpenAI API key (required for analysis)
  *
@@ -20,9 +20,9 @@
  *   SKIP_ANALYSIS   — Set to "true" to skip OpenAI analysis
  */
 
-import { runPipeline, type PipelineConfig } from '../src/services/pipeline';
-import { closeDriver } from '../src/services/neo4j';
 import type { IssueState } from '../src/services/github';
+import { closeDriver } from '../src/services/neo4j';
+import { type PipelineConfig, runPipeline } from '../src/services/pipeline';
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -53,7 +53,7 @@ async function main() {
     owner,
     repo,
     state: (process.env.ISSUE_STATE as IssueState) || 'all',
-    limit: parseInt(process.env.ISSUE_LIMIT || '0', 10),
+    limit: Number.parseInt(process.env.ISSUE_LIMIT || '0', 10),
     analyze: process.env.SKIP_ANALYSIS !== 'true',
     fullSync,
   };
@@ -69,7 +69,7 @@ async function main() {
 
     if (result.errors.length > 0) {
       console.error(`\nCompleted with ${result.errors.length} error(s):`);
-      result.errors.forEach((e) => console.error(`  - ${e}`));
+      for (const e of result.errors) console.error(`  - ${e}`);
       process.exit(1);
     }
   } catch (err) {
