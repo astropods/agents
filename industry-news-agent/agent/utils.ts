@@ -10,7 +10,7 @@ export interface Article {
   description?: string;
 }
 
-export type OutputFormat = 'summary' | 'analysis' | 'key insights';
+export type OutputFormat = "summary" | "analysis" | "key insights";
 
 // ---------------------------------------------------------------------------
 // Deduplication
@@ -30,19 +30,26 @@ export function deduplicate(articles: Article[]): Article[] {
 // Format detection
 // ---------------------------------------------------------------------------
 
-export function detectFormat(text: string): { topic: string; format: OutputFormat } {
+export function detectFormat(text: string): {
+  topic: string;
+  format: OutputFormat;
+} {
   const lower = text.toLowerCase();
-  let format: OutputFormat = 'summary';
+  let format: OutputFormat = "summary";
 
-  if (lower.includes('analysis') || lower.includes('analyse') || lower.includes('analyze')) {
-    format = 'analysis';
-  } else if (lower.includes('key insight') || lower.includes('insights')) {
-    format = 'key insights';
+  if (
+    lower.includes("analysis") ||
+    lower.includes("analyse") ||
+    lower.includes("analyze")
+  ) {
+    format = "analysis";
+  } else if (lower.includes("key insight") || lower.includes("insights")) {
+    format = "key insights";
   }
 
   const topic = text
-    .replace(/\b(summary|analysis|analyse|analyze|key insights?)\b/gi, '')
-    .replace(/\s+/g, ' ')
+    .replace(/\b(summary|analysis|analyse|analyze|key insights?)\b/gi, "")
+    .replace(/\s+/g, " ")
     .trim();
 
   return { topic: topic || text.trim(), format };
