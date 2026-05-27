@@ -1,22 +1,25 @@
-import { serve } from '@astropods/adapter-core';
-import { MastraAdapter } from '@astropods/adapter-mastra';
-import { Agent } from '@mastra/core/agent';
-import { Mastra } from '@mastra/core/mastra';
-import { Memory } from '@mastra/memory';
-import { LibSQLStore } from '@mastra/libsql';
-import { createTool } from '@mastra/core/tools';
-import { z } from 'zod';
-import { google } from 'googleapis';
-import OpenAI from 'openai';
+import { serve } from "@astropods/adapter-core";
+import { MastraAdapter } from "@astropods/adapter-mastra";
+import { Agent } from "@mastra/core/agent";
+import { Mastra } from "@mastra/core/mastra";
+import { createTool } from "@mastra/core/tools";
+import { LibSQLStore } from "@mastra/libsql";
+import { Memory } from "@mastra/memory";
+import { google } from "googleapis";
+import OpenAI from "openai";
+import { z } from "zod";
+import type { BatchResult, SentimentResult } from "./utils";
 import {
-  extractVideoId,
   buildBatchUserMessage,
-  parseJsonSentiments,
+  extractVideoId,
   formatReport,
-} from './utils';
-import type { Sentiment, SentimentResult } from './utils';
+  parseBatchResults,
+} from "./utils";
 
-const youtube = google.youtube({ version: 'v3', auth: process.env.YOUTUBE_API_KEY });
+const youtube = google.youtube({
+  version: "v3",
+  auth: process.env.YOUTUBE_API_KEY,
+});
 const openai = new OpenAI();
 
 // ---------------------------------------------------------------------------
@@ -28,18 +31,21 @@ interface CommentThread {
   hasReplies: boolean;
 }
 
-async function fetchComments(videoId: string, maxComments: number): Promise<CommentThread[]> {
+async function fetchComments(
+  videoId: string,
+  maxComments: number,
+): Promise<CommentThread[]> {
   const comments: CommentThread[] = [];
   let pageToken: string | undefined;
 
   while (comments.length < maxComments) {
     const response = await youtube.commentThreads.list({
-      part: ['snippet'],
+      part: ["snippet"],
       videoId,
       maxResults: Math.min(100, maxComments - comments.length),
       pageToken,
-      textFormat: 'plainText',
-      order: 'relevance',
+      textFormat: "plainText",
+      order: "relevance",
     });
 
     for (const item of response.data.items ?? []) {
@@ -65,39 +71,51 @@ async function fetchComments(videoId: string, maxComments: number): Promise<Comm
 // ---------------------------------------------------------------------------
 
 const SENTIMENT_SYSTEM_PROMPT = [
-  'Classify the sentiment of each comment.',
-  'Return JSON: { "sentiments": ["positive"|"neutral"|"negative", ...] }',
-  'The array must have exactly the same length as the input.',
-  'positive — praise, excitement, appreciation, satisfaction',
-  'negative — criticism, frustration, disappointment, hostility',
-  'neutral  — questions, plain statements, mixed, or off-topic',
-].join('\n');
+  "Analyse each comment and return JSON:",
+  '{ "results": [ { "sentiment": "positive"|"neutral"|"negative", "needs_reply": true|false }, ... ] }',
+  "The results array must have exactly the same length as the input.",
+  "",
+  "sentiment:",
+  "  positive — praise, excitement, appreciation, satisfaction",
+  "  negative — criticism, frustration, disappointment, hostility",
+  "  neutral  — questions, plain statements, mixed, or off-topic",
+  "",
+  "needs_reply = true when the comment genuinely warrants a creator response:",
+  "  • direct questions or requests for help / clarification",
+  "  • constructive criticism, bug reports, or substantive feedback",
+  "  • negative sentiment that would benefit from acknowledgment",
+  "needs_reply = false for low-value comments that need no response:",
+  '  • simple praise ("great video!", "thanks!", emoji-only)',
+  "  • generic statements with nothing actionable",
+].join("\n");
 
-async function analyzeBatch(comments: string[]): Promise<Sentiment[]> {
+async function analyzeBatch(comments: string[]): Promise<BatchResult[]> {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: "gpt-4o-mini",
     max_tokens: 1024,
     messages: [
-      { role: 'system', content: SENTIMENT_SYSTEM_PROMPT },
-      { role: 'user', content: buildBatchUserMessage(comments) },
+      { role: "system", content: SENTIMENT_SYSTEM_PROMPT },
+      { role: "user", content: buildBatchUserMessage(comments) },
     ],
   });
-  const raw = response.choices[0].message.content ?? '';
-  return parseJsonSentiments(raw);
+  const raw = response.choices[0].message.content ?? "";
+  return parseBatchResults(raw);
 }
 
-async function analyzeAllComments(comments: CommentThread[]): Promise<SentimentResult[]> {
+async function analyzeAllComments(
+  comments: CommentThread[],
+): Promise<SentimentResult[]> {
   const BATCH_SIZE = 30;
   const results: SentimentResult[] = [];
 
   for (let i = 0; i < comments.length; i += BATCH_SIZE) {
     const batch = comments.slice(i, i + BATCH_SIZE);
-    const sentiments = await analyzeBatch(batch.map((c) => c.text));
+    const batchResults = await analyzeBatch(batch.map((c) => c.text));
     for (let j = 0; j < batch.length; j++) {
       results.push({
         comment: batch[j].text,
-        sentiment: sentiments[j] ?? 'neutral',
-        hasReplies: batch[j].hasReplies,
+        sentiment: batchResults[j]?.sentiment ?? "neutral",
+        needsReply: batchResults[j]?.needsReply ?? false,
       });
     }
   }
@@ -110,33 +128,37 @@ async function analyzeAllComments(comments: CommentThread[]): Promise<SentimentR
 // ---------------------------------------------------------------------------
 
 const analyzeYoutubeComments = createTool({
-  id: 'analyze_youtube_comments',
+  id: "analyze_youtube_comments",
   description:
-    'Fetch YouTube video comments and classify each as positive, neutral, or negative. ' +
-    'Call this whenever the user provides a YouTube video URL or ID.',
+    "Fetch YouTube video comments and classify each as positive, neutral, or negative. " +
+    "Call this whenever the user provides a YouTube video URL or ID.",
   inputSchema: z.object({
     video_url_or_id: z
       .string()
-      .describe('YouTube video URL (any format) or bare 11-character video ID'),
+      .describe("YouTube video URL (any format) or bare 11-character video ID"),
     limit: z
       .number()
       .int()
       .min(1)
       .max(500)
       .optional()
-      .describe('Max comments to fetch (default 100)'),
+      .describe("Max comments to fetch (default 100)"),
   }),
-  execute: async ({ video_url_or_id, limit = 100 }: { video_url_or_id: string; limit?: number }) => {
+  execute: async ({
+    video_url_or_id,
+    limit = 100,
+  }: {
+    video_url_or_id: string;
+    limit?: number;
+  }) => {
     const videoId = extractVideoId(video_url_or_id);
     if (!videoId) {
-      return (
-        'Could not extract a video ID from the input. Please provide a YouTube URL or an 11-character video ID.'
-      );
+      return "Could not extract a video ID from the input. Please provide a YouTube URL or an 11-character video ID.";
     }
 
     const comments = await fetchComments(videoId, limit);
     if (comments.length === 0) {
-      return 'No comments found — comments may be disabled for this video.';
+      return "No comments found — comments may be disabled for this video.";
     }
 
     const results = await analyzeAllComments(comments);
@@ -149,12 +171,12 @@ const analyzeYoutubeComments = createTool({
 // ---------------------------------------------------------------------------
 
 const memory = new Memory({
-  storage: new LibSQLStore({ id: 'memory', url: ':memory:' }),
+  storage: new LibSQLStore({ id: "memory", url: ":memory:" }),
 });
 
 const agent = new Agent({
-  id: 'youtube-comment-analyzer',
-  name: 'YouTube Comment Analyzer',
+  id: "youtube-comment-analyzer",
+  name: "YouTube Comment Analyzer",
   instructions: `You are a YouTube comment sentiment analyzer. When a user provides a YouTube video URL or ID, call the analyze_youtube_comments tool with the full URL or ID. Return the tool output verbatim without reformatting.
 
 Supported input formats:
@@ -163,11 +185,11 @@ Supported input formats:
 - https://www.youtube.com/shorts/VIDEO_ID
 - VIDEO_ID (bare 11-character ID)
 - VIDEO_ID 200 (with optional comment limit)`,
-  model: 'openai/gpt-4o-mini',
+  model: "openai/gpt-4o-mini",
   memory,
   tools: { analyze_youtube_comments: analyzeYoutubeComments },
 });
 
-new Mastra({ agents: { 'youtube-comment-analyzer': agent } });
+new Mastra({ agents: { "youtube-comment-analyzer": agent } });
 
 serve(new MastraAdapter(agent));

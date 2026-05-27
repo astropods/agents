@@ -2,12 +2,17 @@
 // Types
 // ---------------------------------------------------------------------------
 
-export type Sentiment = 'positive' | 'neutral' | 'negative';
+export type Sentiment = "positive" | "neutral" | "negative";
+
+export interface BatchResult {
+  sentiment: Sentiment;
+  needsReply: boolean;
+}
 
 export interface SentimentResult {
   comment: string;
   sentiment: Sentiment;
-  hasReplies: boolean;
+  needsReply: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -33,11 +38,13 @@ export function extractVideoId(input: string): string | null {
 // Sentiment normalisation
 // ---------------------------------------------------------------------------
 
-const VALID_SENTIMENTS = new Set<string>(['positive', 'neutral', 'negative']);
+const VALID_SENTIMENTS = new Set<string>(["positive", "neutral", "negative"]);
 
 export function normalizeSentiment(value: unknown): Sentiment {
-  const s = String(value ?? '').toLowerCase().trim();
-  return VALID_SENTIMENTS.has(s) ? (s as Sentiment) : 'neutral';
+  const s = String(value ?? "")
+    .toLowerCase()
+    .trim();
+  return VALID_SENTIMENTS.has(s) ? (s as Sentiment) : "neutral";
 }
 
 // ---------------------------------------------------------------------------
@@ -52,55 +59,79 @@ export function buildBatchUserMessage(comments: string[]): string {
 // JSON sentiment response parser
 // ---------------------------------------------------------------------------
 
-export function parseJsonSentiments(raw: string): Sentiment[] {
-  const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
-  const parsed = JSON.parse(clean) as { sentiments: unknown[] };
-  return parsed.sentiments.map(normalizeSentiment);
+export function parseBatchResults(raw: string): BatchResult[] {
+  const clean = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/, "")
+    .trim();
+  const parsed = JSON.parse(clean) as { results: unknown[] };
+  return parsed.results.map((item) => {
+    const obj = (item && typeof item === "object" ? item : {}) as Record<
+      string,
+      unknown
+    >;
+    return {
+      sentiment: normalizeSentiment(obj.sentiment),
+      needsReply: obj.needs_reply === true,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
 // Report formatter
 // ---------------------------------------------------------------------------
 
-export function formatReport(results: SentimentResult[], videoId: string): string {
-  const counts: Record<Sentiment, number> = { positive: 0, neutral: 0, negative: 0 };
-  const examples: Record<Sentiment, string[]> = { positive: [], neutral: [], negative: [] };
-  const unrepliedExamples: string[] = [];
+export function formatReport(
+  results: SentimentResult[],
+  videoId: string,
+): string {
+  const counts: Record<Sentiment, number> = {
+    positive: 0,
+    neutral: 0,
+    negative: 0,
+  };
+  const examples: Record<Sentiment, string[]> = {
+    positive: [],
+    neutral: [],
+    negative: [],
+  };
+  const needsReplyExamples: string[] = [];
 
   for (const r of results) {
     counts[r.sentiment]++;
     if (examples[r.sentiment].length < 3) {
-      examples[r.sentiment].push(r.comment.slice(0, 160).replace(/\n/g, ' '));
+      examples[r.sentiment].push(r.comment.slice(0, 160).replace(/\n/g, " "));
     }
-    if (!r.hasReplies && unrepliedExamples.length < 5) {
-      unrepliedExamples.push(r.comment.slice(0, 160).replace(/\n/g, ' '));
+    if (r.needsReply && needsReplyExamples.length < 5) {
+      needsReplyExamples.push(r.comment.slice(0, 160).replace(/\n/g, " "));
     }
   }
 
   const total = results.length;
-  const unrepliedCount = results.filter(r => !r.hasReplies).length;
-  const pct = (n: number) => total > 0 ? `${Math.round((n / total) * 100)}%` : '0%';
+  const needsReplyCount = results.filter((r) => r.needsReply).length;
+  const pct = (n: number) =>
+    total > 0 ? `${Math.round((n / total) * 100)}%` : "0%";
 
   const section = (label: string, prefix: string, sentiment: Sentiment) => [
     `${label}  ${counts[sentiment]} comments (${pct(counts[sentiment])})`,
-    ...examples[sentiment].map(e => `  ${prefix} "${e}"`),
+    ...examples[sentiment].map((e) => `  ${prefix} "${e}"`),
   ];
 
   return [
     `YouTube Comment Sentiment Analysis`,
     `Video : https://youtube.com/watch?v=${videoId}`,
     `Total : ${total} comments analysed`,
-    '='.repeat(65),
-    '',
-    ...section('POSITIVE', '+', 'positive'),
-    '',
-    ...section('NEUTRAL ', '~', 'neutral'),
-    '',
-    ...section('NEGATIVE', '-', 'negative'),
-    '',
-    `NEEDS REPLY  ${unrepliedCount} comments`,
-    ...unrepliedExamples.map(e => `  ! "${e}"`),
-    '',
-    '='.repeat(65),
-  ].join('\n');
+    "=".repeat(65),
+    "",
+    ...section("POSITIVE", "+", "positive"),
+    "",
+    ...section("NEUTRAL ", "~", "neutral"),
+    "",
+    ...section("NEGATIVE", "-", "negative"),
+    "",
+    `NEEDS REPLY  ${needsReplyCount} comments`,
+    ...needsReplyExamples.map((e) => `  ! "${e}"`),
+    "",
+    "=".repeat(65),
+  ].join("\n");
 }
