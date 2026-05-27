@@ -92,7 +92,7 @@ export function formatIssueReport(issue: AnalyzedIssue): string {
     lines.push(`\nCompetitor/alternative mentions: ${a.competitive_mentions.join(', ')}`);
   }
   if (a.workarounds.length > 0) {
-    lines.push(`\nWorkarounds reported:\n${a.workarounds.map(w => `  • ${w}`).join('\n')}`);
+    lines.push(`\nWorkarounds reported:\n${a.workarounds.map((w) => `  • ${w}`).join('\n')}`);
   }
 
   return lines.join('\n');
