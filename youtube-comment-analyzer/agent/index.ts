@@ -92,7 +92,7 @@ async function analyzeAllComments(comments: CommentThread[]): Promise<SentimentR
 
   for (let i = 0; i < comments.length; i += BATCH_SIZE) {
     const batch = comments.slice(i, i + BATCH_SIZE);
-    const sentiments = await analyzeBatch(batch.map(c => c.text));
+    const sentiments = await analyzeBatch(batch.map((c) => c.text));
     for (let j = 0; j < batch.length; j++) {
       results.push({
         comment: batch[j].text,
