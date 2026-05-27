@@ -30,7 +30,7 @@ async function fetchNewsAPI(topic: string): Promise<Article[]> {
   return (data.articles ?? []).map((a: Record<string, unknown>) => ({
     title: a.title,
     url: a.url,
-    source: `NewsAPI / ${a.source?.name ?? "unknown"}`,
+    source: `NewsAPI / ${(a.source as Record<string, unknown>)?.name ?? "unknown"}`,
     publishedAt: a.publishedAt,
     description: a.description,
   }));
@@ -48,7 +48,7 @@ async function fetchGNews(topic: string): Promise<Article[]> {
   return (data.articles ?? []).map((a: Record<string, unknown>) => ({
     title: a.title,
     url: a.url,
-    source: `GNews / ${a.source?.name ?? "unknown"}`,
+    source: `GNews / ${(a.source as Record<string, unknown>)?.name ?? "unknown"}`,
     publishedAt: a.publishedAt,
     description: a.description,
   }));
@@ -65,11 +65,11 @@ async function fetchGuardian(topic: string): Promise<Article[]> {
     },
   });
   return (data.response?.results ?? []).map((a: Record<string, unknown>) => ({
-    title: a.fields?.headline ?? a.webTitle,
+    title: (a.fields as Record<string, unknown>)?.headline ?? a.webTitle,
     url: a.webUrl,
     source: "The Guardian",
     publishedAt: a.webPublicationDate,
-    description: a.fields?.trailText,
+    description: (a.fields as Record<string, unknown>)?.trailText,
   }));
 }
 
