@@ -18,7 +18,7 @@ export type OutputFormat = 'summary' | 'analysis' | 'key insights';
 
 export function deduplicate(articles: Article[]): Article[] {
   const seen = new Set<string>();
-  return articles.filter(a => {
+  return articles.filter((a) => {
     const key = a.title.toLowerCase().trim();
     if (seen.has(key)) return false;
     seen.add(key);

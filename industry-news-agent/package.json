@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "start": "bun run agent/index.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@astropods/adapter-core": "latest",
@@ -17,6 +19,7 @@
     "zod": "^3.0.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "latest",
     "@types/bun": "latest",
     "typescript": "^5.0.0"
   }
