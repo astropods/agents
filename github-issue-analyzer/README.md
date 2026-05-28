@@ -72,7 +72,7 @@ This will:
 3. Build and run the startup ingestion (full sync: fetches issues, analyzes with OpenAI, stores in Neo4j)
 4. Start the agent
 
-Open http://localhost:3000 to chat with the agent.
+Open http://localhost:3100 (or the URL shown by ast dev) to chat with the agent.
 
 ## Project Structure
 
