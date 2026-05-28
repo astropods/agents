@@ -15,6 +15,8 @@ Pre-built agents packages as Astropods you can run locally with `ast dev`.
 | [release-note-helper](./release-note-helper) | Queries Jira for completed issues, lets you curate candidates interactively, verifies linked GitHub PRs, and drafts a formatted release note matching your team's style. Remembers preferences across sessions via Redis. Requires `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_KEY`, `GITHUB_TOKEN`, and `ANTHROPIC_API_KEY`. |
 | [sales-research-agent](./sales-research-agent) | Researches customer accounts by searching Gong call transcripts (semantic vector search via Qdrant) and Salesforce data. Requires `GONG_ACCESS_KEY`, `GONG_ACCESS_KEY_SECRET`, and Salesforce OAuth credentials. |
 | [feature-flag-assistant](./feature-flag-assistant) | Identifies stale LaunchDarkly feature flags for cleanup: flags fully rolled out to 100% production for 2+ weeks and flags with zero code references. Sends bi-weekly scheduled audit reports to Slack. Requires `LAUNCHDARKLY_API_KEY`, `GITHUB_TOKEN`, and `SLACK_BOT_TOKEN`. |
+| [github-issue-scorer](./github-issue-scorer) | Scores open GitHub issues by priority and sentiment using GPT-4o mini — ranking by urgency, surfacing frustrated users, flagging competitor mentions, and collecting community workarounds. Requires `GITHUB_TOKEN` and `OPENAI_API_KEY`. |
+| [industry-news-agent](./industry-news-agent) | Fetches industry news from up to four sources in parallel (NewsAPI, GNews, The Guardian, MediaStack), deduplicates, and delivers an AI briefing as a summary, deep analysis, or key insights. All API keys are optional. Requires `OPENAI_API_KEY`. |
 
 ## Quick start
 

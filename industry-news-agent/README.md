@@ -1,5 +1,7 @@
 # Industry News Agent
 
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/industry-news-agent)
+
 An Astro agent that fetches industry news from up to four sources in parallel, deduplicates articles, and delivers a structured AI briefing via web or Slack. All API keys are optional — configure any combination and the agent works with whatever sources you have. Ask for a summary, a deep analysis, or just the key insights.
 
 ## Workflow
@@ -86,3 +88,7 @@ industry-news-agent/
 ## Model
 
 Uses `openai/gpt-4o-mini` via the Astro-managed OpenAI integration.
+
+## Agent directory
+
+View this agent on Astropods: [astropods.com/astro-ai/industry-news-agent](https://astropods.com/astro-ai/industry-news-agent)
