@@ -1,15 +1,15 @@
 # Industry News Agent
 
-An Astro agent that fetches industry news from four sources in parallel, deduplicates articles, and delivers a structured AI briefing via web or Slack. Ask for a summary, a deep analysis, or just the key insights.
+An Astro agent that fetches industry news from up to four sources in parallel, deduplicates articles, and delivers a structured AI briefing via web or Slack. All API keys are optional — configure any combination and the agent works with whatever sources you have. Ask for a summary, a deep analysis, or just the key insights.
 
 ## Workflow
 
 1. **Fetch in parallel** — Queries NewsAPI, GNews, The Guardian, and MediaStack simultaneously (up to 10 articles each)
 2. **Deduplicate** — Removes duplicate articles across sources by title
-3. **Summarise** — Sends the top 20 unique articles to GPT-4o mini for a structured briefing
+3. **Summarise** — Sends all unique articles to GPT-4o mini for a structured briefing
 4. **Deliver** — Returns the result in your chosen format via web chat or Slack
 
-Sources degrade gracefully — if one fails (quota, invalid key, outage) the rest are still used.
+All API keys are **optional** — configure any combination and only those sources are queried. If no keys are set, the agent will tell you which to add. Sources that error (quota, outage) are skipped gracefully.
 
 ## Quick start
 
@@ -48,13 +48,13 @@ Send a topic — optionally append a format keyword:
 
 All runtime credentials are managed by `ast configure` — no manual `.env` file needed.
 
-| Variable | Source | Description | Get a key |
-|----------|--------|-------------|-----------|
-| `OPENAI_API_KEY` | Auto-injected | OpenAI model API key | — |
-| `NEWS_API_KEY` | `ast configure` | NewsAPI key | [newsapi.org](https://newsapi.org) |
-| `GNEWS_API_KEY` | `ast configure` | GNews API key | [gnews.io](https://gnews.io) |
-| `GUARDIAN_API_KEY` | `ast configure` | The Guardian Open Platform key | [open-platform.theguardian.com](https://open-platform.theguardian.com/access/) |
-| `MEDIASTACK_API_KEY` | `ast configure` | MediaStack API key | [mediastack.com](https://mediastack.com) |
+| Variable | Required | Source | Description | Get a key |
+|----------|----------|--------|-------------|-----------|
+| `OPENAI_API_KEY` | Yes | Auto-injected | OpenAI model API key | — |
+| `NEWS_API_KEY` | No | `ast configure` | NewsAPI key | [newsapi.org](https://newsapi.org) |
+| `GNEWS_API_KEY` | No | `ast configure` | GNews API key | [gnews.io](https://gnews.io) |
+| `GUARDIAN_API_KEY` | No | `ast configure` | The Guardian Open Platform key | [open-platform.theguardian.com](https://open-platform.theguardian.com/access/) |
+| `MEDIASTACK_API_KEY` | No | `ast configure` | MediaStack API key | [mediastack.com](https://mediastack.com) |
 
 ## Testing
 

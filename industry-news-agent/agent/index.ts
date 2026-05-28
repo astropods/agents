@@ -96,19 +96,27 @@ async function fetchMediaStack(topic: string): Promise<Article[]> {
 // Parallel fetch + dedup
 // ---------------------------------------------------------------------------
 
-const SOURCES: [string, (topic: string) => Promise<Article[]>][] = [
-  ["NewsAPI", fetchNewsAPI],
-  ["GNews", fetchGNews],
-  ["The Guardian", fetchGuardian],
-  ["MediaStack", fetchMediaStack],
+const SOURCES: {
+  name: string;
+  envKey: string;
+  fetch: (topic: string) => Promise<Article[]>;
+}[] = [
+  { name: "NewsAPI", envKey: "NEWS_API_KEY", fetch: fetchNewsAPI },
+  { name: "GNews", envKey: "GNEWS_API_KEY", fetch: fetchGNews },
+  { name: "The Guardian", envKey: "GUARDIAN_API_KEY", fetch: fetchGuardian },
+  { name: "MediaStack", envKey: "MEDIASTACK_API_KEY", fetch: fetchMediaStack },
 ];
 
+function configuredSources() {
+  return SOURCES.filter((s) => process.env[s.envKey]);
+}
+
 async function fetchAll(topic: string): Promise<Article[]> {
-  const results = await Promise.allSettled(SOURCES.map(([, fn]) => fn(topic)));
+  const active = configuredSources();
+  const results = await Promise.allSettled(active.map((s) => s.fetch(topic)));
   const all: Article[] = [];
 
   for (let i = 0; i < results.length; i++) {
-    const [name] = SOURCES[i];
     const result = results[i];
     if (result.status === "fulfilled") {
       all.push(...result.value);
@@ -117,7 +125,7 @@ async function fetchAll(topic: string): Promise<Article[]> {
         result.reason?.response?.data?.message ??
         result.reason?.message ??
         "unknown error";
-      console.error(`[${name}] fetch failed: ${msg}`);
+      console.error(`[${active[i].name}] fetch failed: ${msg}`);
     }
   }
 
@@ -197,6 +205,12 @@ const fetchIndustryNews = createTool({
       ),
   }),
   execute: async ({ query }: { query: string }) => {
+    const active = configuredSources();
+    if (active.length === 0) {
+      const keys = SOURCES.map((s) => s.envKey).join(", ");
+      return `No news sources configured. Set at least one API key: ${keys}.`;
+    }
+
     const { topic, format } = detectFormat(query);
     const raw = await fetchAll(topic);
     const articles = deduplicate(raw);
