@@ -41,7 +41,7 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
     </tr>
     <tr>
       <td><a href="./industry-news-agent">industry-news-agent</a></td>
-      <td>Fetches industry news from up to four sources in parallel (NewsAPI, GNews, The Guardian, MediaStack), deduplicates, and delivers an AI briefing as a summary, deep analysis, or key insights. All API keys are optional. Requires `OPENAI_API_KEY`.</td>
+      <td>Fetches industry news from up to four sources in parallel (NewsAPI, GNews, The Guardian, MediaStack), deduplicates, and delivers an AI briefing as a summary, deep analysis, or key insights. All API keys are optional. Requires <code>OPENAI_API_KEY</code>.</td>
     </tr>
   </tbody>
 </table>
