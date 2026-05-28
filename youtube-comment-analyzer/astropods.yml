@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: package/v1
+name: "youtube-comment-analyzer"
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    messaging: true
+
+models:
+  openai:
+    provider: openai
+
+inputs:
+  YOUTUBE_API_KEY:
+    name: YOUTUBE_API_KEY
+    datatype: string
+    secret: true
+    description: "YouTube Data API v3 key from Google Cloud Console"
+    display-as: short-text
+
+dev:
+  interfaces:
+    messaging:
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true
