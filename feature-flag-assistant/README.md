@@ -62,5 +62,5 @@ Set secrets via `ast configure` — do not commit them.
 The bi-weekly flag audit report is sent by the `ingestion/report.py` container, which runs as a platform-managed cron job. The schedule (e.g. every Monday at 9am) is configured at deploy time via the UI schedule picker — no code change required.
 
 ### Interfaces
-- **Web** — HTTP/SSE endpoint (playground available at `localhost:3000` during dev)
+- **Web** — HTTP/SSE endpoint (playground typically available at `localhost:3100` during dev)
 - **Slack** — bot integration via Socket Mode

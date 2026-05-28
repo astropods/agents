@@ -69,7 +69,7 @@ youtube-comment-analyzer/
 
 ## Interfaces
 
-- **Web** — Playground available at `localhost:3000` during `ast dev`
+- **Web** — Playground typically available at `localhost:3100` during `ast dev`
 - **Slack** — Bot integration via Socket Mode (mention the bot or reply in a thread)
 
 ## Model
