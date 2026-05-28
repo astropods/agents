@@ -10,7 +10,7 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
 <table>
   <thead>
     <tr>
-      <th width="220">Agent</th>
+      <th width="250">Agent</th>
       <th>Description</th>
     </tr>
   </thead>
@@ -34,6 +34,10 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
     <tr>
       <td><a href="./feature-flag-assistant">feature-flag-assistant</a></td>
       <td>Identifies stale LaunchDarkly feature flags for cleanup: flags fully rolled out to 100% production for 2+ weeks and flags with zero code references. Sends bi-weekly scheduled audit reports to Slack. Requires <code>LAUNCHDARKLY_API_KEY</code>, <code>GITHUB_TOKEN</code>, and <code>SLACK_BOT_TOKEN</code>.</td>
+    </tr>
+    <tr>
+      <td><a href="./youtube-comment-analyzer">youtube-comment-analyzer</a></td>
+      <td>Classifies YouTube video comments by sentiment using GPT-4o mini. Fetches up to 500 comments via the YouTube Data API, batches them for classification, and returns a breakdown with representative examples and unreplied comments to prioritise. Requires <code>OPENAI_API_KEY</code> and <code>YOUTUBE_API_KEY</code>.</td>
     </tr>
   </tbody>
 </table>
