@@ -1,5 +1,4 @@
 # Astropods Agents
-
 This repo contains pre-built agents you can run locally with `ast dev`. You can also try these agents directly from [astropods.com/explore](https://astropods.com/explore) with one-click deploys.
 
 - For local development or to contribute, you will need the Astropods [**CLI called `ast`**](https://docs.astropods.com)
@@ -42,6 +41,10 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
     <tr>
       <td><a href="./industry-news-agent">industry-news-agent</a></td>
       <td>Fetches industry news from up to four sources in parallel (NewsAPI, GNews, The Guardian, MediaStack), deduplicates, and delivers an AI briefing as a summary, deep analysis, or key insights. All API keys are optional. Requires <code>OPENAI_API_KEY</code>.</td>
+    </tr>
+    <tr>
+      <td><a href="./github-issue-scorer">github-issue-scorer</a></td>
+      <td>Scores open GitHub issues by priority and sentiment using GPT-4o mini — ranking by urgency, surfacing frustrated users, flagging competitor mentions, and collecting community workarounds. Requires <code>GITHUB_TOKEN</code> and <code>OPENAI_API_KEY</code>.</td>
     </tr>
     <tr>
       <td><a href="./route-urgent-tickets-agent">route-urgent-tickets-agent</a></td>
