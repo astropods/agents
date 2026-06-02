@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://astropods.ai/schema/package.json
+spec: package/v1
+name: "industry-news-agent"
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    messaging: true
+
+models:
+  openai:
+    provider: openai
+
+inputs:
+  NEWS_API_KEY:
+    name: NEWS_API_KEY
+    datatype: string
+    secret: true
+    optional: true
+    description: "NewsAPI key (newsapi.org)"
+    display-as: short-text
+  GNEWS_API_KEY:
+    name: GNEWS_API_KEY
+    datatype: string
+    secret: true
+    optional: true
+    description: "GNews API key (gnews.io)"
+    display-as: short-text
+  GUARDIAN_API_KEY:
+    name: GUARDIAN_API_KEY
+    datatype: string
+    secret: true
+    optional: true
+    description: "The Guardian Open Platform API key (open-platform.theguardian.com)"
+    display-as: short-text
+  MEDIASTACK_API_KEY:
+    name: MEDIASTACK_API_KEY
+    datatype: string
+    secret: true
+    optional: true
+    description: "MediaStack API key (mediastack.com)"
+    display-as: short-text
+dev:
+  interfaces:
+    messaging:
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true

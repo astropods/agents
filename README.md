@@ -55,6 +55,10 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td><a href="./youtube-comment-analyzer">youtube-comment-analyzer</a></td>
       <td>Classifies YouTube video comments by sentiment using GPT-4o mini. Fetches up to 500 comments via the YouTube Data API, batches them for classification, and returns a breakdown with representative examples and unreplied comments to prioritise. Requires <code>OPENAI_API_KEY</code> and <code>YOUTUBE_API_KEY</code>.</td>
     </tr>
+    <tr>
+      <td><a href="./industry-news-agent">industry-news-agent</a></td>
+      <td>Fetches industry news from up to four sources in parallel (NewsAPI, GNews, The Guardian, MediaStack), deduplicates, and delivers an AI briefing as a summary, deep analysis, or key insights. All API keys are optional. Requires <code>OPENAI_API_KEY</code>.</td>
+    </tr>
   </tbody>
 </table>
 
