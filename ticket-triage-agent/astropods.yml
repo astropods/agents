@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: package/v1
+name: ticket-triage-agent
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    messaging: true
+
+models:
+  openai:
+    provider: openai
+
+inputs:
+  ZENDESK_SUBDOMAIN:
+    name: ZENDESK_SUBDOMAIN
+    datatype: string
+    description: "Zendesk subdomain — the {subdomain} part of https://{subdomain}.zendesk.com"
+    display-as: short-text
+  ZENDESK_AGENT_EMAIL:
+    name: ZENDESK_AGENT_EMAIL
+    datatype: string
+    description: "Zendesk agent email address used for API authentication"
+    display-as: short-text
+  ZENDESK_API_KEY:
+    name: ZENDESK_API_KEY
+    datatype: string
+    secret: true
+    description: "Zendesk API token"
+    display-as: short-text
+  PINECONE_HOST:
+    name: PINECONE_HOST
+    datatype: string
+    description: "Full Pinecone index host URL including https:// (e.g. https://my-index-abc123.svc.pinecone.io)"
+    display-as: short-text
+  PINECONE_API_KEY:
+    name: PINECONE_API_KEY
+    datatype: string
+    secret: true
+    description: "Pinecone API key"
+    display-as: short-text
+
+dev:
+  interfaces:
+    messaging:
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true

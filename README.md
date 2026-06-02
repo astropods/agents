@@ -43,6 +43,10 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td><a href="./industry-news-agent">industry-news-agent</a></td>
       <td>Fetches industry news from up to four sources in parallel (NewsAPI, GNews, The Guardian, MediaStack), deduplicates, and delivers an AI briefing as a summary, deep analysis, or key insights. All API keys are optional. Requires <code>OPENAI_API_KEY</code>.</td>
     </tr>
+    <tr>
+      <td><a href="./ticket-triage-agent">ticket-triage-agent</a></td>
+      <td>Automatically triages Zendesk support tickets — searches a Pinecone vector knowledge base to auto-resolve common questions, escalates unresolved tickets via Slack, and learns from human-solved tickets by indexing new Q&amp;A pairs into Pinecone. Requires <code>ZENDESK_SUBDOMAIN</code>, <code>ZENDESK_AGENT_EMAIL</code>, <code>ZENDESK_API_KEY</code>, <code>PINECONE_HOST</code>, <code>PINECONE_API_KEY</code>, and <code>OPENAI_API_KEY</code>.</td>
+    </tr>
   </tbody>
 </table>
 
