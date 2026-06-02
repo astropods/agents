@@ -43,6 +43,10 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td><a href="./industry-news-agent">industry-news-agent</a></td>
       <td>Fetches industry news from up to four sources in parallel (NewsAPI, GNews, The Guardian, MediaStack), deduplicates, and delivers an AI briefing as a summary, deep analysis, or key insights. All API keys are optional. Requires <code>OPENAI_API_KEY</code>.</td>
     </tr>
+    <tr>
+      <td><a href="./slack-jira-agent">slack-jira-agent</a></td>
+      <td>Turns a problem description or Slack thread into a Jira ticket in seconds. GPT-4o mini generates a concise title and detailed description, creates the ticket, and returns the direct link. Requires <code>OPENAI_API_KEY</code>, <code>JIRA_API_KEY</code>, <code>JIRA_USERNAME</code>, <code>JIRA_SUBDOMAIN</code>, and <code>JIRA_PROJECT_ID</code>.</td>
+    </tr>
   </tbody>
 </table>
 
