@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: package/v1
+name: incident-manager-agent
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    messaging: true
+
+models:
+  openai:
+    provider: openai
+
+inputs:
+  NOTION_API_KEY:
+    name: NOTION_API_KEY
+    datatype: string
+    secret: true
+    description: "Notion integration secret"
+    display-as: short-text
+  NOTION_DATABASE_ID:
+    name: NOTION_DATABASE_ID
+    datatype: string
+    description: "Notion database ID holding the incident log"
+    display-as: short-text
+
+dev:
+  interfaces:
+    messaging:
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true

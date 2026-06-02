@@ -43,6 +43,10 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td><a href="./industry-news-agent">industry-news-agent</a></td>
       <td>Fetches industry news from up to four sources in parallel (NewsAPI, GNews, The Guardian, MediaStack), deduplicates, and delivers an AI briefing as a summary, deep analysis, or key insights. All API keys are optional. Requires <code>OPENAI_API_KEY</code>.</td>
     </tr>
+    <tr>
+      <td><a href="./incident-management-agent">incident-management-agent</a></td>
+      <td>Slack-triggered incident management agent that logs incidents in Notion and keeps detail summaries, engineering updates, and support updates current as the conversation unfolds. Requires <code>NOTION_API_KEY</code>, <code>NOTION_DATABASE_ID</code>, and <code>OPENAI_API_KEY</code>.</td>
+    </tr>
   </tbody>
 </table>
 
