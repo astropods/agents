@@ -19,6 +19,10 @@ repository:
   directory: industry-news-agent
 integrations:
   - OpenAI
+  - NewsAPI
+  - GNews
+  - The Guardian
+  - MediaStack
 ---
 
 # Industry News Agent

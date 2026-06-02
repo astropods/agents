@@ -1,11 +1,4 @@
 # Astropods Agents
-
-Pre-built agents packages as Astropods you can run locally with `ast dev`.
-
-- **CLI [docs](https://docs.astropods.com)**
-- **Read our [blog](https://blog.astropods.com)**
-- **Build and deploy to Astro [get started](https://astropods.com)**
-
 This repo contains pre-built agents you can run locally with `ast dev`. You can also try these agents directly from [astropods.com/explore](https://astropods.com/explore) with one-click deploys.
 
 - For local development or to contribute, you will need the Astropods [**CLI called `ast`**](https://docs.astropods.com)
