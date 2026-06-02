@@ -1,0 +1,26 @@
+{
+  "name": "route-urgent-tickets-agent",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "bun run agent/index.ts",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "test:unit": "bun test"
+  },
+  "dependencies": {
+    "@astropods/adapter-core": "latest",
+    "@astropods/adapter-mastra": "latest",
+    "@mastra/core": "latest",
+    "@mastra/memory": "latest",
+    "@mastra/libsql": "latest",
+    "axios": "^1.7.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@types/bun": "latest",
+    "typescript": "^5.4.0"
+  }
+}

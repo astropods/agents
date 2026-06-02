@@ -43,6 +43,10 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td><a href="./industry-news-agent">industry-news-agent</a></td>
       <td>Fetches industry news from up to four sources in parallel (NewsAPI, GNews, The Guardian, MediaStack), deduplicates, and delivers an AI briefing as a summary, deep analysis, or key insights. All API keys are optional. Requires <code>OPENAI_API_KEY</code>.</td>
     </tr>
+    <tr>
+      <td><a href="./route-urgent-tickets-agent">route-urgent-tickets-agent</a></td>
+      <td>Receives Zendesk ticket webhooks, applies relevant tags using GPT-4.1, and routes urgent tickets (outage, security, P1/P2) to the correct PagerDuty team. Standard tickets are tagged only. Requires <code>ZENDESK_SUBDOMAIN</code>, <code>ZENDESK_USERNAME</code>, <code>ZENDESK_API_KEY</code>, <code>ZENDESK_TICKET_URL</code>, <code>PAGERDUTY_API_KEY</code>, <code>PAGERDUTY_FROM_EMAIL</code>, and <code>OPENAI_API_KEY</code>.</td>
+    </tr>
   </tbody>
 </table>
 
