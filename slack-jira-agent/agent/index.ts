@@ -5,7 +5,7 @@ import { Mastra } from "@mastra/core/mastra";
 import { createTool } from "@mastra/core/tools";
 import { LibSQLStore } from "@mastra/libsql";
 import { Memory } from "@mastra/memory";
-import axios from "axios";
+import axios, { type AxiosError } from "axios";
 import OpenAI from "openai";
 import { z } from "zod";
 import type { JiraTicket } from "./utils";
@@ -93,17 +93,51 @@ const createJiraFromContext = createTool({
       ),
   }),
   execute: async ({ text }: { text: string }) => {
-    let content = text;
-    if (extractSlackIds(text) !== null) {
-      const slackToken = process.env.SLACK_BOT_TOKEN;
-      if (!slackToken) {
-        return "A Slack thread URL was provided but SLACK_BOT_TOKEN is not configured. Set SLACK_BOT_TOKEN to enable thread fetching, or paste the thread content directly.";
+    try {
+      let content = text;
+      if (extractSlackIds(text) !== null) {
+        const slackToken = process.env.SLACK_BOT_TOKEN;
+        if (!slackToken) {
+          return "A Slack thread URL was provided but SLACK_BOT_TOKEN is not configured. Set SLACK_BOT_TOKEN to enable thread fetching, or paste the thread content directly.";
+        }
+        content = await fetchSlackThread(text, slackToken);
       }
-      content = await fetchSlackThread(text, slackToken);
+      const ticket = await generateJiraTicket(content);
+      const ticketUrl = await createJiraTicket(ticket);
+      return `Jira ticket created: ${ticketUrl}\n\nTitle: ${ticket.title}\n\nDescription: ${ticket.description}`;
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        return `Failed to parse OpenAI response as JSON: ${err.message}`;
+      }
+      if (err instanceof OpenAI.APIError) {
+        return `OpenAI error (${err.status ?? "unknown"}): ${err.message}`;
+      }
+      if (axios.isAxiosError(err)) {
+        const axErr = err as AxiosError<{
+          errorMessages?: string[];
+          errors?: Record<string, string>;
+        }>;
+        const status = axErr.response?.status;
+        const jiraMsg =
+          axErr.response?.data?.errorMessages?.[0] ??
+          Object.values(axErr.response?.data?.errors ?? {}).join("; ");
+        if (status === 401) {
+          return "Jira authentication failed: check JIRA_API_KEY and JIRA_USERNAME.";
+        }
+        if (status === 400) {
+          return `Jira rejected the request: ${jiraMsg || "bad request"}`;
+        }
+        if (status === 403) {
+          return "Jira permission denied: ensure the account has permission to create issues in this project.";
+        }
+        if (status === 404) {
+          return `Jira project not found: check JIRA_SUBDOMAIN and JIRA_PROJECT_ID.`;
+        }
+        return `Jira API error (${status ?? "network"}): ${jiraMsg || axErr.message}`;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      return `Failed to create Jira ticket: ${message}`;
     }
-    const ticket = await generateJiraTicket(content);
-    const ticketUrl = await createJiraTicket(ticket);
-    return `Jira ticket created: ${ticketUrl}\n\nTitle: ${ticket.title}\n\nDescription: ${ticket.description}`;
   },
 });
 
