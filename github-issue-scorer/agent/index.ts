@@ -115,7 +115,12 @@ async function analyzeIssue(title: string, body: string, comments: string[]) {
       { role: "user", content: buildUserMessage(title, body, comments) },
     ],
   });
-  const raw = JSON.parse(response.choices[0].message.content ?? "{}");
+  let raw: Record<string, unknown>;
+  try {
+    raw = JSON.parse(response.choices[0].message.content ?? "{}");
+  } catch {
+    raw = {};
+  }
   return normalizeAnalysis(raw);
 }
 
@@ -184,21 +189,30 @@ const scoreGithubIssues = createTool({
     issue_number?: number;
     limit?: number;
   }) => {
-    const repoName = `${owner}/${repo}`;
-    const analyzed: AnalyzedIssue[] = [];
+    try {
+      const repoName = `${owner}/${repo}`;
+      const analyzed: AnalyzedIssue[] = [];
 
-    if (issue_number) {
-      const raw = await fetchSingleIssue(owner, repo, issue_number);
-      analyzed.push(await buildAnalyzedIssue(owner, repo, raw));
-    } else {
-      const maxIssues = Math.min(limit, MAX_ISSUES);
-      const issues = await fetchIssues(owner, repo, maxIssues);
-      for (const raw of issues) {
+      if (issue_number) {
+        const raw = await fetchSingleIssue(owner, repo, issue_number);
         analyzed.push(await buildAnalyzedIssue(owner, repo, raw));
+      } else {
+        const maxIssues = Math.min(limit, MAX_ISSUES);
+        const issues = await fetchIssues(owner, repo, maxIssues);
+        for (const raw of issues) {
+          try {
+            analyzed.push(await buildAnalyzedIssue(owner, repo, raw));
+          } catch (err) {
+            console.error(`Failed to analyse issue #${raw.number}:`, err);
+          }
+        }
       }
-    }
 
-    return formatFullReport(analyzed, repoName);
+      return formatFullReport(analyzed, repoName);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return `Error scoring issues for ${owner}/${repo}: ${message}`;
+    }
   },
 });
 
