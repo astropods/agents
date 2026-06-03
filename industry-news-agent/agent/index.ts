@@ -74,7 +74,7 @@ async function fetchGuardian(topic: string): Promise<Article[]> {
 }
 
 async function fetchMediaStack(topic: string): Promise<Article[]> {
-  const { data } = await axios.get("http://api.mediastack.com/v1/news", {
+  const { data } = await axios.get("https://api.mediastack.com/v1/news", {
     params: {
       keywords: topic,
       access_key: process.env.MEDIASTACK_API_KEY,
