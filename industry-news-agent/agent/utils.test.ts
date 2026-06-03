@@ -120,6 +120,10 @@ describe("detectFormat", () => {
     expect(detectFormat("AI news key insights").topic).toBe("AI news");
   });
 
+  test('strips standalone "insights" from topic', () => {
+    expect(detectFormat("fintech insights").topic).toBe("fintech");
+  });
+
   test('strips "analyse" and "analyze" from topic', () => {
     expect(detectFormat("analyse electric vehicles").topic).toBe(
       "electric vehicles",

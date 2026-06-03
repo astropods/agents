@@ -48,7 +48,10 @@ export function detectFormat(text: string): {
   }
 
   const topic = text
-    .replace(/\b(summary|analysis|analyse|analyze|key insights?)\b/gi, "")
+    .replace(
+      /\b(summary|analysis|analyse|analyze|key insights?|insights)\b/gi,
+      "",
+    )
     .replace(/\s+/g, " ")
     .trim();
 
