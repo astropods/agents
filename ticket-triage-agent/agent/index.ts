@@ -11,6 +11,7 @@ import { z } from "zod";
 import {
   buildZendeskAuth,
   buildZendeskBase,
+  parseWebhookPayload,
   verifyZendeskSignature,
 } from "./utils";
 
@@ -284,10 +285,8 @@ Bun.serve({
       return new Response("Unauthorized", { status: 401 });
     }
 
-    let payload: unknown;
-    try {
-      payload = JSON.parse(rawBody);
-    } catch {
+    const payload = parseWebhookPayload(rawBody);
+    if (!payload) {
       return new Response("Invalid JSON", { status: 400 });
     }
 
