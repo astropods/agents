@@ -18,27 +18,31 @@ repository:
   directory: slack-jira-agent
 integrations:
   - OpenAI
+  - Slack
+  - Jira
 ---
 
 # Slack to Jira Agent
 
-The bug is sitting in a Slack thread and nobody has filed a ticket yet. Slack to Jira Agent takes a problem description — typed directly or pasted from a conversation — and turns it into a properly formatted Jira task in seconds. Works from the web playground or directly in Slack via the Slack adapter.
+The bug is sitting in a Slack thread and nobody has filed a ticket yet. Slack to Jira Agent takes a problem description — typed directly, pasted from a conversation, or provided as a Slack thread URL — and turns it into a properly formatted Jira task in seconds. Works from the web playground or directly in Slack via the Slack adapter.
 
 ## Usage
 
 Send a message in one of two ways:
 
-Describe the problem in plain text — the more context the better:
-
-**Examples:**
+**Plain-text description** — describe the problem directly:
 - *"Login button broken on mobile Safari — users get a 403 after OAuth redirect"*
 - *"Checkout flow crashes when applying a discount code on the order summary page"*
 
+**Slack thread URL** — paste a thread link to create a ticket from the actual conversation (requires `SLACK_BOT_TOKEN`):
+- `https://myworkspace.slack.com/archives/C01234/p1234567890123456`
+
 ## What happens
 
-1. GPT-4o mini generates a concise ticket title (max 100 chars) and a detailed description
-2. The ticket is created in Jira as a `Task` under the configured project
-3. The agent returns the direct link to the created ticket
+1. If a Slack thread URL is detected, the agent fetches the thread messages via the Slack API
+2. GPT-4o mini generates a concise ticket title (max 100 chars) and a detailed description
+3. The ticket is created in Jira as a `Task` under the configured project
+4. The agent returns the direct link to the created ticket
 
 ## Slack integration
 
@@ -51,8 +55,9 @@ The agent supports both the **web** and **Slack** adapters. Enable the Slack ada
 | `OPENAI_API_KEY` | Auto-injected by Astropods |
 | `JIRA_API_KEY` | Jira API token — from Atlassian account security settings |
 | `JIRA_USERNAME` | Jira account email address |
-| `JIRA_SUBDOMAIN` | Subdomain for your Atlassian instance (e.g. `mycompany`) |
+| `JIRA_SUBDOMAIN` | Subdomain for your Atlassian instance (e.g. `mycompany`) — alphanumeric and hyphens only |
 | `JIRA_PROJECT_ID` | Jira project key (e.g. `PROJ`) |
+| `SLACK_BOT_TOKEN` | *(Optional)* Slack Bot token (`xoxb-…`) — required only when pasting a Slack thread URL; needs `channels:history` scope |
 
 ## Limitations
 

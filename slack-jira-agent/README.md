@@ -2,14 +2,15 @@
 
 [![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/slack-jira-agent)
 
-An Astro agent that turns a problem description into a Jira ticket in seconds. Describe the issue in plain text — from the web playground or directly in Slack — and the agent generates a concise title and detailed description, creates the ticket, and returns the link.
+An Astro agent that turns a problem description or Slack thread URL into a Jira ticket in seconds. Describe the issue in plain text or paste a Slack thread link — from the web playground or directly in Slack — and the agent generates a concise title and detailed description, creates the ticket, and returns the link.
 
 ## Workflow
 
-1. **Receive message** — User sends a problem description via web chat or Slack
-2. **Generate content** — GPT-4o mini drafts a concise title (max 100 chars) and a detailed ticket description
-3. **Create ticket** — POSTs the ticket to Jira as a `Task` under the configured project
-4. **Return link** — Responds with the direct Atlassian URL to the created ticket
+1. **Receive message** — User sends a problem description or a Slack thread URL via web chat or Slack
+2. **Fetch thread** *(optional)* — If a Slack URL is detected, the agent fetches the thread messages via the Slack API
+3. **Generate content** — GPT-4o mini drafts a concise title (max 100 chars) and a detailed ticket description
+4. **Create ticket** — POSTs the ticket to Jira as a `Task` under the configured project
+5. **Return link** — Responds with the direct Atlassian URL to the created ticket
 
 ## Quick start
 
@@ -40,7 +41,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 | `OPENAI_API_KEY` | Auto-injected | OpenAI model API key |
 | `JIRA_API_KEY` | `ast configure` | Jira API token — from [Atlassian account security settings](https://id.atlassian.com/manage-profile/security/api-tokens) |
 | `JIRA_USERNAME` | `ast configure` | Jira account email address |
-| `JIRA_SUBDOMAIN` | `ast configure` | Subdomain for your Atlassian instance (e.g. `mycompany`) |
+| `JIRA_SUBDOMAIN` | `ast configure` | Subdomain for your Atlassian instance (e.g. `mycompany`) — alphanumeric and hyphens only |
 | `JIRA_PROJECT_ID` | `ast configure` | Jira project key (e.g. `PROJ`) |
 | `SLACK_BOT_TOKEN` | `ast configure` | *(Optional)* Slack Bot token (`xoxb-…`) — required only when pasting a Slack thread URL; needs `channels:history` scope |
 
@@ -50,7 +51,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 bun test
 ```
 
-Unit tests cover the Jira API client and ticket creation helpers using mocked `fetch`.
+Unit tests cover Jira API helpers, Slack URL parsing and thread fetching, subdomain validation, and ticket creation — all with mocked `fetch`.
 
 ## Project structure
 
