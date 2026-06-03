@@ -10,6 +10,7 @@ import { z } from "zod";
 import {
   buildZendeskAuth,
   buildZendeskBase,
+  parseWebhookPayload,
   verifyZendeskSignature,
 } from "./utils";
 
@@ -210,14 +211,13 @@ Bun.serve({
       return new Response("Unauthorized", { status: 401 });
     }
 
-    let payload: unknown;
-    try {
-      payload = JSON.parse(rawBody);
-    } catch {
+    const p = parseWebhookPayload(rawBody) as {
+      detail?: { id?: string; description?: string };
+    } | null;
+    if (!p) {
       return new Response("Invalid JSON", { status: 400 });
     }
 
-    const p = payload as { detail?: { id?: string; description?: string } };
     const ticketId = p?.detail?.id ?? "unknown";
     const description = p?.detail?.description ?? "";
     const ticketUrl = `${process.env.ZENDESK_TICKET_URL ?? ""}/${ticketId}`;
