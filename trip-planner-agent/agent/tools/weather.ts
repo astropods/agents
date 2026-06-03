@@ -1,6 +1,6 @@
 const COMMON_PARAMS =
   "daily=weather_code,temperature_2m_max,temperature_2m_min" +
-  "&timezone=America%2FNew_York" +
+  "&timezone=auto" +
   "&wind_speed_unit=mph" +
   "&temperature_unit=fahrenheit" +
   "&precipitation_unit=inch";
