@@ -81,6 +81,17 @@ route-urgent-tickets-agent/
 - **Web** — Playground available at `localhost:3000` during `ast dev`
 - **Webhook** — Zendesk sends `POST` payloads to port `3000`
 
+## Observability
+
+The webhook handler responds `200` immediately and processes tickets asynchronously. Each outcome emits a structured JSON log line searchable by `ticket_id`:
+
+| `event` | Meaning |
+|---------|---------|
+| `webhook.processed` | Agent completed successfully |
+| `webhook.failed` | Agent threw — ticket was received but **not** processed |
+
+**Important:** there is no retry mechanism. If processing fails (LLM error, Zendesk/PagerDuty API down, missing env var), the ticket is dropped. Monitor your logs for `webhook.failed` entries and re-trigger manually if needed. For production use, consider routing the webhook through a queue (e.g. SQS, BullMQ) with retry and dead-letter support.
+
 ## Model
 
 Uses `openai/gpt-4.1` via the Astro-managed OpenAI integration.

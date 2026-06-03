@@ -226,16 +226,28 @@ Bun.serve({
     const ticketUrl = `${process.env.ZENDESK_TICKET_URL ?? ""}/${ticketId}`;
     const userMessage = `Ticket ID: ${ticketId}\nDescription: ${description}\nZendesk ticket URL: ${ticketUrl}`;
 
-    // Respond immediately to Zendesk, process async
+    // Respond immediately to Zendesk, process async.
+    // NOTE: failures are logged but not retried — check logs for tickets that
+    // did not produce a "processed" entry (searchable by ticket_id).
     agent
       .generate(userMessage)
       .then((result) =>
-        console.log("Webhook processed:", result.text?.slice(0, 200)),
+        console.log(
+          JSON.stringify({
+            event: "webhook.processed",
+            ticket_id: ticketId,
+            summary: result.text?.slice(0, 200),
+          }),
+        ),
       )
       .catch((err) =>
         console.error(
-          "Agent error:",
-          err instanceof Error ? err.message : String(err),
+          JSON.stringify({
+            event: "webhook.failed",
+            ticket_id: ticketId,
+            error: err instanceof Error ? err.message : String(err),
+          }),
+          err,
         ),
       );
 
