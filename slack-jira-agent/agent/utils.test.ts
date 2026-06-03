@@ -35,9 +35,14 @@ describe("parseJiraTicket", () => {
     expect(parseJiraTicket(raw).title).toBe("(no title)");
   });
 
-  test("falls back to empty string when description is missing", () => {
+  test("falls back to placeholder when description is missing", () => {
     const raw = JSON.stringify({ title: "Bug" });
-    expect(parseJiraTicket(raw).description).toBe("");
+    expect(parseJiraTicket(raw).description).toBe("(No description provided)");
+  });
+
+  test("falls back to placeholder when description is an empty string", () => {
+    const raw = JSON.stringify({ title: "Bug", description: "" });
+    expect(parseJiraTicket(raw).description).toBe("(No description provided)");
   });
 
   test("falls back when title is not a string", () => {

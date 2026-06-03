@@ -23,6 +23,7 @@ inputs:
   JIRA_USERNAME:
     name: JIRA_USERNAME
     datatype: string
+    secret: true
     description: "Jira account email address"
     display-as: short-text
   JIRA_SUBDOMAIN:

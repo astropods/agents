@@ -19,7 +19,9 @@ export function parseJiraTicket(raw: string): JiraTicket {
         ? parsed.title.slice(0, 100)
         : "(no title)",
     description:
-      typeof parsed.description === "string" ? parsed.description : "",
+      typeof parsed.description === "string" && parsed.description.length > 0
+        ? parsed.description
+        : "(No description provided)",
   };
 }
 
