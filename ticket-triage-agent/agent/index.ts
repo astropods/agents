@@ -39,6 +39,21 @@ function zendeskAuth(): string {
 }
 
 // ---------------------------------------------------------------------------
+// Pinecone helpers
+// ---------------------------------------------------------------------------
+
+function pineconeHost(): string {
+  if (!process.env.PINECONE_HOST) throw new Error("PINECONE_HOST is not set");
+  return process.env.PINECONE_HOST;
+}
+
+function pineconeApiKey(): string {
+  if (!process.env.PINECONE_API_KEY)
+    throw new Error("PINECONE_API_KEY is not set");
+  return process.env.PINECONE_API_KEY;
+}
+
+// ---------------------------------------------------------------------------
 // Embedding helpers
 // ---------------------------------------------------------------------------
 
@@ -85,11 +100,11 @@ const retrieveEmbeddingsTool = createTool({
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const { data } = await axios.post(
-          `${process.env.PINECONE_HOST}/query`,
+          `${pineconeHost()}/query`,
           { vector, topK: 3, includeMetadata: true },
           {
             headers: {
-              "Api-Key": process.env.PINECONE_API_KEY ?? "",
+              "Api-Key": pineconeApiKey(),
               "Content-Type": "application/json",
             },
           },
@@ -189,11 +204,11 @@ const updatePineconeTool = createTool({
     const vector = await generateEmbedding(question);
     const id = `ticket-${Date.now()}`;
     await axios.post(
-      `${process.env.PINECONE_HOST}/vectors/upsert`,
+      `${pineconeHost()}/vectors/upsert`,
       { vectors: [{ id, values: vector, metadata: { question, answer } }] },
       {
         headers: {
-          "Api-Key": process.env.PINECONE_API_KEY ?? "",
+          "Api-Key": pineconeApiKey(),
           "Content-Type": "application/json",
         },
       },
