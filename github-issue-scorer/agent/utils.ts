@@ -1,3 +1,82 @@
+import type { Octokit } from "@octokit/rest";
+
+// ---------------------------------------------------------------------------
+// GitHub API helpers
+// ---------------------------------------------------------------------------
+
+export async function fetchIssues(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  maxIssues: number,
+) {
+  const issues: Awaited<
+    ReturnType<typeof octokit.rest.issues.listForRepo>
+  >["data"] = [];
+  let page = 1;
+
+  while (issues.length < maxIssues) {
+    const { data } = await octokit.rest.issues.listForRepo({
+      owner,
+      repo,
+      state: "open",
+      per_page: 100,
+      page,
+    });
+    if (data.length === 0) break;
+    for (const issue of data) {
+      if (!issue.pull_request) issues.push(issue);
+      if (issues.length >= maxIssues) break;
+    }
+    if (data.length < 100) break;
+    page++;
+  }
+
+  return issues.slice(0, maxIssues);
+}
+
+export async function fetchSingleIssue(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+) {
+  const { data } = await octokit.rest.issues.get({
+    owner,
+    repo,
+    issue_number: issueNumber,
+  });
+  return data;
+}
+
+export async function fetchComments(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+): Promise<string[]> {
+  const bodies: string[] = [];
+  let page = 1;
+
+  while (true) {
+    const { data } = await octokit.rest.issues.listComments({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      per_page: 100,
+      page,
+    });
+    if (data.length === 0) break;
+    for (const c of data) {
+      if (c.body) bodies.push(c.body);
+    }
+    if (data.length < 100) break;
+    page++;
+  }
+
+  return bodies;
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------

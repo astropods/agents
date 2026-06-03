@@ -10,82 +10,19 @@ import OpenAI from "openai";
 import pMap from "p-map";
 import { z } from "zod";
 import type { AnalyzedIssue } from "./utils";
-import { buildUserMessage, formatFullReport, normalizeAnalysis } from "./utils";
+import {
+  buildUserMessage,
+  fetchComments,
+  fetchIssues,
+  fetchSingleIssue,
+  formatFullReport,
+  normalizeAnalysis,
+} from "./utils";
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 const openai = new OpenAI();
 
 const MAX_ISSUES = 50;
-
-// ---------------------------------------------------------------------------
-// GitHub — issues + paginated comments
-// ---------------------------------------------------------------------------
-
-async function fetchIssues(owner: string, repo: string, maxIssues: number) {
-  const issues: Awaited<
-    ReturnType<typeof octokit.rest.issues.listForRepo>
-  >["data"] = [];
-  let page = 1;
-
-  while (issues.length < maxIssues) {
-    const { data } = await octokit.rest.issues.listForRepo({
-      owner,
-      repo,
-      state: "open",
-      per_page: 100,
-      page,
-    });
-    if (data.length === 0) break;
-    for (const issue of data) {
-      if (!issue.pull_request) issues.push(issue);
-      if (issues.length >= maxIssues) break;
-    }
-    if (data.length < 100) break;
-    page++;
-  }
-
-  return issues.slice(0, maxIssues);
-}
-
-async function fetchSingleIssue(
-  owner: string,
-  repo: string,
-  issueNumber: number,
-) {
-  const { data } = await octokit.rest.issues.get({
-    owner,
-    repo,
-    issue_number: issueNumber,
-  });
-  return data;
-}
-
-async function fetchComments(
-  owner: string,
-  repo: string,
-  issueNumber: number,
-): Promise<string[]> {
-  const bodies: string[] = [];
-  let page = 1;
-
-  while (true) {
-    const { data } = await octokit.rest.issues.listComments({
-      owner,
-      repo,
-      issue_number: issueNumber,
-      per_page: 100,
-      page,
-    });
-    if (data.length === 0) break;
-    for (const c of data) {
-      if (c.body) bodies.push(c.body);
-    }
-    if (data.length < 100) break;
-    page++;
-  }
-
-  return bodies;
-}
 
 // ---------------------------------------------------------------------------
 // LLM analysis
@@ -134,7 +71,7 @@ async function buildAnalyzedIssue(
   repo: string,
   raw: Awaited<ReturnType<typeof fetchSingleIssue>>,
 ): Promise<AnalyzedIssue> {
-  const comments = await fetchComments(owner, repo, raw.number);
+  const comments = await fetchComments(octokit, owner, repo, raw.number);
   const analysis = await analyzeIssue(raw.title, raw.body ?? "", comments);
   const reactions =
     (raw as { reactions?: Record<string, number> }).reactions ?? {};
@@ -195,11 +132,11 @@ const scoreGithubIssues = createTool({
       const analyzed: AnalyzedIssue[] = [];
 
       if (issue_number) {
-        const raw = await fetchSingleIssue(owner, repo, issue_number);
+        const raw = await fetchSingleIssue(octokit, owner, repo, issue_number);
         analyzed.push(await buildAnalyzedIssue(owner, repo, raw));
       } else {
         const maxIssues = Math.min(limit, MAX_ISSUES);
-        const issues = await fetchIssues(owner, repo, maxIssues);
+        const issues = await fetchIssues(octokit, owner, repo, maxIssues);
         const results = await pMap(
           issues,
           async (raw) => {

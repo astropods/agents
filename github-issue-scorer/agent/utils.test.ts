@@ -1,11 +1,137 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import { Octokit } from "@octokit/rest";
 import type { AnalyzedIssue } from "./utils";
 import {
   buildUserMessage,
+  fetchComments,
+  fetchIssues,
+  fetchSingleIssue,
   formatFullReport,
   formatIssueReport,
   normalizeAnalysis,
 } from "./utils";
+
+// ---------------------------------------------------------------------------
+// GitHub API helpers
+// ---------------------------------------------------------------------------
+
+const spies: Array<{ mockRestore: () => void }> = [];
+
+afterEach(() => {
+  spies.forEach((s) => {
+    s.mockRestore();
+  });
+  spies.length = 0;
+});
+
+function mockFetch(body: unknown, status = 200) {
+  return spyOn(global, "fetch").mockResolvedValue(
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+}
+
+describe("fetchSingleIssue", () => {
+  test("returns issue data from the GitHub API", async () => {
+    const spy = mockFetch({
+      number: 7,
+      title: "Login is broken",
+      html_url: "https://github.com/owner/repo/issues/7",
+      body: "Steps to reproduce...",
+      comments: 3,
+    });
+    spies.push(spy);
+    const octokit = new Octokit();
+    const result = await fetchSingleIssue(octokit, "owner", "repo", 7);
+    expect(result.number).toBe(7);
+    expect(result.title).toBe("Login is broken");
+  });
+
+  test("calls the correct GitHub API endpoint", async () => {
+    const spy = mockFetch({
+      number: 42,
+      title: "A bug",
+      html_url: "https://github.com/a/b/issues/42",
+      body: "",
+      comments: 0,
+    });
+    spies.push(spy);
+    const octokit = new Octokit();
+    await fetchSingleIssue(octokit, "a", "b", 42);
+    const url = (spy.mock.calls[0] as [string, unknown])[0] as string;
+    expect(url).toContain("/repos/a/b/issues/42");
+  });
+});
+
+describe("fetchComments", () => {
+  test("returns comment bodies from the GitHub API", async () => {
+    const spy = mockFetch([
+      { id: 1, body: "First comment." },
+      { id: 2, body: "Second comment." },
+    ]);
+    spies.push(spy);
+    const octokit = new Octokit();
+    const comments = await fetchComments(octokit, "owner", "repo", 7);
+    expect(comments).toEqual(["First comment.", "Second comment."]);
+  });
+
+  test("skips comments with null body", async () => {
+    const spy = mockFetch([
+      { id: 1, body: "Valid." },
+      { id: 2, body: null },
+    ]);
+    spies.push(spy);
+    const octokit = new Octokit();
+    const comments = await fetchComments(octokit, "owner", "repo", 7);
+    expect(comments).toEqual(["Valid."]);
+  });
+
+  test("returns empty array when there are no comments", async () => {
+    const spy = mockFetch([]);
+    spies.push(spy);
+    const octokit = new Octokit();
+    const comments = await fetchComments(octokit, "owner", "repo", 7);
+    expect(comments).toEqual([]);
+  });
+});
+
+describe("fetchIssues", () => {
+  test("excludes pull requests from results", async () => {
+    const spy = mockFetch([
+      { number: 1, title: "Bug", pull_request: undefined },
+      { number: 2, title: "A PR", pull_request: { url: "..." } },
+      { number: 3, title: "Feature", pull_request: undefined },
+    ]);
+    spies.push(spy);
+    const octokit = new Octokit();
+    const issues = await fetchIssues(octokit, "owner", "repo", 50);
+    expect(issues.map((i) => i.number)).toEqual([1, 3]);
+  });
+
+  test("respects the maxIssues limit", async () => {
+    const spy = mockFetch(
+      Array.from({ length: 5 }, (_, i) => ({
+        number: i + 1,
+        title: `Issue ${i + 1}`,
+        pull_request: undefined,
+      })),
+    );
+    spies.push(spy);
+    const octokit = new Octokit();
+    const issues = await fetchIssues(octokit, "owner", "repo", 2);
+    expect(issues).toHaveLength(2);
+  });
+
+  test("returns empty array when repo has no open issues", async () => {
+    const spy = mockFetch([]);
+    spies.push(spy);
+    const octokit = new Octokit();
+    const issues = await fetchIssues(octokit, "owner", "repo", 10);
+    expect(issues).toHaveLength(0);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // normalizeAnalysis
