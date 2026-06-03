@@ -58,4 +58,4 @@ Configure your Slack app to send slash command and event payloads to port `3000`
 |---|---|
 | `OPENAI_API_KEY` | Auto-injected by Astropods |
 | `NOTION_API_KEY` | Notion integration secret |
-| `NOTION_DATABASE_ID` | Notion database ID for the incident log |
+| `NOTION_DATABASE_ID` | Notion database ID for the incident log (treated as a secret) |

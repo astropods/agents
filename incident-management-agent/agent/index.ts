@@ -49,9 +49,16 @@ const createIncidentInNotionTool = createTool({
     "Creates a new incident page in Notion with properties and summary blocks.",
   inputSchema: z.object({
     name: z.string().describe("Incident name"),
-    incident_date: z.string().describe("Date in YYYY-MM-DD format"),
-    status: z.string().describe("One of: Not started, In progress, Done"),
-    severity_level: z.string().describe("One of: Critical, High, Medium, Low"),
+    incident_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "must be YYYY-MM-DD")
+      .describe("Date in YYYY-MM-DD format"),
+    status: z
+      .enum(["Not started", "In progress", "Done"])
+      .describe("Incident status"),
+    severity_level: z
+      .enum(["Critical", "High", "Medium", "Low"])
+      .describe("Incident severity"),
     detail_summary: z.string().describe("Detailed summary of the incident"),
     engineering_update: z.string().describe("Update for the engineering team"),
     support_update: z.string().describe("Update for the support team"),
@@ -79,8 +86,12 @@ const updateIncidentInNotionTool = createTool({
     "Updates an existing Notion incident page with new status, severity, and summary blocks.",
   inputSchema: z.object({
     page_id: z.string().describe("Notion page ID of the incident"),
-    status: z.string().describe("One of: Not started, In progress, Done"),
-    severity_level: z.string().describe("One of: Critical, High, Medium, Low"),
+    status: z
+      .enum(["Not started", "In progress", "Done"])
+      .describe("Incident status"),
+    severity_level: z
+      .enum(["Critical", "High", "Medium", "Low"])
+      .describe("Incident severity"),
     detail_summary: z.string().describe("Detailed summary of the incident"),
     engineering_update: z.string().describe("Update for the engineering team"),
     support_update: z.string().describe("Update for the support team"),
@@ -159,16 +170,30 @@ Bun.serve({
       return new Response("Invalid JSON", { status: 400 });
     }
 
-    // Respond immediately to Slack (<3s required), process async
+    // Respond immediately to Slack (<3s required), process async.
+    // NOTE: failures are logged but not retried — monitor logs for
+    // webhook.failed events to catch dropped payloads.
+    const eventTs =
+      (payload as { event?: { ts?: string } })?.event?.ts ?? "unknown";
     agent
       .generate(JSON.stringify(payload))
       .then((result) =>
-        console.log("Webhook processed:", result.text?.slice(0, 200)),
+        console.log(
+          JSON.stringify({
+            event: "webhook.processed",
+            event_ts: eventTs,
+            summary: result.text?.slice(0, 200),
+          }),
+        ),
       )
       .catch((err) =>
         console.error(
-          "Agent error:",
-          err instanceof Error ? err.message : String(err),
+          JSON.stringify({
+            event: "webhook.failed",
+            event_ts: eventTs,
+            error: err instanceof Error ? err.message : String(err),
+          }),
+          err,
         ),
       );
 

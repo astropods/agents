@@ -45,6 +45,13 @@ interface NotionPage {
 // Notion helpers
 // ---------------------------------------------------------------------------
 
+export function validateNotionId(value: string): string {
+  if (!/^[0-9a-f-]{32,36}$/.test(value)) {
+    throw new Error(`Invalid Notion ID: "${value}"`);
+  }
+  return value;
+}
+
 export function notionHeaders(apiKey: string): Record<string, string> {
   return {
     Authorization: `Bearer ${apiKey}`,
@@ -58,7 +65,7 @@ export async function fetchIncidentsFromNotion(
   databaseId: string,
 ): Promise<IncidentRecord[]> {
   const res = await fetch(
-    `https://api.notion.com/v1/databases/${databaseId}/query`,
+    `https://api.notion.com/v1/databases/${validateNotionId(databaseId)}/query`,
     {
       method: "POST",
       headers: notionHeaders(apiKey),
@@ -165,6 +172,7 @@ export async function updateIncidentInNotion(
   pageId: string,
   data: UpdateIncidentData,
 ): Promise<{ page_id: string }> {
+  validateNotionId(pageId);
   // Update page properties
   const propsRes = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
     method: "PATCH",

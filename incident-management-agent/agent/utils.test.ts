@@ -4,7 +4,11 @@ import {
   fetchIncidentsFromNotion,
   notionHeaders,
   updateIncidentInNotion,
+  validateNotionId,
 } from "./utils";
+
+const VALID_DB_ID = "aaaabbbbccccddddeeeeffffaaaabbbb";
+const VALID_PAGE_ID = "bbbbccccddddeeeeffffaaaabbbbcccc";
 
 const spies: Array<{ mockRestore: () => void }> = [];
 
@@ -32,15 +36,40 @@ describe("notionHeaders", () => {
   });
 });
 
+describe("validateNotionId", () => {
+  test("accepts a 32-char hex ID", () => {
+    expect(validateNotionId(VALID_DB_ID)).toBe(VALID_DB_ID);
+  });
+
+  test("accepts a 36-char UUID with hyphens", () => {
+    const uuid = "aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb";
+    expect(validateNotionId(uuid)).toBe(uuid);
+  });
+
+  test("throws on a short non-hex ID like 'db-123'", () => {
+    expect(() => validateNotionId("db-123")).toThrow("Invalid Notion ID");
+  });
+
+  test("throws on an empty string", () => {
+    expect(() => validateNotionId("")).toThrow("Invalid Notion ID");
+  });
+
+  test("throws on an ID with uppercase letters", () => {
+    expect(() => validateNotionId("AAAABBBBCCCCDDDDEEEEFFFFAAAABBBB")).toThrow(
+      "Invalid Notion ID",
+    );
+  });
+});
+
 describe("fetchIncidentsFromNotion", () => {
   test("POSTs to the database query endpoint", async () => {
     const spy = spyOn(global, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ results: [] }), { status: 200 }),
     );
     spies.push(spy);
-    await fetchIncidentsFromNotion("secret_abc", "db-123");
+    await fetchIncidentsFromNotion("secret_abc", VALID_DB_ID);
     expect(spy).toHaveBeenCalledWith(
-      "https://api.notion.com/v1/databases/db-123/query",
+      `https://api.notion.com/v1/databases/${VALID_DB_ID}/query`,
       expect.objectContaining({ method: "POST" }),
     );
   });
@@ -60,7 +89,7 @@ describe("fetchIncidentsFromNotion", () => {
       new Response(JSON.stringify({ results: [mockPage] }), { status: 200 }),
     );
     spies.push(spy);
-    const result = await fetchIncidentsFromNotion("secret_abc", "db-123");
+    const result = await fetchIncidentsFromNotion("secret_abc", VALID_DB_ID);
     expect(result).toEqual([
       {
         page_id: "page-1",
@@ -78,7 +107,9 @@ describe("fetchIncidentsFromNotion", () => {
       new Response("Unauthorized", { status: 401 }),
     );
     spies.push(spy);
-    await expect(fetchIncidentsFromNotion("bad", "db")).rejects.toThrow("401");
+    await expect(fetchIncidentsFromNotion("bad", VALID_DB_ID)).rejects.toThrow(
+      "401",
+    );
   });
 });
 
@@ -88,7 +119,7 @@ describe("createIncidentInNotion", () => {
       new Response(JSON.stringify({ id: "new-page-id" }), { status: 200 }),
     );
     spies.push(spy);
-    await createIncidentInNotion("secret", "db-123", {
+    await createIncidentInNotion("secret", VALID_DB_ID, {
       name: "DB Outage",
       incident_date: "2026-05-20",
       status: "In progress",
@@ -109,7 +140,7 @@ describe("createIncidentInNotion", () => {
       new Response(JSON.stringify({ id: "new-page-id" }), { status: 200 }),
     );
     spies.push(spy);
-    const result = await createIncidentInNotion("secret", "db-123", {
+    const result = await createIncidentInNotion("secret", VALID_DB_ID, {
       name: "DB Outage",
       incident_date: "2026-05-20",
       status: "In progress",
@@ -128,7 +159,7 @@ describe("createIncidentInNotion", () => {
     );
     spies.push(spy);
     await expect(
-      createIncidentInNotion("secret", "db", {
+      createIncidentInNotion("secret", VALID_DB_ID, {
         name: "x",
         incident_date: "2026-05-20",
         status: "In progress",
@@ -146,7 +177,7 @@ describe("createIncidentInNotion", () => {
       new Response(JSON.stringify({ id: "new-page-id" }), { status: 200 }),
     );
     spies.push(spy);
-    await createIncidentInNotion("secret", "db-123", {
+    await createIncidentInNotion("secret", VALID_DB_ID, {
       name: "DB Outage",
       incident_date: "2026-05-20",
       status: "In progress",
@@ -158,7 +189,7 @@ describe("createIncidentInNotion", () => {
     });
     const [, init] = spy.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(init.body as string);
-    expect(body.parent).toEqual({ database_id: "db-123" });
+    expect(body.parent).toEqual({ database_id: VALID_DB_ID });
     expect(body.properties.Name).toEqual({
       title: [{ text: { content: "DB Outage" } }],
     });
@@ -180,14 +211,14 @@ describe("updateIncidentInNotion", () => {
   test("PATCHes the page properties", async () => {
     const spy = spyOn(global, "fetch")
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: "page-1" }), { status: 200 }),
+        new Response(JSON.stringify({ id: VALID_PAGE_ID }), { status: 200 }),
       )
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ results: [] }), { status: 200 }),
       )
       .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
     spies.push(spy);
-    await updateIncidentInNotion("secret", "page-1", {
+    await updateIncidentInNotion("secret", VALID_PAGE_ID, {
       status: "Done",
       severity_level: "High",
       detail_summary: "Resolved",
@@ -195,28 +226,28 @@ describe("updateIncidentInNotion", () => {
       support_update: "All clear",
     });
     const [firstUrl, firstInit] = spy.mock.calls[0] as [string, RequestInit];
-    expect(firstUrl).toBe("https://api.notion.com/v1/pages/page-1");
+    expect(firstUrl).toBe(`https://api.notion.com/v1/pages/${VALID_PAGE_ID}`);
     expect((firstInit as RequestInit).method).toBe("PATCH");
   });
 
   test("returns page_id", async () => {
     const spy = spyOn(global, "fetch")
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: "page-1" }), { status: 200 }),
+        new Response(JSON.stringify({ id: VALID_PAGE_ID }), { status: 200 }),
       )
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ results: [] }), { status: 200 }),
       )
       .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
     spies.push(spy);
-    const result = await updateIncidentInNotion("secret", "page-1", {
+    const result = await updateIncidentInNotion("secret", VALID_PAGE_ID, {
       status: "Done",
       severity_level: "High",
       detail_summary: "Resolved",
       engineering_update: "Fixed",
       support_update: "All clear",
     });
-    expect(result).toEqual({ page_id: "page-1" });
+    expect(result).toEqual({ page_id: VALID_PAGE_ID });
   });
 
   test("throws on non-ok response from PATCH properties", async () => {
@@ -225,7 +256,7 @@ describe("updateIncidentInNotion", () => {
     );
     spies.push(spy);
     await expect(
-      updateIncidentInNotion("bad", "page-1", {
+      updateIncidentInNotion("bad", VALID_PAGE_ID, {
         status: "Done",
         severity_level: "High",
         detail_summary: "x",
@@ -238,7 +269,7 @@ describe("updateIncidentInNotion", () => {
   test("archives existing blocks and appends new summary blocks", async () => {
     const spy = spyOn(global, "fetch")
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: "page-1" }), { status: 200 }),
+        new Response(JSON.stringify({ id: VALID_PAGE_ID }), { status: 200 }),
       )
       .mockResolvedValueOnce(
         new Response(
@@ -250,7 +281,7 @@ describe("updateIncidentInNotion", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
     spies.push(spy);
-    await updateIncidentInNotion("secret", "page-1", {
+    await updateIncidentInNotion("secret", VALID_PAGE_ID, {
       status: "Done",
       severity_level: "High",
       detail_summary: "Resolved",
@@ -268,7 +299,9 @@ describe("updateIncidentInNotion", () => {
       archived: true,
     });
     const [appendUrl, appendInit] = spy.mock.calls[4] as [string, RequestInit];
-    expect(appendUrl).toBe("https://api.notion.com/v1/blocks/page-1/children");
+    expect(appendUrl).toBe(
+      `https://api.notion.com/v1/blocks/${VALID_PAGE_ID}/children`,
+    );
     expect((appendInit as RequestInit).method).toBe("PATCH");
     const appendBody = JSON.parse((appendInit as RequestInit).body as string);
     expect(appendBody.children).toHaveLength(6);

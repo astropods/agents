@@ -39,7 +39,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 |----------|--------|-------------|
 | `OPENAI_API_KEY` | Auto-injected | OpenAI model API key |
 | `NOTION_API_KEY` | `ast configure` | Notion integration secret — from [notion.so/my-integrations](https://www.notion.so/my-integrations) |
-| `NOTION_DATABASE_ID` | `ast configure` | ID of the Notion database used as the incident log |
+| `NOTION_DATABASE_ID` | `ast configure` | ID of the Notion database used as the incident log (treated as a secret) |
 
 ## Testing
 
@@ -47,7 +47,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 bun test
 ```
 
-Unit tests cover the Notion API client functions (fetch, create, update) using mocked `fetch`.
+Unit tests cover the Notion API helpers (fetch, create, update) and `validateNotionId` using mocked `fetch`.
 
 ## Project structure
 

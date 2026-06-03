@@ -23,6 +23,7 @@ inputs:
   NOTION_DATABASE_ID:
     name: NOTION_DATABASE_ID
     datatype: string
+    secret: true
     description: "Notion database ID holding the incident log"
     display-as: short-text
 
