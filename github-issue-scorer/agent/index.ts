@@ -7,6 +7,7 @@ import { LibSQLStore } from "@mastra/libsql";
 import { Memory } from "@mastra/memory";
 import { Octokit } from "@octokit/rest";
 import OpenAI from "openai";
+import pMap from "p-map";
 import { z } from "zod";
 import type { AnalyzedIssue } from "./utils";
 import { buildUserMessage, formatFullReport, normalizeAnalysis } from "./utils";
@@ -199,12 +200,20 @@ const scoreGithubIssues = createTool({
       } else {
         const maxIssues = Math.min(limit, MAX_ISSUES);
         const issues = await fetchIssues(owner, repo, maxIssues);
-        for (const raw of issues) {
-          try {
-            analyzed.push(await buildAnalyzedIssue(owner, repo, raw));
-          } catch (err) {
-            console.error(`Failed to analyse issue #${raw.number}:`, err);
-          }
+        const results = await pMap(
+          issues,
+          async (raw) => {
+            try {
+              return await buildAnalyzedIssue(owner, repo, raw);
+            } catch (err) {
+              console.error(`Failed to analyse issue #${raw.number}:`, err);
+              return null;
+            }
+          },
+          { concurrency: 5 },
+        );
+        for (const result of results) {
+          if (result !== null) analyzed.push(result);
         }
       }
 
