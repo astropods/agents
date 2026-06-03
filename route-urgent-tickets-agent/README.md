@@ -60,7 +60,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 bun test
 ```
 
-Unit tests cover the Zendesk and PagerDuty API helpers using mocked `fetch`.
+Unit tests cover the pure utility functions: Zendesk URL and auth builders, webhook payload parsing, and HMAC signature verification.
 
 ## Project structure
 

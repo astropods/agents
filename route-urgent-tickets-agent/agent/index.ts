@@ -221,7 +221,10 @@ Bun.serve({
       return new Response("Invalid JSON", { status: 400 });
     }
 
-    const ticketId = p?.detail?.id ?? "unknown";
+    const ticketId = p?.detail?.id;
+    if (!ticketId) {
+      return new Response("Missing ticket ID in payload", { status: 400 });
+    }
     const description = p?.detail?.description ?? "";
     const ticketUrl = `${process.env.ZENDESK_TICKET_URL ?? ""}/${ticketId}`;
     const userMessage = `Ticket ID: ${ticketId}\nDescription: ${description}\nZendesk ticket URL: ${ticketUrl}`;
