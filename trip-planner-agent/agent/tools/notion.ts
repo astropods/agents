@@ -11,6 +11,11 @@ function notionHeaders(): Record<string, string> {
   };
 }
 
+// NOTE: This function makes three sequential Notion API calls (create page →
+// create database → append packing list). The Notion API has no transaction
+// support, so a failure at step 2 or 3 will leave an orphaned page behind.
+// The error is propagated to the agent so the user can retry; manual cleanup
+// of the orphaned page may be required on repeated failures.
 export async function createNotionTripPlanTemplate(
   trip_page_title: string,
   packing_list: string[],
