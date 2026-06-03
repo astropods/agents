@@ -9,6 +9,7 @@ tags:
   - issue-tracking
 capabilities:
   - "Create a Jira task from a plain-text problem description"
+  - "Fetch a Slack thread by URL and create a ticket from the conversation content"
   - "Generate a concise title and detailed description using GPT-4o mini"
   - "Return the direct Atlassian URL to the created ticket"
 repository:

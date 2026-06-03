@@ -12,6 +12,8 @@ import type { JiraTicket } from "./utils";
 import {
   buildBasicAuthHeader,
   buildJiraRequestBody,
+  extractSlackIds,
+  fetchSlackThread,
   parseJiraTicket,
   validateSubdomain,
 } from "./utils";
@@ -91,7 +93,15 @@ const createJiraFromContext = createTool({
       ),
   }),
   execute: async ({ text }: { text: string }) => {
-    const ticket = await generateJiraTicket(text);
+    let content = text;
+    if (extractSlackIds(text) !== null) {
+      const slackToken = process.env.SLACK_BOT_TOKEN;
+      if (!slackToken) {
+        return "A Slack thread URL was provided but SLACK_BOT_TOKEN is not configured. Set SLACK_BOT_TOKEN to enable thread fetching, or paste the thread content directly.";
+      }
+      content = await fetchSlackThread(text, slackToken);
+    }
+    const ticket = await generateJiraTicket(content);
     const ticketUrl = await createJiraTicket(ticket);
     return `Jira ticket created: ${ticketUrl}\n\nTitle: ${ticket.title}\n\nDescription: ${ticket.description}`;
   },

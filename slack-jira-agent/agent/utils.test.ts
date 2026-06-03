@@ -1,7 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import {
   buildBasicAuthHeader,
   buildJiraRequestBody,
+  extractSlackIds,
+  fetchSlackThread,
   parseJiraTicket,
   validateSubdomain,
 } from "./utils";
@@ -84,6 +86,109 @@ describe("buildJiraRequestBody", () => {
 // ---------------------------------------------------------------------------
 // buildBasicAuthHeader
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// extractSlackIds
+// ---------------------------------------------------------------------------
+
+describe("extractSlackIds", () => {
+  test("parses a standard Slack thread URL", () => {
+    const result = extractSlackIds(
+      "https://myworkspace.slack.com/archives/C01234ABCD/p1234567890123456",
+    );
+    expect(result).not.toBeNull();
+    expect(result?.channel).toBe("C01234ABCD");
+    expect(result?.ts).toBe("1234567890.123456");
+  });
+
+  test("returns null for a non-Slack URL", () => {
+    expect(extractSlackIds("https://example.com/foo")).toBeNull();
+  });
+
+  test("returns null for plain text", () => {
+    expect(extractSlackIds("Login button is broken")).toBeNull();
+  });
+
+  test("returns null when timestamp has fewer than 16 digits", () => {
+    expect(
+      extractSlackIds("https://workspace.slack.com/archives/C01234/p123456789"),
+    ).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fetchSlackThread
+// ---------------------------------------------------------------------------
+
+describe("fetchSlackThread", () => {
+  function mockFetch(body: unknown, status = 200) {
+    return spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+  }
+
+  test("returns formatted thread messages", async () => {
+    const spy = mockFetch({
+      ok: true,
+      messages: [
+        { user: "U001", text: "Something is broken" },
+        { user: "U002", text: "I see it too" },
+      ],
+    });
+    const result = await fetchSlackThread(
+      "https://workspace.slack.com/archives/C01234ABCD/p1234567890123456",
+      "xoxb-token",
+    );
+    expect(result).toBe("U001: Something is broken\nU002: I see it too");
+    spy.mockRestore();
+  });
+
+  test("sends Bearer token in Authorization header", async () => {
+    const spy = mockFetch({ ok: true, messages: [] });
+    await fetchSlackThread(
+      "https://workspace.slack.com/archives/C01234ABCD/p1234567890123456",
+      "xoxb-mytoken",
+    );
+    const call = spy.mock.calls[0];
+    expect((call[1] as RequestInit).headers).toMatchObject({
+      Authorization: "Bearer xoxb-mytoken",
+    });
+    spy.mockRestore();
+  });
+
+  test("throws when Slack API returns ok: false", async () => {
+    const spy = mockFetch({ ok: false, error: "channel_not_found" });
+    await expect(
+      fetchSlackThread(
+        "https://workspace.slack.com/archives/C01234ABCD/p1234567890123456",
+        "xoxb-token",
+      ),
+    ).rejects.toThrow("Slack API error: channel_not_found");
+    spy.mockRestore();
+  });
+
+  test("throws when given an unparseable URL", async () => {
+    await expect(
+      fetchSlackThread("https://example.com/not-slack", "xoxb-token"),
+    ).rejects.toThrow("Cannot parse Slack URL");
+  });
+
+  test("handles missing user or text fields gracefully", async () => {
+    const spy = mockFetch({
+      ok: true,
+      messages: [{ text: "no user here" }, { user: "U001" }],
+    });
+    const result = await fetchSlackThread(
+      "https://workspace.slack.com/archives/C01234ABCD/p1234567890123456",
+      "xoxb-token",
+    );
+    expect(result).toBe("unknown: no user here\nU001: ");
+    spy.mockRestore();
+  });
+});
 
 // ---------------------------------------------------------------------------
 // validateSubdomain

@@ -23,12 +23,13 @@ ast dev
 
 ## Usage
 
-Send a problem description — the more context the better:
+Send a problem description or a Slack thread URL — the more context the better:
 
 **Examples:**
 - *"Login button broken on mobile Safari — users get a 403 after OAuth redirect"*
 - *"Checkout flow crashes when applying a discount code on the order summary page"*
 - *"Need to add rate limiting to the /api/export endpoint — currently no limits in place"*
+- *`https://myworkspace.slack.com/archives/C01234/p1234567890123456`* — paste a thread URL to create a ticket directly from the conversation (requires `SLACK_BOT_TOKEN`)
 
 ## Environment variables
 
@@ -41,6 +42,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 | `JIRA_USERNAME` | `ast configure` | Jira account email address |
 | `JIRA_SUBDOMAIN` | `ast configure` | Subdomain for your Atlassian instance (e.g. `mycompany`) |
 | `JIRA_PROJECT_ID` | `ast configure` | Jira project key (e.g. `PROJ`) |
+| `SLACK_BOT_TOKEN` | `ast configure` | *(Optional)* Slack Bot token (`xoxb-…`) — required only when pasting a Slack thread URL; needs `channels:history` scope |
 
 ## Testing
 
