@@ -92,7 +92,7 @@ const SENTIMENT_SYSTEM_PROMPT = [
 async function analyzeBatch(comments: string[]): Promise<BatchResult[]> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    max_tokens: 1024,
+    max_tokens: 4096,
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: SENTIMENT_SYSTEM_PROMPT },
