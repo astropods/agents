@@ -1,9 +1,71 @@
 import { describe, expect, test } from "bun:test";
+import { createHmac } from "node:crypto";
 import {
   buildZendeskAuth,
   buildZendeskBase,
   parseWebhookPayload,
+  verifyZendeskSignature,
 } from "./utils";
+
+// ---------------------------------------------------------------------------
+// verifyZendeskSignature
+// ---------------------------------------------------------------------------
+
+describe("verifyZendeskSignature", () => {
+  const SECRET = "test-webhook-secret";
+
+  function makeSignature(body: string, timestamp: string): string {
+    return createHmac("sha256", SECRET)
+      .update(timestamp + body)
+      .digest("base64");
+  }
+
+  test("returns true for a valid signature", () => {
+    const body = '{"foo":"bar"}';
+    const ts = "1700000000";
+    expect(
+      verifyZendeskSignature(body, ts, makeSignature(body, ts), SECRET),
+    ).toBe(true);
+  });
+
+  test("returns false when signature is wrong", () => {
+    expect(
+      verifyZendeskSignature(
+        '{"foo":"bar"}',
+        "1700000000",
+        "invalidsig",
+        SECRET,
+      ),
+    ).toBe(false);
+  });
+
+  test("returns false when body has been tampered with", () => {
+    const ts = "1700000000";
+    const sig = makeSignature('{"foo":"bar"}', ts);
+    expect(verifyZendeskSignature('{"foo":"tampered"}', ts, sig, SECRET)).toBe(
+      false,
+    );
+  });
+
+  test("returns false when timestamp differs", () => {
+    const body = '{"foo":"bar"}';
+    const sig = makeSignature(body, "1700000000");
+    expect(verifyZendeskSignature(body, "1700000001", sig, SECRET)).toBe(false);
+  });
+
+  test("returns false for empty signature", () => {
+    expect(
+      verifyZendeskSignature('{"foo":"bar"}', "1700000000", "", SECRET),
+    ).toBe(false);
+  });
+
+  test("returns false when secret is wrong", () => {
+    const body = '{"foo":"bar"}';
+    const ts = "1700000000";
+    const sig = makeSignature(body, ts);
+    expect(verifyZendeskSignature(body, ts, sig, "wrong-secret")).toBe(false);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // buildZendeskBase

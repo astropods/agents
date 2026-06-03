@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 // ---------------------------------------------------------------------------
 // Zendesk URL + auth builders
 // ---------------------------------------------------------------------------
@@ -8,6 +10,32 @@ export function buildZendeskBase(subdomain: string): string {
 
 export function buildZendeskAuth(email: string, apiKey: string): string {
   return Buffer.from(`${email}/token:${apiKey}`).toString("base64");
+}
+
+// ---------------------------------------------------------------------------
+// Webhook signature verification
+// ---------------------------------------------------------------------------
+
+/**
+ * Verifies a Zendesk webhook HMAC-SHA256 signature.
+ * Zendesk signs requests with: HMAC-SHA256(secret, timestamp + body), base64-encoded.
+ * Uses constant-time comparison to prevent timing attacks.
+ */
+export function verifyZendeskSignature(
+  body: string,
+  timestamp: string,
+  signature: string,
+  secret: string,
+): boolean {
+  const expected = createHmac("sha256", secret)
+    .update(timestamp + body)
+    .digest("base64");
+  try {
+    return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+  } catch {
+    // timingSafeEqual throws if buffers differ in length
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------

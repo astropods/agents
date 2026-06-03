@@ -75,6 +75,7 @@ Configure a Zendesk webhook to `POST` to your agent's URL on port `3000`:
 | `ZENDESK_API_KEY` | Zendesk API token |
 | `PINECONE_HOST` | Full Pinecone index host URL |
 | `PINECONE_API_KEY` | Pinecone API key |
+| `WEBHOOK_SECRET` | Zendesk webhook signing secret — used to verify HMAC-SHA256 signatures on incoming requests |
 
 ## Slack integration
 
