@@ -53,7 +53,7 @@ The agent will:
 
 ## Limitations
 
-- Weather uses Open-Meteo free tier; coordinates are resolved from GPT-4.1 training knowledge (not geocoding API).
+- Weather uses Open-Meteo free tier; coordinates are resolved from GPT-4.1 training knowledge (not geocoding API). Timezone is inferred automatically from coordinates.
 - Yelp results depend on the `YELP_API_KEY` having access to the Yelp Fusion API.
 - Notion output uses a fixed schema (Day of Week, Date, Weather, Activities Planned, Dining); column layout is not configurable.
 - Creates `Task` entries in Notion only — sub-tasks or nested pages are not supported.

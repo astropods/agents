@@ -66,11 +66,19 @@ Unit tests cover weather helpers, Yelp search, and Notion page creation using mo
 ```
 trip-planner-agent/
 ├── agent/
-│   ├── index.ts        # Agent definition, instructions, and tool registration
-│   ├── utils.ts        # Weather, Yelp, and Notion API helpers
-│   └── utils.test.ts   # Unit tests
-├── astropods.yml        # Agent specification (models, integrations)
-├── Dockerfile           # Agent container image
+│   ├── index.ts            # Agent definition, instructions, and tool registration
+│   ├── tools/
+│   │   ├── date.ts         # Today's date helper
+│   │   ├── weather.ts      # Open-Meteo forecast and historical weather
+│   │   ├── yelp.ts         # Yelp Fusion search
+│   │   └── notion.ts       # Notion page, database, and entry creation
+│   └── tests/
+│       ├── date.test.ts
+│       ├── weather.test.ts
+│       ├── yelp.test.ts
+│       └── notion.test.ts
+├── astropods.yml            # Agent specification (models, integrations)
+├── Dockerfile               # Agent container image
 ├── tsconfig.json
 └── package.json
 ```
