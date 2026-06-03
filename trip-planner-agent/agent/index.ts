@@ -88,7 +88,7 @@ const searchYelpTool = createTool({
         'Search term e.g. "restaurants", "museums", "outdoor activities"',
       ),
     location: z.string().describe("City or address to search near"),
-    limit: z.number().describe("Max results to return (1-50)"),
+    limit: z.number().min(1).max(50).describe("Max results to return (1-50)"),
   }),
   execute: async ({
     term,
