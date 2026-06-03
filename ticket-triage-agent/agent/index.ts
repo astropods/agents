@@ -103,6 +103,7 @@ const retrieveEmbeddingsTool = createTool({
         throw err;
       }
     }
+    throw new Error("Pinecone query failed after 3 attempts");
   },
 });
 
