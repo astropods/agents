@@ -58,7 +58,10 @@ const getZendeskTicketTool = createTool({
   id: "get_zendesk_ticket",
   description: "Get detailed information about a Zendesk ticket by ID.",
   inputSchema: z.object({
-    ticket_id: z.string().describe("The Zendesk ticket ID"),
+    ticket_id: z
+      .string()
+      .regex(/^\d+$/, "ticket_id must be numeric")
+      .describe("The Zendesk ticket ID"),
   }),
   execute: async ({ ticket_id }: { ticket_id: string }) => {
     const { data } = await axios.get(`${zendeskBase()}/tickets/${ticket_id}`, {
@@ -113,7 +116,10 @@ const updateZendeskTicketTool = createTool({
   description:
     "Update a Zendesk ticket status and post a public reply to the customer. Status meanings: open=pending on support, pending=waiting on customer, solved=customer is happy.",
   inputSchema: z.object({
-    ticket_id: z.string().describe("The Zendesk ticket ID"),
+    ticket_id: z
+      .string()
+      .regex(/^\d+$/, "ticket_id must be numeric")
+      .describe("The Zendesk ticket ID"),
     status: z.enum(["open", "pending", "solved"]),
     comment: z.string().describe("Public reply to the customer"),
   }),
@@ -145,7 +151,10 @@ const getSolvedTicketCommentsTool = createTool({
   description:
     "Get all comments for a solved Zendesk ticket to extract Q&A knowledge.",
   inputSchema: z.object({
-    ticket_id: z.string().describe("The Zendesk ticket ID"),
+    ticket_id: z
+      .string()
+      .regex(/^\d+$/, "ticket_id must be numeric")
+      .describe("The Zendesk ticket ID"),
   }),
   execute: async ({ ticket_id }: { ticket_id: string }) => {
     const { data } = await axios.get(
@@ -198,7 +207,10 @@ const lookupZendeskAgentTool = createTool({
   description:
     "Look up a Zendesk user/agent by ID to determine if they are a human agent (not a bot).",
   inputSchema: z.object({
-    agent_id: z.string().describe("The Zendesk user/agent ID"),
+    agent_id: z
+      .string()
+      .regex(/^\d+$/, "agent_id must be numeric")
+      .describe("The Zendesk user/agent ID"),
   }),
   execute: async ({ agent_id }: { agent_id: string }) => {
     const { data } = await axios.get(`${zendeskBase()}/users/${agent_id}`, {
