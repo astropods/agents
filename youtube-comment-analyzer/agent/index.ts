@@ -115,7 +115,8 @@ async function analyzeAllComments(
       results.push({
         comment: batch[j].text,
         sentiment: batchResults[j]?.sentiment ?? "neutral",
-        needsReply: batchResults[j]?.needsReply ?? false,
+        needsReply:
+          (batchResults[j]?.needsReply ?? false) && !batch[j].hasReplies,
       });
     }
   }
