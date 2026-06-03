@@ -10,6 +10,6 @@ export function getTodaysDate(): { date: string; day_of_week: string } {
     "Friday",
     "Saturday",
   ];
-  const day_of_week = days[now.getDay()];
+  const day_of_week = days[now.getUTCDay()];
   return { date, day_of_week };
 }
