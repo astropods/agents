@@ -156,13 +156,31 @@ const analyzeYoutubeComments = createTool({
       return "Could not extract a video ID from the input. Please provide a YouTube URL or an 11-character video ID.";
     }
 
-    const comments = await fetchComments(videoId, limit);
-    if (comments.length === 0) {
-      return "No comments found — comments may be disabled for this video.";
-    }
+    try {
+      const comments = await fetchComments(videoId, limit);
+      if (comments.length === 0) {
+        return "No comments found — comments may be disabled for this video.";
+      }
 
-    const results = await analyzeAllComments(comments);
-    return formatReport(results, videoId);
+      const results = await analyzeAllComments(comments);
+      return formatReport(results, videoId);
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        return `Failed to parse OpenAI response: ${err.message}`;
+      }
+      if (err instanceof OpenAI.APIError) {
+        return `OpenAI error (${err.status ?? "unknown"}): ${err.message}`;
+      }
+      const status = (err as { status?: number }).status;
+      if (status === 403) {
+        return "Failed to fetch comments: YouTube API quota exhausted or access denied. Check your YOUTUBE_API_KEY and quota limits.";
+      }
+      if (status === 404) {
+        return "Failed to fetch comments: video not found or comments are unavailable.";
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      return `Failed to analyse comments: ${message}`;
+    }
   },
 });
 
