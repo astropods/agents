@@ -54,3 +54,16 @@ export function buildJiraRequestBody(ticket: JiraTicket, projectId: string) {
 export function buildBasicAuthHeader(username: string, apiKey: string): string {
   return `Basic ${Buffer.from(`${username}:${apiKey}`).toString("base64")}`;
 }
+
+// ---------------------------------------------------------------------------
+// Subdomain validator (SSRF defence)
+// ---------------------------------------------------------------------------
+
+export function validateSubdomain(value: string): string {
+  if (!/^[a-zA-Z0-9-]+$/.test(value)) {
+    throw new Error(
+      `Invalid JIRA_SUBDOMAIN: "${value}" — must contain only alphanumeric characters and hyphens`,
+    );
+  }
+  return value;
+}

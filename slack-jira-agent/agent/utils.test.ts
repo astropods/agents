@@ -3,6 +3,7 @@ import {
   buildBasicAuthHeader,
   buildJiraRequestBody,
   parseJiraTicket,
+  validateSubdomain,
 } from "./utils";
 
 // ---------------------------------------------------------------------------
@@ -83,6 +84,52 @@ describe("buildJiraRequestBody", () => {
 // ---------------------------------------------------------------------------
 // buildBasicAuthHeader
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// validateSubdomain
+// ---------------------------------------------------------------------------
+
+describe("validateSubdomain", () => {
+  test("accepts a simple alphanumeric subdomain", () => {
+    expect(validateSubdomain("mycompany")).toBe("mycompany");
+  });
+
+  test("accepts a subdomain with hyphens", () => {
+    expect(validateSubdomain("my-company-123")).toBe("my-company-123");
+  });
+
+  test("accepts uppercase letters", () => {
+    expect(validateSubdomain("MyCompany")).toBe("MyCompany");
+  });
+
+  test("throws for subdomain containing a dot", () => {
+    expect(() => validateSubdomain("evil.attacker.com/path?")).toThrow(
+      /Invalid JIRA_SUBDOMAIN/,
+    );
+  });
+
+  test("throws for subdomain containing a slash", () => {
+    expect(() => validateSubdomain("company/../../etc")).toThrow(
+      /Invalid JIRA_SUBDOMAIN/,
+    );
+  });
+
+  test("throws for subdomain containing @", () => {
+    expect(() => validateSubdomain("user@evil.com")).toThrow(
+      /Invalid JIRA_SUBDOMAIN/,
+    );
+  });
+
+  test("throws for empty string", () => {
+    expect(() => validateSubdomain("")).toThrow(/Invalid JIRA_SUBDOMAIN/);
+  });
+
+  test("throws for subdomain with spaces", () => {
+    expect(() => validateSubdomain("my company")).toThrow(
+      /Invalid JIRA_SUBDOMAIN/,
+    );
+  });
+});
 
 describe("buildBasicAuthHeader", () => {
   test("returns Basic prefix", () => {

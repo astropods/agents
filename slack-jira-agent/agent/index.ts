@@ -13,6 +13,7 @@ import {
   buildBasicAuthHeader,
   buildJiraRequestBody,
   parseJiraTicket,
+  validateSubdomain,
 } from "./utils";
 
 const openai = new OpenAI();
@@ -56,7 +57,7 @@ async function createJiraTicket(ticket: JiraTicket): Promise<string> {
     );
   }
 
-  const baseUrl = `https://${subdomain}.atlassian.net`;
+  const baseUrl = `https://${validateSubdomain(subdomain)}.atlassian.net`;
   const response = await axios.post(
     `${baseUrl}/rest/api/3/issue`,
     buildJiraRequestBody(ticket, projectId),
