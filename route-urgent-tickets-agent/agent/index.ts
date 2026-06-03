@@ -73,7 +73,10 @@ const updateTicketTagsTool = createTool({
   id: "update_ticket_tags",
   description: "Apply selected tags to a Zendesk ticket.",
   inputSchema: z.object({
-    ticket_id: z.string().describe("The Zendesk ticket ID"),
+    ticket_id: z
+      .string()
+      .regex(/^\d+$/, "ticket_id must be numeric")
+      .describe("The Zendesk ticket ID"),
     tags: z.array(z.string()).describe("Tags to apply to the ticket"),
   }),
   execute: async ({
