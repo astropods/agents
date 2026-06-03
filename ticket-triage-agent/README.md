@@ -34,6 +34,7 @@ Configure two Zendesk webhooks to `POST` to your agent URL on port `3000`:
 
 - **Trigger 1:** Ticket created → `https://<agent-url>:3000`
 - **Trigger 2:** Ticket status changed to Solved → `https://<agent-url>:3000`
+- **Signing:** Enable webhook signing in Zendesk and copy the signing secret into `WEBHOOK_SECRET`. The agent verifies the `x-zendesk-webhook-signature` HMAC-SHA256 header on every request and rejects anything that doesn't match.
 
 ## Usage via chat
 
@@ -57,6 +58,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 | `ZENDESK_API_KEY` | `ast configure` | Zendesk API token — from Zendesk Admin > Apps & Integrations > API |
 | `PINECONE_HOST` | `ast configure` | Full Pinecone index host URL — from [Pinecone console](https://app.pinecone.io) |
 | `PINECONE_API_KEY` | `ast configure` | Pinecone API key — from [Pinecone console](https://app.pinecone.io) |
+| `WEBHOOK_SECRET` | `ast configure` | Zendesk webhook signing secret — copy from Zendesk Admin > Webhooks > your webhook > Signing Secret |
 
 ## Testing
 
@@ -64,7 +66,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 bun test
 ```
 
-Unit tests cover the Zendesk and Pinecone API helpers using mocked `fetch`.
+Unit tests cover the pure utility functions: Zendesk URL and auth builders, webhook payload parsing, and HMAC signature verification.
 
 ## Project structure
 
