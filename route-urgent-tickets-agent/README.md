@@ -27,6 +27,7 @@ ast dev
 Configure a Zendesk webhook to `POST` to your agent URL on port `3000`:
 
 - **Trigger:** Ticket created → `https://<agent-url>:3000/`
+- **Signing:** Enable webhook signing in Zendesk and copy the signing secret into `WEBHOOK_SECRET`. The agent verifies the `x-zendesk-webhook-signature` HMAC-SHA256 header on every request and rejects anything that doesn't match.
 
 ## Usage via chat
 
@@ -51,6 +52,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 | `ZENDESK_TICKET_URL` | `ast configure` | Base ticket URL e.g. `https://mycompany.zendesk.com/agent/tickets` |
 | `PAGERDUTY_API_KEY` | `ast configure` | PagerDuty REST API key — from [PagerDuty API access](https://support.pagerduty.com/docs/api-access-keys) |
 | `PAGERDUTY_FROM_EMAIL` | `ast configure` | Email for PagerDuty `From` header (required by PagerDuty API) |
+| `WEBHOOK_SECRET` | `ast configure` | Zendesk webhook signing secret — copy from Zendesk Admin > Webhooks > your webhook > Signing Secret |
 
 ## Testing
 

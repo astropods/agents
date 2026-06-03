@@ -7,7 +7,11 @@ import { LibSQLStore } from "@mastra/libsql";
 import { Memory } from "@mastra/memory";
 import axios from "axios";
 import { z } from "zod";
-import { buildZendeskAuth, buildZendeskBase } from "./utils";
+import {
+  buildZendeskAuth,
+  buildZendeskBase,
+  verifyZendeskSignature,
+} from "./utils";
 
 // ---------------------------------------------------------------------------
 // Zendesk helpers
@@ -191,9 +195,24 @@ Bun.serve({
     if (req.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
     }
+
+    const rawBody = await req.text();
+
+    const secret = process.env.WEBHOOK_SECRET;
+    if (!secret) {
+      console.error("WEBHOOK_SECRET is not configured — rejecting webhook");
+      return new Response("Webhook secret not configured", { status: 401 });
+    }
+
+    const sig = req.headers.get("x-zendesk-webhook-signature") ?? "";
+    const ts = req.headers.get("x-zendesk-webhook-signature-timestamp") ?? "";
+    if (!verifyZendeskSignature(rawBody, ts, sig, secret)) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     let payload: unknown;
     try {
-      payload = await req.json();
+      payload = JSON.parse(rawBody);
     } catch {
       return new Response("Invalid JSON", { status: 400 });
     }

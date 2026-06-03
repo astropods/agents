@@ -46,6 +46,12 @@ inputs:
     datatype: string
     description: "Email address for PagerDuty From header (required by PagerDuty API)"
     display-as: short-text
+  WEBHOOK_SECRET:
+    name: WEBHOOK_SECRET
+    datatype: string
+    secret: true
+    description: "Zendesk webhook signing secret — used to verify HMAC-SHA256 signatures on incoming webhook requests"
+    display-as: short-text
 
 dev:
   interfaces:

@@ -61,3 +61,4 @@ Configure a Zendesk webhook to `POST` to your agent's URL on port `3000`:
 | `ZENDESK_TICKET_URL` | Base ticket URL e.g. `https://mycompany.zendesk.com/agent/tickets` |
 | `PAGERDUTY_API_KEY` | PagerDuty REST API key |
 | `PAGERDUTY_FROM_EMAIL` | Email for PagerDuty `From` header (required by PagerDuty API) |
+| `WEBHOOK_SECRET` | Zendesk webhook signing secret — used to verify HMAC-SHA256 signatures on incoming requests |
