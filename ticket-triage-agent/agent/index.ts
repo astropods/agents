@@ -202,7 +202,7 @@ const updatePineconeTool = createTool({
     answer: string;
   }) => {
     const vector = await generateEmbedding(question);
-    const id = `ticket-${Date.now()}`;
+    const id = `ticket-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await axios.post(
       `${pineconeHost()}/vectors/upsert`,
       { vectors: [{ id, values: vector, metadata: { question, answer } }] },
