@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import type { AnalyzedIssue } from "./utils";
-import { buildUserMessage, formatFullReport, normalizeAnalysis } from "./utils";
+import {
+  buildUserMessage,
+  formatFullReport,
+  formatIssueReport,
+  normalizeAnalysis,
+} from "./utils";
 
 // ---------------------------------------------------------------------------
 // normalizeAnalysis
@@ -63,6 +68,92 @@ describe("normalizeAnalysis", () => {
     expect(() => normalizeAnalysis("string")).not.toThrow();
     expect(() => normalizeAnalysis(42)).not.toThrow();
     expect(normalizeAnalysis(null).priority).toBe("low");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// formatIssueReport
+// ---------------------------------------------------------------------------
+
+function makeFullIssue(overrides: Partial<AnalyzedIssue> = {}): AnalyzedIssue {
+  return {
+    number: 42,
+    title: "Something is broken",
+    url: "https://github.com/owner/repo/issues/42",
+    upvotes: 7,
+    total_reactions: 10,
+    comment_count: 3,
+    analysis: {
+      summary: "A widget crashes on startup.",
+      sentiment: "frustration",
+      sentiment_details: "Users are very frustrated.",
+      competitive_mentions: [],
+      workarounds: [],
+      priority: "high",
+      priority_reason: "Causes data loss.",
+    },
+    ...overrides,
+  };
+}
+
+describe("formatIssueReport", () => {
+  test("includes issue number, title, and URL", () => {
+    const report = formatIssueReport(makeFullIssue());
+    expect(report).toContain("#42");
+    expect(report).toContain("Something is broken");
+    expect(report).toContain("https://github.com/owner/repo/issues/42");
+  });
+
+  test("includes reaction counts and comment count", () => {
+    const report = formatIssueReport(makeFullIssue());
+    expect(report).toContain("7 upvotes");
+    expect(report).toContain("10 total");
+    expect(report).toContain("3 comments");
+  });
+
+  test("includes priority and sentiment in uppercase", () => {
+    const report = formatIssueReport(makeFullIssue());
+    expect(report).toContain("HIGH");
+    expect(report).toContain("Causes data loss.");
+    expect(report).toContain("FRUSTRATION");
+    expect(report).toContain("Users are very frustrated.");
+  });
+
+  test("includes summary text", () => {
+    const report = formatIssueReport(makeFullIssue());
+    expect(report).toContain("A widget crashes on startup.");
+  });
+
+  test("shows competitive mentions section when array is non-empty", () => {
+    const issue = makeFullIssue({
+      analysis: {
+        ...makeFullIssue().analysis,
+        competitive_mentions: ["ToolA", "ToolB"],
+      },
+    });
+    const report = formatIssueReport(issue);
+    expect(report).toContain("Competitor/alternative mentions");
+    expect(report).toContain("ToolA");
+    expect(report).toContain("ToolB");
+  });
+
+  test("shows workarounds section when array is non-empty", () => {
+    const issue = makeFullIssue({
+      analysis: {
+        ...makeFullIssue().analysis,
+        workarounds: ["use flag --foo", "downgrade to v1"],
+      },
+    });
+    const report = formatIssueReport(issue);
+    expect(report).toContain("Workarounds reported");
+    expect(report).toContain("• use flag --foo");
+    expect(report).toContain("• downgrade to v1");
+  });
+
+  test("omits both sections when arrays are empty", () => {
+    const report = formatIssueReport(makeFullIssue());
+    expect(report).not.toContain("Competitor");
+    expect(report).not.toContain("Workarounds");
   });
 });
 
