@@ -80,7 +80,6 @@ const retrieveEmbeddingsTool = createTool({
     const vector = await generateEmbedding(query);
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        await new Promise((r) => setTimeout(r, 1500));
         const { data } = await axios.post(
           `${process.env.PINECONE_HOST}/query`,
           { vector, topK: 3, includeMetadata: true },
