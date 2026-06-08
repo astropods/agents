@@ -54,8 +54,13 @@ describe("validateNotionId", () => {
     expect(() => validateNotionId("")).toThrow("Invalid Notion ID");
   });
 
-  test("throws on an ID with uppercase letters", () => {
-    expect(() => validateNotionId("AAAABBBBCCCCDDDDEEEEFFFFAAAABBBB")).toThrow(
+  test("accepts a 32-char uppercase hex ID", () => {
+    const id = "AAAABBBBCCCCDDDDEEEEFFFFAAAABBBB";
+    expect(validateNotionId(id)).toBe(id);
+  });
+
+  test("throws on an ID with non-hex characters", () => {
+    expect(() => validateNotionId("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")).toThrow(
       "Invalid Notion ID",
     );
   });

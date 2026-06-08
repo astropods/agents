@@ -46,7 +46,7 @@ interface NotionPage {
 // ---------------------------------------------------------------------------
 
 export function validateNotionId(value: string): string {
-  if (!/^[0-9a-f-]{32,36}$/.test(value)) {
+  if (!/^[0-9a-fA-F-]{32,36}$/.test(value)) {
     throw new Error(`Invalid Notion ID: "${value}"`);
   }
   return value;
@@ -72,7 +72,10 @@ export async function fetchIncidentsFromNotion(
       body: JSON.stringify({}),
     },
   );
-  if (!res.ok) throw new Error(`Notion API error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Notion API error: ${res.status} — ${body}`);
+  }
   const data = (await res.json()) as { results: NotionPage[] };
   return data.results.map((page) => ({
     page_id: page.id,
@@ -162,7 +165,10 @@ export async function createIncidentInNotion(
       ),
     }),
   });
-  if (!res.ok) throw new Error(`Notion API error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Notion API error: ${res.status} — ${body}`);
+  }
   const page = (await res.json()) as { id: string };
   return { page_id: page.id };
 }
@@ -184,7 +190,10 @@ export async function updateIncidentInNotion(
       },
     }),
   });
-  if (!propsRes.ok) throw new Error(`Notion API error: ${propsRes.status}`);
+  if (!propsRes.ok) {
+    const body = await propsRes.text();
+    throw new Error(`Notion API error: ${propsRes.status} — ${body}`);
+  }
 
   // Fetch existing child blocks
   const blocksRes = await fetch(
@@ -193,7 +202,10 @@ export async function updateIncidentInNotion(
       headers: notionHeaders(apiKey),
     },
   );
-  if (!blocksRes.ok) throw new Error(`Notion API error: ${blocksRes.status}`);
+  if (!blocksRes.ok) {
+    const body = await blocksRes.text();
+    throw new Error(`Notion API error: ${blocksRes.status} — ${body}`);
+  }
   const blocksData = (await blocksRes.json()) as { results: { id: string }[] };
 
   // Archive existing blocks
@@ -207,8 +219,10 @@ export async function updateIncidentInNotion(
           body: JSON.stringify({ archived: true }),
         },
       );
-      if (!archiveRes.ok)
-        throw new Error(`Notion API error: ${archiveRes.status}`);
+      if (!archiveRes.ok) {
+        const body = await archiveRes.text();
+        throw new Error(`Notion API error: ${archiveRes.status} — ${body}`);
+      }
     }),
   );
 
@@ -227,7 +241,10 @@ export async function updateIncidentInNotion(
       }),
     },
   );
-  if (!appendRes.ok) throw new Error(`Notion API error: ${appendRes.status}`);
+  if (!appendRes.ok) {
+    const body = await appendRes.text();
+    throw new Error(`Notion API error: ${appendRes.status} — ${body}`);
+  }
 
   return { page_id: pageId };
 }
