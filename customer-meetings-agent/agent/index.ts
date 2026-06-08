@@ -65,13 +65,18 @@ const getZendeskTicketsTool = createTool({
       .describe("Customer name, email, or domain to search open tickets for"),
   }),
   execute: async ({ query }: { query: string }) => {
-    const tickets = await searchZendeskTickets(
-      env("ZENDESK_URL"),
-      env("ZENDESK_EMAIL"),
-      env("ZENDESK_API_KEY"),
-      query,
-    );
-    return JSON.stringify(tickets);
+    try {
+      const tickets = await searchZendeskTickets(
+        env("ZENDESK_URL"),
+        env("ZENDESK_EMAIL"),
+        env("ZENDESK_API_KEY"),
+        query,
+      );
+      return JSON.stringify(tickets);
+    } catch (err) {
+      console.error("[get_zendesk_tickets] error:", err);
+      throw err;
+    }
   },
 });
 
@@ -85,8 +90,13 @@ const getHubSpotDealsTool = createTool({
       .describe("Company or deal name to search active deals for"),
   }),
   execute: async ({ query }: { query: string }) => {
-    const deals = await searchHubSpotDeals(env("HUBSPOT_API_KEY"), query);
-    return JSON.stringify(deals);
+    try {
+      const deals = await searchHubSpotDeals(env("HUBSPOT_API_KEY"), query);
+      return JSON.stringify(deals);
+    } catch (err) {
+      console.error("[get_hubspot_deals] error:", err);
+      throw err;
+    }
   },
 });
 
@@ -140,11 +150,13 @@ const ready = messagingClient.connectWithRetry({
 });
 
 let conv: ConversationStream | null = null;
-ready.then(() => {
-  conv = messagingClient.createConversationStream();
-  conv.on("error", (e) => console.error("[messaging] bidi stream error", e));
-  console.log("[messaging] bidi stream connected");
-});
+ready
+  .then(() => {
+    conv = messagingClient.createConversationStream();
+    conv.on("error", (e) => console.error("[messaging] bidi stream error", e));
+    console.log("[messaging] bidi stream connected");
+  })
+  .catch((e) => console.error("[messaging] connect failed:", e));
 
 function postToSlack(channelId: string, body: string): void {
   if (!conv) {

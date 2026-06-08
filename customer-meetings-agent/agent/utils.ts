@@ -45,7 +45,10 @@ export async function refreshGoogleToken(
       refresh_token: refreshToken,
     }),
   });
-  if (!res.ok) throw new Error(`Google token refresh failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Google token refresh failed: ${res.status} — ${body}`);
+  }
   const data = (await res.json()) as { access_token?: string; error?: string };
   if (!data.access_token)
     throw new Error(`Google token error: ${data.error ?? "no access_token"}`);
@@ -74,7 +77,10 @@ export async function getCalendarEvents(
     `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   );
-  if (!res.ok) throw new Error(`Google Calendar API error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Google Calendar API error: ${res.status} — ${body}`);
+  }
   const data = (await res.json()) as {
     items: {
       id: string;
@@ -117,7 +123,10 @@ export async function searchZendeskTickets(
       },
     },
   );
-  if (!res.ok) throw new Error(`Zendesk API error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Zendesk API error: ${res.status} — ${body}`);
+  }
   const data = (await res.json()) as {
     results: {
       id: number;
@@ -169,7 +178,10 @@ export async function searchHubSpotDeals(
       }),
     },
   );
-  if (!res.ok) throw new Error(`HubSpot API error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`HubSpot API error: ${res.status} — ${body}`);
+  }
   const data = (await res.json()) as {
     results: {
       id: string;
