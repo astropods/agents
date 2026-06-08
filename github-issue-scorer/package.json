@@ -1,0 +1,26 @@
+{
+  "name": "github-issue-scorer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "bun run agent/index.ts",
+    "test": "bun test",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@astropods/adapter-core": "latest",
+    "@astropods/adapter-mastra": "latest",
+    "@mastra/core": "latest",
+    "@mastra/libsql": "latest",
+    "@mastra/memory": "latest",
+    "@octokit/rest": "^21.0.0",
+    "openai": "^4.0.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "latest",
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  }
+}
