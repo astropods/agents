@@ -31,10 +31,10 @@ inputs:
     secret: true
     description: "OAuth2 refresh token from Zoom authorization"
     display-as: short-text
-  ZENDESK_URL:
-    name: ZENDESK_URL
+  ZENDESK_SUBDOMAIN:
+    name: ZENDESK_SUBDOMAIN
     datatype: string
-    description: "Zendesk subdomain (the {url} in https://{url}.zendesk.com)"
+    description: "Zendesk subdomain (the part before .zendesk.com, e.g. mycompany)"
     display-as: short-text
   ZENDESK_AGENT_EMAIL:
     name: ZENDESK_AGENT_EMAIL

@@ -25,6 +25,12 @@ function env(name: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Zoom token cache — updated on each successful refresh to handle rotation
+// ---------------------------------------------------------------------------
+
+let zoomRefreshToken: string | undefined;
+
+// ---------------------------------------------------------------------------
 // Tools
 // ---------------------------------------------------------------------------
 
@@ -40,11 +46,12 @@ const getZoomTranscriptTool = createTool({
   }),
   execute: async ({ meeting_id }: { meeting_id: string }) => {
     try {
-      const accessToken = await refreshZoomToken(
+      const { accessToken, refreshToken } = await refreshZoomToken(
         env("ZOOM_CLIENT_ID"),
         env("ZOOM_CLIENT_SECRET"),
-        env("ZOOM_REFRESH_TOKEN"),
+        zoomRefreshToken ?? env("ZOOM_REFRESH_TOKEN"),
       );
+      zoomRefreshToken = refreshToken;
       return getZoomTranscript(accessToken, meeting_id);
     } catch (err) {
       console.error("[get_zoom_transcript] error:", err);
@@ -74,13 +81,13 @@ const createZendeskTicketTool = createTool({
   }) => {
     try {
       const result = await createZendeskTicket(
-        env("ZENDESK_URL"),
+        env("ZENDESK_SUBDOMAIN"),
         env("ZENDESK_AGENT_EMAIL"),
         env("ZENDESK_API_KEY"),
         subject,
         description,
       );
-      return JSON.stringify(result);
+      return result;
     } catch (err) {
       console.error("[create_zendesk_ticket] error:", err);
       throw err;
@@ -108,7 +115,7 @@ const updateNotionPageTool = createTool({
         title,
         content,
       );
-      return JSON.stringify(result);
+      return result;
     } catch (err) {
       console.error("[update_notion_page] error:", err);
       throw err;

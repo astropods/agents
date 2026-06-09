@@ -29,7 +29,12 @@ export function validateMeetingId(value: string): string {
 }
 
 export function validateNotionPageId(value: string): string {
-  if (!/^[0-9a-fA-F-]{32,36}$/.test(value)) {
+  if (
+    !/^[0-9a-fA-F]{32}$/.test(value) &&
+    !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      value,
+    )
+  ) {
     throw new Error(`Invalid Notion page ID: "${value}"`);
   }
   return value;
@@ -50,7 +55,7 @@ export async function refreshZoomToken(
   clientId: string,
   clientSecret: string,
   refreshToken: string,
-): Promise<string> {
+): Promise<{ accessToken: string; refreshToken: string }> {
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
     "base64",
   );
@@ -68,10 +73,17 @@ export async function refreshZoomToken(
     const body = await res.text();
     throw new Error(`Zoom token refresh failed: ${res.status} — ${body}`);
   }
-  const data = (await res.json()) as { access_token?: string };
+  const data = (await res.json()) as {
+    access_token?: string;
+    refresh_token?: string;
+  };
   if (!data.access_token)
     throw new Error("Zoom token response missing access_token");
-  return data.access_token;
+  return {
+    accessToken: data.access_token,
+    // Zoom rotates the refresh token on each use; fall back to current if not returned
+    refreshToken: data.refresh_token ?? refreshToken,
+  };
 }
 
 export async function getZoomTranscript(

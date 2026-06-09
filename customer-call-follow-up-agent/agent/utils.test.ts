@@ -60,6 +60,12 @@ describe("validateNotionPageId", () => {
       "Invalid Notion page ID",
     );
   });
+
+  test("throws on all-hyphen string", () => {
+    expect(() =>
+      validateNotionPageId("--------------------------------"),
+    ).toThrow("Invalid Notion page ID");
+  });
 });
 
 describe("validateZendeskSubdomain", () => {
@@ -92,12 +98,14 @@ describe("refreshZoomToken", () => {
       }),
     );
     spies.push(spy);
-    const token = await refreshZoomToken(
+    const result = await refreshZoomToken(
       "client-id",
       "client-secret",
       "refresh-tok",
     );
-    expect(token).toBe("zoom_tok_abc");
+    expect(result.accessToken).toBe("zoom_tok_abc");
+    // falls back to input refresh token when response omits refresh_token
+    expect(result.refreshToken).toBe("refresh-tok");
   });
 
   test("POSTs to the Zoom token endpoint", async () => {
@@ -135,6 +143,22 @@ describe("refreshZoomToken", () => {
     await expect(refreshZoomToken("id", "secret", "refresh")).rejects.toThrow(
       "401",
     );
+  });
+
+  test("returns rotated refresh_token when Zoom provides one", async () => {
+    const spy = spyOn(global, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          access_token: "new_access",
+          refresh_token: "new_refresh",
+        }),
+        { status: 200 },
+      ),
+    );
+    spies.push(spy);
+    const result = await refreshZoomToken("id", "secret", "old_refresh");
+    expect(result.accessToken).toBe("new_access");
+    expect(result.refreshToken).toBe("new_refresh");
   });
 
   test("throws when access_token is missing", async () => {
