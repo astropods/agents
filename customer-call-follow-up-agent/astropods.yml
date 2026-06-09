@@ -1,0 +1,77 @@
+spec: package/v1
+name: customer-call-follow-up-agent
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    messaging: true
+
+models:
+  openai:
+    provider: openai
+
+inputs:
+  ZOOM_CLIENT_ID:
+    name: ZOOM_CLIENT_ID
+    datatype: string
+    secret: true
+    description: "Zoom marketplace app client ID"
+    display-as: short-text
+  ZOOM_CLIENT_SECRET:
+    name: ZOOM_CLIENT_SECRET
+    datatype: string
+    secret: true
+    description: "Zoom marketplace app client secret"
+    display-as: short-text
+  ZOOM_REFRESH_TOKEN:
+    name: ZOOM_REFRESH_TOKEN
+    datatype: string
+    secret: true
+    description: "OAuth2 refresh token from Zoom authorization"
+    display-as: short-text
+  ZENDESK_URL:
+    name: ZENDESK_URL
+    datatype: string
+    description: "Zendesk subdomain (the {url} in https://{url}.zendesk.com)"
+    display-as: short-text
+  ZENDESK_AGENT_EMAIL:
+    name: ZENDESK_AGENT_EMAIL
+    datatype: string
+    secret: true
+    description: "Zendesk agent email for API auth"
+    display-as: short-text
+  ZENDESK_API_KEY:
+    name: ZENDESK_API_KEY
+    datatype: string
+    secret: true
+    description: "Zendesk API token"
+    display-as: short-text
+  NOTION_API_KEY:
+    name: NOTION_API_KEY
+    datatype: string
+    secret: true
+    description: "Notion internal integration secret"
+    display-as: short-text
+  NOTION_PARENT_PAGE_ID:
+    name: NOTION_PARENT_PAGE_ID
+    datatype: string
+    description: "ID of the Notion page that holds all call summary pages"
+    display-as: short-text
+
+  WEBHOOK_SECRET:
+    name: WEBHOOK_SECRET
+    datatype: string
+    secret: true
+    optional: true
+    description: "Bearer token to authenticate incoming webhook requests"
+    display-as: short-text
+
+dev:
+  interfaces:
+    messaging:
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true
