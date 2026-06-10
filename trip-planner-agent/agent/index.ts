@@ -177,8 +177,9 @@ const memory = new Memory({
 const agent = new Agent({
   id: "trip-planner",
   name: "Trip Planner",
-  instructions:
-    "You are a trip planning agent. Use the tools available to you to plan a trip and fulfill the user request. Make sure to use all info to account for how to best answer their question.",
+  instructions: `You are a trip planning agent. Use the tools available to you to plan a trip and fulfill the user request. Make sure to use all info to account for how to best answer their question.
+
+IMPORTANT: Before any date reasoning, comparisons, or deciding whether to use forecast vs historical weather, you MUST first call get_todays_date to determine today's date. Never assume or infer the current date from your training knowledge.`,
   model: "openai/gpt-4.1",
   memory,
   tools: {

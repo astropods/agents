@@ -5,9 +5,15 @@ const mockYelpResponse = {
   businesses: [
     {
       name: "Central Park Tours",
+      is_closed: false,
+      review_count: 120,
       rating: 4.5,
-      categories: [{ title: "Tours" }],
+      categories: [{ alias: "tours", title: "Tours" }],
       location: { address1: "123 Central Park W" },
+      hours: [{ is_open_now: true }],
+      // extra fields that should be filtered out
+      image_url: "https://example.com/img.jpg",
+      phone: "+12125550001",
     },
   ],
   total: 1,
@@ -54,9 +60,20 @@ describe("searchYelp", () => {
     );
   });
 
-  test("returns parsed JSON", async () => {
+  test("filters response to required fields", async () => {
     const result = await searchYelp("museums", "New York", 5);
-    expect(result).toEqual(mockYelpResponse);
+    expect(result.businesses).toHaveLength(1);
+    const biz = result.businesses[0] as Record<string, unknown>;
+    expect(biz.name).toBe("Central Park Tours");
+    expect(biz.is_closed).toBe(false);
+    expect(biz.review_count).toBe(120);
+    expect(biz.rating).toBe(4.5);
+    expect(biz.categories).toEqual(["Tours"]);
+    expect(biz.location).toEqual({ address1: "123 Central Park W" });
+    expect(biz.hours).toEqual([{ is_open_now: true }]);
+    // extra fields stripped
+    expect(biz.image_url).toBeUndefined();
+    expect(biz.phone).toBeUndefined();
   });
 
   test("throws if YELP_API_KEY is not set", async () => {
