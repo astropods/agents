@@ -77,7 +77,7 @@ describe("getCalendarEvents", () => {
     const [url] = spy.mock.calls[0] as [string];
     expect(url).toContain("calendars/primary/events");
     expect(decodeURIComponent(url)).toContain("2026-05-22T00:00:00Z");
-    expect(decodeURIComponent(url)).toContain("2026-05-22T23:59:59Z");
+    expect(decodeURIComponent(url)).toContain("2026-05-23T00:00:00.000Z");
   });
 
   test("maps items to CalendarEvent array", async () => {
@@ -166,7 +166,7 @@ describe("searchZendeskTickets", () => {
     );
     const [url] = spy.mock.calls[0] as [string];
     expect(url).toContain("company.zendesk.com");
-    expect(url).toContain("search.json");
+    expect(url).toContain("/api/v2/search.json");
   });
 
   test("maps results to ZendeskTicket array", async () => {

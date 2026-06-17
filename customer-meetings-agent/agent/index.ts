@@ -26,6 +26,27 @@ function env(name: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Google token cache — avoids refreshing on every tool call (tokens live 3600s)
+// ---------------------------------------------------------------------------
+
+const TOKEN_TTL_MS = 50 * 60 * 1000; // 50 minutes
+
+let cachedGoogleToken: string | undefined;
+let cachedGoogleTokenAt = 0;
+
+async function getCachedGoogleToken(): Promise<string> {
+  if (!cachedGoogleToken || Date.now() - cachedGoogleTokenAt > TOKEN_TTL_MS) {
+    cachedGoogleToken = await refreshGoogleToken(
+      env("GOOGLE_CLIENT_ID"),
+      env("GOOGLE_CLIENT_SECRET"),
+      env("GOOGLE_REFRESH_TOKEN"),
+    );
+    cachedGoogleTokenAt = Date.now();
+  }
+  return cachedGoogleToken;
+}
+
+// ---------------------------------------------------------------------------
 // Tools
 // ---------------------------------------------------------------------------
 
@@ -41,11 +62,7 @@ const getCalendarEventsTool = createTool({
       .describe("ISO date YYYY-MM-DD to fetch events for. Defaults to today."),
   }),
   execute: async ({ date }: { date?: string }) => {
-    const accessToken = await refreshGoogleToken(
-      env("GOOGLE_CLIENT_ID"),
-      env("GOOGLE_CLIENT_SECRET"),
-      env("GOOGLE_REFRESH_TOKEN"),
-    );
+    const accessToken = await getCachedGoogleToken();
     const events = await getCalendarEvents(
       accessToken,
       env("GOOGLE_CALENDAR_ID"),
@@ -160,8 +177,11 @@ ready
 
 function postToSlack(channelId: string, body: string): void {
   if (!conv) {
-    console.warn("[messaging] bidi stream not ready, dropping message");
-    return;
+    const err = new Error(
+      "[messaging] bidi stream not ready — message not delivered",
+    );
+    console.error(err.message);
+    throw err;
   }
   conv.sendAgentResponse({
     conversationId: channelId,
@@ -185,6 +205,9 @@ async function runDailyBrief(): Promise<void> {
   if (running.has(name)) return;
   running.add(name);
   try {
+    // Ensure the gRPC stream is connected before generating — prevents the
+    // brief from being silently dropped if the cron fires during startup backoff.
+    await ready;
     const result = await agent.generate(
       "Generate the daily pre-meeting customer brief for today.",
       {

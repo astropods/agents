@@ -66,7 +66,9 @@ export async function getCalendarEvents(
 ): Promise<CalendarEvent[]> {
   const d = date ?? new Date().toISOString().split("T")[0];
   const timeMin = `${d}T00:00:00Z`;
-  const timeMax = `${d}T23:59:59Z`;
+  const nextDay = new Date(`${d}T00:00:00Z`);
+  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+  const timeMax = nextDay.toISOString();
   const params = new URLSearchParams({
     timeMin,
     timeMax,
@@ -114,9 +116,9 @@ export async function searchZendeskTickets(
   query: string,
 ): Promise<ZendeskTicket[]> {
   const base = zendeskUrl.replace(/\/+$/, "");
-  const searchQuery = `type:ticket status:open ${query}`;
+  const searchQuery = `type:ticket status:open "${query}"`;
   const res = await fetch(
-    `${base}/search.json?query=${encodeURIComponent(searchQuery)}`,
+    `${base}/api/v2/search.json?query=${encodeURIComponent(searchQuery)}`,
     {
       headers: {
         Authorization: `Basic ${buildZendeskAuth(agentEmail, apiKey)}`,
