@@ -11,6 +11,7 @@ import { z } from "zod";
 import {
   buildZendeskAuth,
   buildZendeskBase,
+  isTimestampFresh,
   parseWebhookPayload,
   verifyZendeskSignature,
 } from "./utils";
@@ -265,6 +266,10 @@ Status meanings:
 - pending: waiting on the customer
 - solved: customer is happy with the resolution`;
 
+// In-memory storage: conversation context is scoped to the current process.
+// Each webhook event is self-contained so this is fine for triage processing.
+// For persistent multi-turn Slack/web chat, replace ":memory:" with a
+// platform-provided LibSQL URL via the Astropods deploy config.
 const memory = new Memory({
   storage: new LibSQLStore({ id: "memory", url: ":memory:" }),
 });
@@ -308,6 +313,9 @@ Bun.serve({
 
     const sig = req.headers.get("x-zendesk-webhook-signature") ?? "";
     const ts = req.headers.get("x-zendesk-webhook-signature-timestamp") ?? "";
+    if (!isTimestampFresh(ts)) {
+      return new Response("Unauthorized", { status: 401 });
+    }
     if (!verifyZendeskSignature(rawBody, ts, sig, secret)) {
       return new Response("Unauthorized", { status: 401 });
     }
@@ -317,18 +325,32 @@ Bun.serve({
       return new Response("Invalid JSON", { status: 400 });
     }
 
-    // Respond immediately to Zendesk, process async
+    const p = payload as { detail?: { id?: string } };
+    const ticketId = p.detail?.id ?? "(unknown)";
+
+    // Respond immediately to Zendesk, process async.
+    // NOTE: failures are logged but not retried — check logs for entries with
+    // event "webhook.failed" to identify dropped tickets.
     agent
       .generate(
         `Zendesk webhook received:\n\n${JSON.stringify(payload, null, 2)}`,
       )
       .then((result) =>
-        console.log("Webhook processed:", result.text?.slice(0, 200)),
+        console.log(
+          JSON.stringify({
+            event: "webhook.processed",
+            ticket_id: ticketId,
+            summary: result.text?.slice(0, 200),
+          }),
+        ),
       )
       .catch((err) =>
         console.error(
-          "Agent error:",
-          err instanceof Error ? err.message : String(err),
+          JSON.stringify({
+            event: "webhook.failed",
+            ticket_id: ticketId,
+            error: err instanceof Error ? err.message : String(err),
+          }),
         ),
       );
 

@@ -5,6 +5,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 // ---------------------------------------------------------------------------
 
 export function buildZendeskBase(subdomain: string): string {
+  if (!/^[a-z0-9-]+$/i.test(subdomain)) {
+    throw new Error(`Invalid Zendesk subdomain: "${subdomain}"`);
+  }
   return `https://${subdomain}.zendesk.com/api/v2`;
 }
 
@@ -36,6 +39,24 @@ export function verifyZendeskSignature(
     // timingSafeEqual throws if buffers differ in length
     return false;
   }
+}
+
+/**
+ * Returns true when the timestamp is within maxAgeSeconds of now.
+ * Accepts epoch seconds as a numeric string (e.g. "1700000000") or any
+ * string parseable by Date (e.g. ISO 8601).  Returns false for unparseable
+ * input so callers can safely reject the request.
+ */
+export function isTimestampFresh(
+  timestamp: string,
+  maxAgeSeconds = 300,
+): boolean {
+  const parsed = Number(timestamp);
+  const epochSec = Number.isNaN(parsed)
+    ? new Date(timestamp).getTime() / 1000
+    : parsed;
+  if (Number.isNaN(epochSec)) return false;
+  return Math.abs(Date.now() / 1000 - epochSec) <= maxAgeSeconds;
 }
 
 // ---------------------------------------------------------------------------
