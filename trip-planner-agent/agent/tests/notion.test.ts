@@ -4,14 +4,19 @@ import {
   createNotionTripPlanTemplate,
 } from "../tools/notion.js";
 
-function makeFetchSequence(responses: unknown[]): typeof fetch {
+function makeFetchSequence(
+  responses: unknown[],
+  failAt?: number, // 0-indexed call index that should return ok: false
+): typeof fetch {
   let call = 0;
   return mock(() => {
-    const body = responses[call++];
+    const idx = call++;
+    const body = responses[idx];
+    const ok = idx !== failAt;
     return Promise.resolve({
-      ok: true,
+      ok,
       json: () => Promise.resolve(body),
-      text: () => Promise.resolve(""),
+      text: () => Promise.resolve(`error at call ${idx}`),
     } as Response) as unknown as Response;
   }) as unknown as typeof fetch;
 }
@@ -97,6 +102,30 @@ describe("createNotionTripPlanTemplate", () => {
         }) => b.bulleted_list_item.rich_text[0].text.content,
       );
     expect(itemTexts).toEqual(["Passport", "Camera"]);
+  });
+
+  test("throws on create page error (call 1 fails)", async () => {
+    global.fetch = makeFetchSequence([{}, {}, {}], 0);
+    await expect(
+      createNotionTripPlanTemplate("Paris Trip", ["Passport"]),
+    ).rejects.toThrow("Notion create page error");
+  });
+
+  test("throws on create database error, leaving orphaned page (call 2 fails)", async () => {
+    global.fetch = makeFetchSequence([{ id: "orphaned-page" }, {}, {}], 1);
+    await expect(
+      createNotionTripPlanTemplate("Paris Trip", ["Passport"]),
+    ).rejects.toThrow("Notion create database error");
+  });
+
+  test("throws on packing list append error (call 3 fails)", async () => {
+    global.fetch = makeFetchSequence(
+      [{ id: "trip-page-id" }, { id: "db-id" }, {}],
+      2,
+    );
+    await expect(
+      createNotionTripPlanTemplate("Paris Trip", ["Passport"]),
+    ).rejects.toThrow("Notion add packing list error");
   });
 
   test("throws if NOTION_BEARER_TOKEN is not set", async () => {
@@ -186,6 +215,26 @@ describe("addWeatherToNotionDatabase", () => {
       "Seafood",
     );
     expect((result as { id: string }).id).toBe("entry-id");
+  });
+
+  test("throws on Notion API error", async () => {
+    global.fetch = mock(() =>
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({}),
+        text: () => Promise.resolve("Unauthorized"),
+      } as Response),
+    ) as unknown as typeof fetch;
+    await expect(
+      addWeatherToNotionDatabase(
+        "db-id",
+        "Monday",
+        "2025-06-02",
+        "Sunny",
+        "Beach",
+        "Seafood",
+      ),
+    ).rejects.toThrow("Notion add entry error");
   });
 
   test("throws if NOTION_BEARER_TOKEN is not set", async () => {

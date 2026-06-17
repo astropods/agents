@@ -1,15 +1,13 @@
-export function getTodaysDate(): { date: string; day_of_week: string } {
+export function getTodaysDate(timezone?: string): {
+  date: string;
+  day_of_week: string;
+} {
   const now = new Date();
-  const date = now.toISOString().split("T")[0];
-  const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  const day_of_week = days[now.getUTCDay()];
+  const tz = timezone ?? "UTC";
+  const date = now.toLocaleDateString("sv", { timeZone: tz }); // sv locale → YYYY-MM-DD
+  const day_of_week = now.toLocaleDateString("en-US", {
+    timeZone: tz,
+    weekday: "long",
+  });
   return { date, day_of_week };
 }

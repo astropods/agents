@@ -21,9 +21,17 @@ import { searchYelp } from "./tools/yelp";
 const getTodaysDateTool = createTool({
   id: "get_todays_date",
   description:
-    "Returns today's date and day of week. Use this to determine whether trip dates are in the past (use historical weather) or future (use forecast).",
-  inputSchema: z.object({}),
-  execute: async () => JSON.stringify(getTodaysDate()),
+    "Returns today's date and day of week. Use this to determine whether trip dates are in the past (use historical weather) or future (use forecast). Pass the destination IANA timezone (e.g. 'America/New_York') to get the correct local date near midnight.",
+  inputSchema: z.object({
+    timezone: z
+      .string()
+      .optional()
+      .describe(
+        "IANA timezone string for the destination (e.g. 'America/New_York', 'Europe/Paris'). Defaults to UTC.",
+      ),
+  }),
+  execute: async ({ timezone }: { timezone?: string }) =>
+    JSON.stringify(getTodaysDate(timezone)),
 });
 
 const getWeatherForecastTool = createTool({
@@ -179,7 +187,7 @@ const agent = new Agent({
   name: "Trip Planner",
   instructions: `You are a trip planning agent. Use the tools available to you to plan a trip and fulfill the user request. Make sure to use all info to account for how to best answer their question.
 
-IMPORTANT: Before any date reasoning, comparisons, or deciding whether to use forecast vs historical weather, you MUST first call get_todays_date to determine today's date. Never assume or infer the current date from your training knowledge.`,
+IMPORTANT: Before any date reasoning, comparisons, or deciding whether to use forecast vs historical weather, you MUST first call get_todays_date to determine today's date. Pass the destination's IANA timezone (e.g. 'America/New_York', 'Europe/Paris', 'Asia/Tokyo') so the date is correct near midnight. Never assume or infer the current date from your training knowledge.`,
   model: "openai/gpt-4.1",
   memory,
   tools: {

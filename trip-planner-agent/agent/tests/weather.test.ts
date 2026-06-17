@@ -56,6 +56,14 @@ describe("getWeatherForecast", () => {
       getWeatherForecast(0, 0, "2025-06-01", "2025-06-02"),
     ).rejects.toThrow("Weather forecast API error: 500");
   });
+
+  test("URL-encodes date parameters to prevent query string injection", async () => {
+    await getWeatherForecast(0, 0, "2025-06-01&malicious=true", "2025-06-02");
+    const url = (global.fetch as unknown as ReturnType<typeof mock>).mock
+      .calls[0][0] as string;
+    expect(url).toContain("start_date=2025-06-01%26malicious%3Dtrue");
+    expect(url).not.toContain("&malicious=true");
+  });
 });
 
 describe("getHistoricalWeather", () => {
@@ -64,6 +72,27 @@ describe("getHistoricalWeather", () => {
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining("archive-api.open-meteo.com/v1/archive"),
     );
+  });
+
+  test("includes required query params", async () => {
+    await getHistoricalWeather(48.8566, 2.3522, "2024-06-01", "2024-06-03");
+    const url = (global.fetch as unknown as ReturnType<typeof mock>).mock
+      .calls[0][0] as string;
+    expect(url).toContain("latitude=48.8566");
+    expect(url).toContain("longitude=2.3522");
+    expect(url).toContain("start_date=2024-06-01");
+    expect(url).toContain("end_date=2024-06-03");
+    expect(url).toContain("temperature_unit=fahrenheit");
+  });
+
+  test("returns parsed JSON response", async () => {
+    const result = await getHistoricalWeather(
+      48.8566,
+      2.3522,
+      "2024-06-01",
+      "2024-06-02",
+    );
+    expect(result).toEqual(mockWeatherData);
   });
 
   test("throws on non-ok response", async () => {
