@@ -338,6 +338,12 @@ Bun.serve({
       )
       .catch((err) =>
         console.error(
+          "Agent error processing webhook:",
+          JSON.stringify(payload),
+          err instanceof Error ? err.message : String(err),
+        ),
+      );
+        console.error(
           "Agent error:",
           err instanceof Error ? err.message : String(err),
         ),
