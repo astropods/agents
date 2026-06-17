@@ -119,6 +119,21 @@ describe("extractSlackIds", () => {
       extractSlackIds("https://workspace.slack.com/archives/C01234/p123456789"),
     ).toBeNull();
   });
+
+  test("parses a lowercase DM channel ID", () => {
+    const result = extractSlackIds(
+      "https://workspace.slack.com/archives/d01234abcd/p1234567890123456",
+    );
+    expect(result?.channel).toBe("d01234abcd");
+    expect(result?.ts).toBe("1234567890.123456");
+  });
+
+  test("parses a mixed-case channel ID", () => {
+    const result = extractSlackIds(
+      "https://workspace.slack.com/archives/D01234AbCd/p1234567890123456",
+    );
+    expect(result?.channel).toBe("D01234AbCd");
+  });
 });
 
 // ---------------------------------------------------------------------------

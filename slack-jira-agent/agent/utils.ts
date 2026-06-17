@@ -64,7 +64,7 @@ export function buildBasicAuthHeader(username: string, apiKey: string): string {
 export function extractSlackIds(
   text: string,
 ): { channel: string; ts: string } | null {
-  const match = text.match(/\/archives\/([A-Z0-9]+)\/p(\d{16})/);
+  const match = text.match(/\/archives\/([A-Za-z0-9]+)\/p(\d{16})/i);
   if (!match) return null;
   const raw = match[2]; // 16 digits: 10-digit unix seconds + 6-digit microseconds
   return { channel: match[1], ts: `${raw.slice(0, 10)}.${raw.slice(10)}` };

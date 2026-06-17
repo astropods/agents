@@ -36,6 +36,12 @@ inputs:
     datatype: string
     description: "Jira project key (e.g. 'PROJ')"
     display-as: short-text
+  SLACK_BOT_TOKEN:
+    name: SLACK_BOT_TOKEN
+    datatype: string
+    secret: true
+    description: "Slack Bot OAuth token (xoxb-...) — required for fetching Slack thread content when a thread URL is provided"
+    display-as: short-text
 dev:
   interfaces:
     messaging:
