@@ -95,14 +95,37 @@ describe("fetchComments", () => {
     const comments = await fetchComments(octokit, "owner", "repo", 7);
     expect(comments).toEqual([]);
   });
+
+  test("fetches multiple pages when first page returns 100 items", async () => {
+    const page1 = Array.from({ length: 100 }, (_, i) => ({
+      id: i + 1,
+      body: `Comment ${i + 1}`,
+    }));
+    const page2 = [{ id: 101, body: "Last comment" }];
+    const jsonResponse = (body: unknown) =>
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    const spy = spyOn(global, "fetch")
+      .mockResolvedValueOnce(jsonResponse(page1))
+      .mockResolvedValueOnce(jsonResponse(page2));
+    spies.push(spy);
+    const octokit = new Octokit();
+    const comments = await fetchComments(octokit, "owner", "repo", 7);
+    expect(comments).toHaveLength(101);
+    expect(comments[0]).toBe("Comment 1");
+    expect(comments[100]).toBe("Last comment");
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("fetchIssues", () => {
   test("excludes pull requests from results", async () => {
     const spy = mockFetch([
-      { number: 1, title: "Bug", pull_request: undefined },
+      { number: 1, title: "Bug" },
       { number: 2, title: "A PR", pull_request: { url: "..." } },
-      { number: 3, title: "Feature", pull_request: undefined },
+      { number: 3, title: "Feature" },
     ]);
     spies.push(spy);
     const octokit = new Octokit();
@@ -115,7 +138,6 @@ describe("fetchIssues", () => {
       Array.from({ length: 5 }, (_, i) => ({
         number: i + 1,
         title: `Issue ${i + 1}`,
-        pull_request: undefined,
       })),
     );
     spies.push(spy);
@@ -130,6 +152,29 @@ describe("fetchIssues", () => {
     const octokit = new Octokit();
     const issues = await fetchIssues(octokit, "owner", "repo", 10);
     expect(issues).toHaveLength(0);
+  });
+
+  test("fetches multiple pages when first page returns 100 items", async () => {
+    const page1 = Array.from({ length: 100 }, (_, i) => ({
+      number: i + 1,
+      title: `Issue ${i + 1}`,
+    }));
+    const page2 = [{ number: 101, title: "Issue 101" }];
+    const jsonResponse = (body: unknown) =>
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    const spy = spyOn(global, "fetch")
+      .mockResolvedValueOnce(jsonResponse(page1))
+      .mockResolvedValueOnce(jsonResponse(page2));
+    spies.push(spy);
+    const octokit = new Octokit();
+    const issues = await fetchIssues(octokit, "owner", "repo", 200);
+    expect(issues).toHaveLength(101);
+    expect(issues[0].number).toBe(1);
+    expect(issues[100].number).toBe(101);
+    expect(spy).toHaveBeenCalledTimes(2);
   });
 });
 
