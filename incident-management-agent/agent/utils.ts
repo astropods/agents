@@ -64,20 +64,32 @@ export async function fetchIncidentsFromNotion(
   apiKey: string,
   databaseId: string,
 ): Promise<IncidentRecord[]> {
-  const res = await fetch(
-    `https://api.notion.com/v1/databases/${validateNotionId(databaseId)}/query`,
-    {
-      method: "POST",
-      headers: notionHeaders(apiKey),
-      body: JSON.stringify({}),
-    },
-  );
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Notion API error: ${res.status} — ${body}`);
-  }
-  const data = (await res.json()) as { results: NotionPage[] };
-  return data.results.map((page) => ({
+  const allResults: NotionPage[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const res = await fetch(
+      `https://api.notion.com/v1/databases/${validateNotionId(databaseId)}/query`,
+      {
+        method: "POST",
+        headers: notionHeaders(apiKey),
+        body: JSON.stringify(cursor ? { start_cursor: cursor } : {}),
+      },
+    );
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Notion API error: ${res.status} — ${body}`);
+    }
+    const data = (await res.json()) as {
+      results: NotionPage[];
+      has_more: boolean;
+      next_cursor: string | null;
+    };
+    allResults.push(...data.results);
+    cursor = data.has_more && data.next_cursor ? data.next_cursor : undefined;
+  } while (cursor);
+
+  return allResults.map((page) => ({
     page_id: page.id,
     name: page.properties.Name?.title?.[0]?.plain_text ?? "",
     status: page.properties.Status?.select?.name ?? "",
@@ -144,6 +156,7 @@ export async function createIncidentInNotion(
   databaseId: string,
   data: CreateIncidentData,
 ): Promise<{ page_id: string }> {
+  validateNotionId(databaseId);
   const res = await fetch("https://api.notion.com/v1/pages", {
     method: "POST",
     headers: notionHeaders(apiKey),
@@ -195,38 +208,33 @@ export async function updateIncidentInNotion(
     throw new Error(`Notion API error: ${propsRes.status} — ${body}`);
   }
 
-  // Fetch existing child blocks
-  const blocksRes = await fetch(
-    `https://api.notion.com/v1/blocks/${pageId}/children`,
-    {
+  // Fetch ALL existing child blocks (paginated)
+  const allBlocks: { id: string }[] = [];
+  let blockCursor: string | undefined;
+  do {
+    const url = new URL(`https://api.notion.com/v1/blocks/${pageId}/children`);
+    if (blockCursor) url.searchParams.set("start_cursor", blockCursor);
+    const blocksRes = await fetch(url.toString(), {
       headers: notionHeaders(apiKey),
-    },
-  );
-  if (!blocksRes.ok) {
-    const body = await blocksRes.text();
-    throw new Error(`Notion API error: ${blocksRes.status} — ${body}`);
-  }
-  const blocksData = (await blocksRes.json()) as { results: { id: string }[] };
+    });
+    if (!blocksRes.ok) {
+      const body = await blocksRes.text();
+      throw new Error(`Notion API error: ${blocksRes.status} — ${body}`);
+    }
+    const blocksData = (await blocksRes.json()) as {
+      results: { id: string }[];
+      has_more: boolean;
+      next_cursor: string | null;
+    };
+    allBlocks.push(...blocksData.results);
+    blockCursor =
+      blocksData.has_more && blocksData.next_cursor
+        ? blocksData.next_cursor
+        : undefined;
+  } while (blockCursor);
 
-  // Archive existing blocks
-  await Promise.all(
-    blocksData.results.map(async (block) => {
-      const archiveRes = await fetch(
-        `https://api.notion.com/v1/blocks/${block.id}`,
-        {
-          method: "PATCH",
-          headers: notionHeaders(apiKey),
-          body: JSON.stringify({ archived: true }),
-        },
-      );
-      if (!archiveRes.ok) {
-        const body = await archiveRes.text();
-        throw new Error(`Notion API error: ${archiveRes.status} — ${body}`);
-      }
-    }),
-  );
-
-  // Append fresh summary blocks
+  // Append new summary blocks FIRST — if archiving fails after this, the page
+  // has duplicate content (old + new) rather than no content at all.
   const appendRes = await fetch(
     `https://api.notion.com/v1/blocks/${pageId}/children`,
     {
@@ -245,6 +253,24 @@ export async function updateIncidentInNotion(
     const body = await appendRes.text();
     throw new Error(`Notion API error: ${appendRes.status} — ${body}`);
   }
+
+  // Archive old blocks (IDs collected before append, so new blocks are safe)
+  await Promise.all(
+    allBlocks.map(async (block) => {
+      const archiveRes = await fetch(
+        `https://api.notion.com/v1/blocks/${block.id}`,
+        {
+          method: "PATCH",
+          headers: notionHeaders(apiKey),
+          body: JSON.stringify({ archived: true }),
+        },
+      );
+      if (!archiveRes.ok) {
+        const body = await archiveRes.text();
+        throw new Error(`Notion API error: ${archiveRes.status} — ${body}`);
+      }
+    }),
+  );
 
   return { page_id: pageId };
 }

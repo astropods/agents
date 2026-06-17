@@ -52,7 +52,7 @@ Unit tests cover the Notion API helpers (fetch, create, update) and `validateNot
 ## Project structure
 
 ```
-incident-manager-agent/
+incident-management-agent/
 ├── agent/
 │   ├── index.ts        # Agent definition, tools, and Slack webhook server
 │   ├── utils.ts        # Notion API helpers and type definitions

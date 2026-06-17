@@ -107,6 +107,59 @@ describe("fetchIncidentsFromNotion", () => {
     ]);
   });
 
+  test("fetches all pages when has_more is true", async () => {
+    const page1 = {
+      id: "page-1",
+      properties: {
+        Name: { title: [{ plain_text: "Incident 1" }] },
+        Status: { select: { name: "In progress" } },
+        "Severity Level": { select: { name: "Low" } },
+        "Incident Date": { date: { start: "2026-05-20" } },
+        "Slack Channel ID": { rich_text: [{ plain_text: "C1" }] },
+      },
+    };
+    const page2 = {
+      id: "page-2",
+      properties: {
+        Name: { title: [{ plain_text: "Incident 2" }] },
+        Status: { select: { name: "Resolved" } },
+        "Severity Level": { select: { name: "High" } },
+        "Incident Date": { date: { start: "2026-05-21" } },
+        "Slack Channel ID": { rich_text: [{ plain_text: "C2" }] },
+      },
+    };
+    const spy = spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            results: [page1],
+            has_more: true,
+            next_cursor: "cur1",
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            results: [page2],
+            has_more: false,
+            next_cursor: null,
+          }),
+          { status: 200 },
+        ),
+      );
+    spies.push(spy);
+    const result = await fetchIncidentsFromNotion("secret", VALID_DB_ID);
+    expect(result).toHaveLength(2);
+    expect(result[0].name).toBe("Incident 1");
+    expect(result[1].name).toBe("Incident 2");
+    expect(spy).toHaveBeenCalledTimes(2);
+    // Second call passes start_cursor in body
+    const [, opts] = spy.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(opts.body as string)).toEqual({ start_cursor: "cur1" });
+  });
+
   test("throws on non-ok response", async () => {
     const spy = spyOn(global, "fetch").mockResolvedValue(
       new Response("Unauthorized", { status: 401 }),
@@ -156,6 +209,21 @@ describe("createIncidentInNotion", () => {
       slack_channel_id: "C123",
     });
     expect(result).toEqual({ page_id: "new-page-id" });
+  });
+
+  test("throws on invalid database ID", async () => {
+    await expect(
+      createIncidentInNotion("secret", "db-123", {
+        name: "x",
+        incident_date: "2026-05-20",
+        status: "In progress",
+        severity_level: "Low",
+        detail_summary: "x",
+        engineering_update: "x",
+        support_update: "x",
+        slack_channel_id: "C1",
+      }),
+    ).rejects.toThrow("Invalid Notion ID");
   });
 
   test("throws on non-ok response", async () => {
@@ -293,9 +361,18 @@ describe("updateIncidentInNotion", () => {
       engineering_update: "Fixed",
       support_update: "All clear",
     });
-    // 5 calls: PATCH props, GET blocks, PATCH block-a, PATCH block-b, PATCH children (append)
+    // 5 calls: PATCH props, GET blocks, PATCH append (new blocks), PATCH block-a, PATCH block-b
     expect(spy).toHaveBeenCalledTimes(5);
-    const [archiveAUrl, archiveAInit] = spy.mock.calls[2] as [
+    // Call 2: append new blocks first
+    const [appendUrl, appendInit] = spy.mock.calls[2] as [string, RequestInit];
+    expect(appendUrl).toBe(
+      `https://api.notion.com/v1/blocks/${VALID_PAGE_ID}/children`,
+    );
+    expect((appendInit as RequestInit).method).toBe("PATCH");
+    const appendBody = JSON.parse((appendInit as RequestInit).body as string);
+    expect(appendBody.children).toHaveLength(6);
+    // Calls 3 & 4: archive old blocks after new ones are safely appended
+    const [archiveAUrl, archiveAInit] = spy.mock.calls[3] as [
       string,
       RequestInit,
     ];
@@ -303,12 +380,49 @@ describe("updateIncidentInNotion", () => {
     expect(JSON.parse((archiveAInit as RequestInit).body as string)).toEqual({
       archived: true,
     });
-    const [appendUrl, appendInit] = spy.mock.calls[4] as [string, RequestInit];
-    expect(appendUrl).toBe(
-      `https://api.notion.com/v1/blocks/${VALID_PAGE_ID}/children`,
-    );
-    expect((appendInit as RequestInit).method).toBe("PATCH");
-    const appendBody = JSON.parse((appendInit as RequestInit).body as string);
-    expect(appendBody.children).toHaveLength(6);
+  });
+
+  test("fetches all block pages when has_more is true", async () => {
+    const spy = spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        // PATCH props
+        new Response(JSON.stringify({ id: VALID_PAGE_ID }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        // GET blocks page 1
+        new Response(
+          JSON.stringify({
+            results: [{ id: "block-a" }],
+            has_more: true,
+            next_cursor: "cur1",
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        // GET blocks page 2
+        new Response(
+          JSON.stringify({
+            results: [{ id: "block-b" }],
+            has_more: false,
+            next_cursor: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    spies.push(spy);
+    await updateIncidentInNotion("secret", VALID_PAGE_ID, {
+      status: "Done",
+      severity_level: "High",
+      detail_summary: "x",
+      engineering_update: "x",
+      support_update: "x",
+    });
+    // 6 calls: PATCH props, GET blocks p1, GET blocks p2, PATCH block-a, PATCH block-b, PATCH append
+    expect(spy).toHaveBeenCalledTimes(6);
+    // Second GET uses start_cursor
+    const [blocksUrl2] = spy.mock.calls[2] as [string];
+    expect(blocksUrl2).toContain("start_cursor=cur1");
   });
 });

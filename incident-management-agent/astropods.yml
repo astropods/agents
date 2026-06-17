@@ -26,6 +26,12 @@ inputs:
     secret: true
     description: "Notion database ID holding the incident log"
     display-as: short-text
+  SLACK_SIGNING_SECRET:
+    name: SLACK_SIGNING_SECRET
+    datatype: string
+    secret: true
+    description: "Slack app signing secret — used to verify incoming webhook request signatures"
+    display-as: short-text
 
 dev:
   interfaces:

@@ -14,7 +14,7 @@ capabilities:
 repository:
   type: github
   url: https://github.com/astropods/agents
-  directory: incident-manager-agent
+  directory: incident-management-agent
 integrations:
   - OpenAI
   - Slack (via built-in adapter)
