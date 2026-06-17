@@ -369,7 +369,63 @@ describe("createNotionPage", () => {
     await createNotionPage("key", VALID_PARENT_ID, "Title", longContent);
     const [, opts] = spy.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(opts.body as string) as { children: unknown[] };
-    expect(body.children.length).toBe(3); // 5000 / 2000 = 3 chunks
+    expect(body.children.length).toBe(3); // 5000 / 2000 = 3 chunks, all within 100-block limit
+  });
+
+  test("appends blocks in batches when content exceeds 100-block limit", async () => {
+    // 105 blocks × 2000 chars — first 100 in page creation, 5 remaining in one PATCH
+    const spy = spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ id: "page-abc", url: "https://notion.so/page-abc" }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ results: [] }), { status: 200 }),
+      );
+    spies.push(spy);
+    const hugeContent = "x".repeat(105 * 2000);
+    const result = await createNotionPage(
+      "key",
+      VALID_PARENT_ID,
+      "Title",
+      hugeContent,
+    );
+    expect(result.page_url).toBe("https://notion.so/page-abc");
+    expect(spy).toHaveBeenCalledTimes(2);
+    // First call: POST /v1/pages with 100 blocks
+    const [createUrl, createOpts] = spy.mock.calls[0] as [string, RequestInit];
+    expect(createUrl).toBe("https://api.notion.com/v1/pages");
+    const createBody = JSON.parse(createOpts.body as string) as {
+      children: unknown[];
+    };
+    expect(createBody.children.length).toBe(100);
+    // Second call: PATCH /v1/blocks/{id}/children with remaining 5 blocks
+    const [appendUrl, appendOpts] = spy.mock.calls[1] as [string, RequestInit];
+    expect(appendUrl).toBe(
+      "https://api.notion.com/v1/blocks/page-abc/children",
+    );
+    const appendBody = JSON.parse(appendOpts.body as string) as {
+      children: unknown[];
+    };
+    expect(appendBody.children.length).toBe(5);
+  });
+
+  test("throws when block append fails", async () => {
+    const spy = spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ id: "page-abc", url: "https://notion.so/page-abc" }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response("Rate limited", { status: 429 }));
+    spies.push(spy);
+    const hugeContent = "x".repeat(201 * 2000);
+    await expect(
+      createNotionPage("key", VALID_PARENT_ID, "Title", hugeContent),
+    ).rejects.toThrow("Notion block append failed: 429");
   });
 
   test("throws on non-ok response", async () => {

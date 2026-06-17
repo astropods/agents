@@ -160,18 +160,20 @@ export async function createZendeskTicket(
 // Notion
 // ---------------------------------------------------------------------------
 
+const NOTION_BLOCK_LIMIT = 100;
+
 export async function createNotionPage(
   apiKey: string,
   parentPageId: string,
   title: string,
   content: string,
 ): Promise<NotionPageResult> {
-  // Split into 2000-char chunks (Notion API rich_text block limit)
+  // Split into 2000-char chunks (Notion API rich_text block limit per block)
   const chunks: string[] = [];
   for (let i = 0; i < content.length; i += 2000) {
     chunks.push(content.slice(i, i + 2000));
   }
-  const children = chunks.map((chunk) => ({
+  const allBlocks = chunks.map((chunk) => ({
     object: "block",
     type: "paragraph",
     paragraph: {
@@ -179,13 +181,16 @@ export async function createNotionPage(
     },
   }));
 
+  const notionHeaders = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+    "Notion-Version": "2022-06-28",
+  };
+
+  // Notion limits page creation to 100 children — create with first batch
   const res = await fetch("https://api.notion.com/v1/pages", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "Notion-Version": "2022-06-28",
-    },
+    headers: notionHeaders,
     body: JSON.stringify({
       parent: { page_id: validateNotionPageId(parentPageId) },
       properties: {
@@ -193,7 +198,7 @@ export async function createNotionPage(
           title: [{ type: "text", text: { content: title } }],
         },
       },
-      children,
+      children: allBlocks.slice(0, NOTION_BLOCK_LIMIT),
     }),
   });
   if (!res.ok) {
@@ -201,5 +206,29 @@ export async function createNotionPage(
     throw new Error(`Notion page creation failed: ${res.status} — ${body}`);
   }
   const data = (await res.json()) as { id: string; url: string };
+
+  // Append remaining blocks in batches of 100
+  for (
+    let i = NOTION_BLOCK_LIMIT;
+    i < allBlocks.length;
+    i += NOTION_BLOCK_LIMIT
+  ) {
+    const batch = allBlocks.slice(i, i + NOTION_BLOCK_LIMIT);
+    const appendRes = await fetch(
+      `https://api.notion.com/v1/blocks/${data.id}/children`,
+      {
+        method: "PATCH",
+        headers: notionHeaders,
+        body: JSON.stringify({ children: batch }),
+      },
+    );
+    if (!appendRes.ok) {
+      const body = await appendRes.text();
+      throw new Error(
+        `Notion block append failed: ${appendRes.status} — ${body}`,
+      );
+    }
+  }
+
   return { page_url: data.url };
 }

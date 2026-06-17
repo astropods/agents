@@ -67,7 +67,7 @@ curl -X POST https://<agent-url>:3000 \
 | `ZOOM_CLIENT_ID` | Zoom marketplace app client ID |
 | `ZOOM_CLIENT_SECRET` | Zoom marketplace app client secret |
 | `ZOOM_REFRESH_TOKEN` | OAuth2 refresh token — obtained by completing Zoom OAuth authorization |
-| `ZENDESK_URL` | Zendesk subdomain (the `{url}` in `https://{url}.zendesk.com`) |
+| `ZENDESK_SUBDOMAIN` | Zendesk subdomain (the `{subdomain}` in `https://{subdomain}.zendesk.com`) |
 | `ZENDESK_AGENT_EMAIL` | Zendesk agent email for API auth |
 | `ZENDESK_API_KEY` | Zendesk API token |
 | `NOTION_API_KEY` | Notion internal integration secret — from [notion.so/my-integrations](https://www.notion.so/my-integrations) |

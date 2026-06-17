@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { serve } from "@astropods/adapter-core";
 import { MastraAdapter } from "@astropods/adapter-mastra";
 import { Agent } from "@mastra/core/agent";
@@ -25,10 +26,32 @@ function env(name: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Zoom token cache — updated on each successful refresh to handle rotation
+// Zoom token cache — serialised with a pending-promise lock to prevent
+// concurrent refreshes from racing and invalidating each other's tokens.
 // ---------------------------------------------------------------------------
 
 let zoomRefreshToken: string | undefined;
+let pendingTokenRefresh: Promise<string> | null = null;
+
+function getZoomAccessToken(): Promise<string> {
+  if (!pendingTokenRefresh) {
+    pendingTokenRefresh = refreshZoomToken(
+      env("ZOOM_CLIENT_ID"),
+      env("ZOOM_CLIENT_SECRET"),
+      zoomRefreshToken ?? env("ZOOM_REFRESH_TOKEN"),
+    )
+      .then(({ accessToken, refreshToken }) => {
+        zoomRefreshToken = refreshToken;
+        pendingTokenRefresh = null;
+        return accessToken;
+      })
+      .catch((err) => {
+        pendingTokenRefresh = null;
+        throw err;
+      });
+  }
+  return pendingTokenRefresh;
+}
 
 // ---------------------------------------------------------------------------
 // Tools
@@ -46,12 +69,7 @@ const getZoomTranscriptTool = createTool({
   }),
   execute: async ({ meeting_id }: { meeting_id: string }) => {
     try {
-      const { accessToken, refreshToken } = await refreshZoomToken(
-        env("ZOOM_CLIENT_ID"),
-        env("ZOOM_CLIENT_SECRET"),
-        zoomRefreshToken ?? env("ZOOM_REFRESH_TOKEN"),
-      );
-      zoomRefreshToken = refreshToken;
+      const accessToken = await getZoomAccessToken();
       return getZoomTranscript(accessToken, meeting_id);
     } catch (err) {
       console.error("[get_zoom_transcript] error:", err);
@@ -177,7 +195,13 @@ Bun.serve({
     const secret = process.env.WEBHOOK_SECRET;
     if (secret) {
       const auth = req.headers.get("authorization") ?? "";
-      if (auth !== `Bearer ${secret}`) {
+      const expected = `Bearer ${secret}`;
+      const authBuf = Buffer.from(auth);
+      const expectedBuf = Buffer.from(expected);
+      const valid =
+        authBuf.length === expectedBuf.length &&
+        timingSafeEqual(authBuf, expectedBuf);
+      if (!valid) {
         return new Response("Unauthorized", { status: 401 });
       }
     }

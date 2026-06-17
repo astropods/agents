@@ -44,7 +44,7 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
     </tr>
     <tr>
       <td><a href="./customer-call-follow-up-agent">customer-call-follow-up-agent</a></td>
-      <td>Fetches the Zoom transcript after a sales call, extracts action items, raises Zendesk tickets for issues, creates a Notion call summary page, and returns a formatted action list. Requires <code>ZOOM_CLIENT_ID</code>, <code>ZOOM_CLIENT_SECRET</code>, <code>ZOOM_REFRESH_TOKEN</code>, <code>ZENDESK_URL</code>, <code>ZENDESK_AGENT_EMAIL</code>, <code>ZENDESK_API_KEY</code>, <code>NOTION_API_KEY</code>, <code>NOTION_PARENT_PAGE_ID</code>, and <code>OPENAI_API_KEY</code>.</td>
+      <td>Fetches the Zoom transcript after a sales call, extracts action items, raises Zendesk tickets for issues, creates a Notion call summary page, and returns a formatted action list. Requires <code>ZOOM_CLIENT_ID</code>, <code>ZOOM_CLIENT_SECRET</code>, <code>ZOOM_REFRESH_TOKEN</code>, <code>ZENDESK_SUBDOMAIN</code>, <code>ZENDESK_AGENT_EMAIL</code>, <code>ZENDESK_API_KEY</code>, <code>NOTION_API_KEY</code>, <code>NOTION_PARENT_PAGE_ID</code>, and <code>OPENAI_API_KEY</code>.</td>
     </tr>
     <tr>
       <td><a href="./github-issue-scorer">github-issue-scorer</a></td>

@@ -47,7 +47,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 | `ZOOM_CLIENT_ID` | `ast configure` | Zoom marketplace app client ID — from [Zoom App Marketplace](https://marketplace.zoom.us) |
 | `ZOOM_CLIENT_SECRET` | `ast configure` | Zoom marketplace app client secret |
 | `ZOOM_REFRESH_TOKEN` | `ast configure` | OAuth2 refresh token from Zoom authorization |
-| `ZENDESK_URL` | `ast configure` | Zendesk subdomain (e.g. `mycompany`) |
+| `ZENDESK_SUBDOMAIN` | `ast configure` | Zendesk subdomain (e.g. `mycompany`) |
 | `ZENDESK_AGENT_EMAIL` | `ast configure` | Zendesk agent email for API auth |
 | `ZENDESK_API_KEY` | `ast configure` | Zendesk API token — from Zendesk Admin > Apps & Integrations > API |
 | `NOTION_API_KEY` | `ast configure` | Notion internal integration secret — from [notion.so/my-integrations](https://www.notion.so/my-integrations) |
