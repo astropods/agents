@@ -5,6 +5,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 // ---------------------------------------------------------------------------
 
 export function buildZendeskBase(subdomain: string): string {
+ if (!/^[a-zA-Z0-9][a-zA-Z0-9-]*$/.test(subdomain)) {
+   throw new Error(`Invalid Zendesk subdomain: ${subdomain}`);
+ }
+ return `https://${subdomain}.zendesk.com/api/v2`;
+}
   return `https://${subdomain}.zendesk.com/api/v2`;
 }
 
