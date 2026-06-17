@@ -308,6 +308,17 @@ Bun.serve({
 
     const sig = req.headers.get("x-zendesk-webhook-signature") ?? "";
     const ts = req.headers.get("x-zendesk-webhook-signature-timestamp") ?? "";
+
+    // Reject stale webhooks (replay protection)
+    const ageMs = Date.now() - Number(ts) * 1000;
+    if (Number.isNaN(ageMs) || Math.abs(ageMs) > 5 * 60 * 1000) {
+      return new Response("Timestamp out of range", { status: 401 });
+    }
+
+    if (!verifyZendeskSignature(rawBody, ts, sig, secret)) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+    const ts = req.headers.get("x-zendesk-webhook-signature-timestamp") ?? "";
     if (!verifyZendeskSignature(rawBody, ts, sig, secret)) {
       return new Response("Unauthorized", { status: 401 });
     }
