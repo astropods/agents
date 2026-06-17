@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 import {
   buildZendeskAuth,
   buildZendeskBase,
+  isTimestampFresh,
   parseWebhookPayload,
   verifyZendeskSignature,
 } from "./utils";
@@ -67,6 +68,50 @@ describe("verifyZendeskSignature", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// isTimestampFresh
+// ---------------------------------------------------------------------------
+
+describe("isTimestampFresh", () => {
+  test("returns true for a timestamp within 5 minutes", () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    expect(isTimestampFresh(String(nowSec))).toBe(true);
+  });
+
+  test("returns true for a timestamp 4 minutes old", () => {
+    const ts = Math.floor(Date.now() / 1000) - 240;
+    expect(isTimestampFresh(String(ts))).toBe(true);
+  });
+
+  test("returns false for a timestamp older than 5 minutes", () => {
+    const ts = Math.floor(Date.now() / 1000) - 301;
+    expect(isTimestampFresh(String(ts))).toBe(false);
+  });
+
+  test("returns false for a very old epoch timestamp like 1700000000", () => {
+    expect(isTimestampFresh("1700000000")).toBe(false);
+  });
+
+  test("returns true for a recent ISO 8601 string", () => {
+    const iso = new Date().toISOString();
+    expect(isTimestampFresh(iso)).toBe(true);
+  });
+
+  test("returns false for an unparseable string", () => {
+    expect(isTimestampFresh("not-a-timestamp")).toBe(false);
+  });
+
+  test("returns false for an empty string", () => {
+    expect(isTimestampFresh("")).toBe(false);
+  });
+
+  test("respects custom maxAgeSeconds", () => {
+    const ts = Math.floor(Date.now() / 1000) - 10;
+    expect(isTimestampFresh(String(ts), 5)).toBe(false);
+    expect(isTimestampFresh(String(ts), 30)).toBe(true);
+  });
+});
+
 describe("buildZendeskBase", () => {
   test("builds correct Zendesk API base URL", () => {
     expect(buildZendeskBase("mycompany")).toBe(
@@ -78,6 +123,22 @@ describe("buildZendeskBase", () => {
     expect(buildZendeskBase("acme-corp")).toBe(
       "https://acme-corp.zendesk.com/api/v2",
     );
+  });
+
+  test("throws on a subdomain containing a dot", () => {
+    expect(() => buildZendeskBase("evil.com")).toThrow(
+      "Invalid Zendesk subdomain",
+    );
+  });
+
+  test("throws on a subdomain containing a slash", () => {
+    expect(() => buildZendeskBase("evil.com/foo#")).toThrow(
+      "Invalid Zendesk subdomain",
+    );
+  });
+
+  test("throws on an empty subdomain", () => {
+    expect(() => buildZendeskBase("")).toThrow("Invalid Zendesk subdomain");
   });
 });
 
@@ -151,8 +212,7 @@ describe("parseWebhookPayload", () => {
     expect(result.foo).toBe("bar");
   });
 
-  test("passes JSON arrays through as payloads", () => {
-    const result = parseWebhookPayload("[1,2,3]");
-    expect(Array.isArray(result)).toBe(true);
+  test("returns null for JSON arrays", () => {
+    expect(parseWebhookPayload("[1,2,3]")).toBeNull();
   });
 });

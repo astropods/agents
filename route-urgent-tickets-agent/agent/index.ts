@@ -10,6 +10,7 @@ import { z } from "zod";
 import {
   buildZendeskAuth,
   buildZendeskBase,
+  isTimestampFresh,
   parseWebhookPayload,
   verifyZendeskSignature,
 } from "./utils";
@@ -190,6 +191,27 @@ const agent = new Agent({
 new Mastra({ agents: { "route-urgent-tickets-agent": agent } });
 
 // ---------------------------------------------------------------------------
+// Startup env validation
+// ---------------------------------------------------------------------------
+
+const REQUIRED_ENV_VARS = [
+  "ZENDESK_SUBDOMAIN",
+  "ZENDESK_USERNAME",
+  "ZENDESK_API_KEY",
+  "ZENDESK_TICKET_URL",
+  "PAGERDUTY_API_KEY",
+  "PAGERDUTY_FROM_EMAIL",
+  "WEBHOOK_SECRET",
+] as const;
+
+const missing = REQUIRED_ENV_VARS.filter((k) => !process.env[k]);
+if (missing.length > 0) {
+  throw new Error(
+    `Missing required environment variables: ${missing.join(", ")}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Zendesk webhook HTTP server (port 3000)
 // ---------------------------------------------------------------------------
 
@@ -210,6 +232,9 @@ Bun.serve({
 
     const sig = req.headers.get("x-zendesk-webhook-signature") ?? "";
     const ts = req.headers.get("x-zendesk-webhook-signature-timestamp") ?? "";
+    if (!isTimestampFresh(ts)) {
+      return new Response("Unauthorized", { status: 401 });
+    }
     if (!verifyZendeskSignature(rawBody, ts, sig, secret)) {
       return new Response("Unauthorized", { status: 401 });
     }
