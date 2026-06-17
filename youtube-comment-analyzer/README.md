@@ -31,6 +31,7 @@ Send a message with a YouTube video URL or ID:
 | `https://www.youtube.com/watch?v=VIDEO_ID` | Analyse top 100 comments |
 | `https://youtu.be/VIDEO_ID` | Analyse top 100 comments |
 | `https://www.youtube.com/shorts/VIDEO_ID` | Analyse top 100 comments |
+| `https://www.youtube.com/embed/VIDEO_ID` | Analyse top 100 comments |
 | `VIDEO_ID` | Bare 11-character ID |
 | `VIDEO_ID 200` | Analyse up to 200 comments |
 

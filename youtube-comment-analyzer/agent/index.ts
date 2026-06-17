@@ -203,6 +203,7 @@ Supported input formats:
 - https://www.youtube.com/watch?v=VIDEO_ID
 - https://youtu.be/VIDEO_ID
 - https://www.youtube.com/shorts/VIDEO_ID
+- https://www.youtube.com/embed/VIDEO_ID
 - VIDEO_ID (bare 11-character ID)
 - VIDEO_ID 200 (with optional comment limit)`,
   model: "openai/gpt-4o-mini",
