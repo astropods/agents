@@ -71,6 +71,9 @@ export function parseWebhookPayload(text: string): object | null {
     const parsed = JSON.parse(text);
     // Only treat as a webhook payload if it's an object — bare numbers like
     // '12345' are valid JSON but should be handled as ticket IDs instead.
+    if (Array.isArray(parsed)) {
+      return null;
+    }
     if (parsed !== null && typeof parsed === "object") {
       return parsed;
     }

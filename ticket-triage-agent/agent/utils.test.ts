@@ -219,8 +219,7 @@ describe("parseWebhookPayload", () => {
     expect(result.foo).toBe("bar");
   });
 
-  test("passes JSON arrays through as payloads", () => {
-    const result = parseWebhookPayload("[1,2,3]");
-    expect(Array.isArray(result)).toBe(true);
+  test("returns null for JSON arrays", () => {
+    expect(parseWebhookPayload("[1,2,3]")).toBeNull();
   });
 });

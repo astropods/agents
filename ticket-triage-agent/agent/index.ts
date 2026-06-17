@@ -293,6 +293,26 @@ const agent = new Agent({
 new Mastra({ agents: { "ticket-triage-agent": agent } });
 
 // ---------------------------------------------------------------------------
+// Startup env validation
+// ---------------------------------------------------------------------------
+
+const REQUIRED_ENV_VARS = [
+  "ZENDESK_SUBDOMAIN",
+  "ZENDESK_AGENT_EMAIL",
+  "ZENDESK_API_KEY",
+  "PINECONE_HOST",
+  "PINECONE_API_KEY",
+  "WEBHOOK_SECRET",
+] as const;
+
+const missing = REQUIRED_ENV_VARS.filter((k) => !process.env[k]);
+if (missing.length > 0) {
+  throw new Error(
+    `Missing required environment variables: ${missing.join(", ")}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Zendesk webhook HTTP server (port 3000)
 // ---------------------------------------------------------------------------
 
