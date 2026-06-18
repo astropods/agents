@@ -40,7 +40,7 @@ Send a Zoom meeting ID via chat or Slack:
 Or trigger it via webhook (e.g. from a Zoom recording-ready automation):
 
 ```bash
-curl -X POST https://<agent-url>:3000 \
+curl -X POST https://<agent-url> \
   -H "Content-Type: application/json" \
   -d '{"meetingId": "87654321098"}'
 ```
