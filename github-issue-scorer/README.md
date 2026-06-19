@@ -52,7 +52,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 bun test
 ```
 
-Unit tests cover the GitHub API client and all scoring/analysis utilities using mocked `fetch`.
+Unit tests cover the GitHub API helpers (`fetchIssues`, `fetchSingleIssue`, `fetchComments`) using mocked `fetch`, and all scoring and formatting utilities (`normalizeAnalysis`, `formatIssueReport`, `formatFullReport`, `buildUserMessage`).
 
 ## Project structure
 
