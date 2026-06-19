@@ -12,6 +12,7 @@
         "@mastra/memory": "latest",
         "@octokit/rest": "^21.0.0",
         "openai": "^4.0.0",
+        "p-map": "^7.0.0",
         "zod": "^3.0.0",
       },
       "devDependencies": {
