@@ -68,6 +68,29 @@ describe("deduplicate", () => {
     const articles = [makeArticle("Only One")];
     expect(deduplicate(articles)).toHaveLength(1);
   });
+
+  test("filters out articles with null or undefined title", () => {
+    const articles = [
+      makeArticle("Valid Title"),
+      {
+        title: null,
+        url: "https://example.com/a",
+        source: "S",
+      } as unknown as Article,
+      {
+        title: undefined,
+        url: "https://example.com/b",
+        source: "S",
+      } as unknown as Article,
+      makeArticle("Another Valid"),
+    ];
+    const result = deduplicate(articles);
+    expect(result).toHaveLength(2);
+    expect(result.map((a) => a.title)).toEqual([
+      "Valid Title",
+      "Another Valid",
+    ]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -118,6 +141,10 @@ describe("detectFormat", () => {
       "startup funding",
     );
     expect(detectFormat("AI news key insights").topic).toBe("AI news");
+  });
+
+  test('strips standalone "insights" from topic', () => {
+    expect(detectFormat("fintech insights").topic).toBe("fintech");
   });
 
   test('strips "analyse" and "analyze" from topic', () => {

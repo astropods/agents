@@ -92,7 +92,8 @@ const SENTIMENT_SYSTEM_PROMPT = [
 async function analyzeBatch(comments: string[]): Promise<BatchResult[]> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    max_tokens: 1024,
+    max_tokens: 4096,
+    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: SENTIMENT_SYSTEM_PROMPT },
       { role: "user", content: buildBatchUserMessage(comments) },
@@ -115,7 +116,8 @@ async function analyzeAllComments(
       results.push({
         comment: batch[j].text,
         sentiment: batchResults[j]?.sentiment ?? "neutral",
-        needsReply: batchResults[j]?.needsReply ?? false,
+        needsReply:
+          (batchResults[j]?.needsReply ?? false) && !batch[j].hasReplies,
       });
     }
   }
@@ -156,13 +158,31 @@ const analyzeYoutubeComments = createTool({
       return "Could not extract a video ID from the input. Please provide a YouTube URL or an 11-character video ID.";
     }
 
-    const comments = await fetchComments(videoId, limit);
-    if (comments.length === 0) {
-      return "No comments found — comments may be disabled for this video.";
-    }
+    try {
+      const comments = await fetchComments(videoId, limit);
+      if (comments.length === 0) {
+        return "No comments found — comments may be disabled for this video.";
+      }
 
-    const results = await analyzeAllComments(comments);
-    return formatReport(results, videoId);
+      const results = await analyzeAllComments(comments);
+      return formatReport(results, videoId);
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        return `Failed to parse OpenAI response: ${err.message}`;
+      }
+      if (err instanceof OpenAI.APIError) {
+        return `OpenAI error (${err.status ?? "unknown"}): ${err.message}`;
+      }
+      const status = (err as { status?: number }).status;
+      if (status === 403) {
+        return "Failed to fetch comments: YouTube API quota exhausted or access denied. Check your YOUTUBE_API_KEY and quota limits.";
+      }
+      if (status === 404) {
+        return "Failed to fetch comments: video not found or comments are unavailable.";
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      return `Failed to analyse comments: ${message}`;
+    }
   },
 });
 
@@ -183,6 +203,7 @@ Supported input formats:
 - https://www.youtube.com/watch?v=VIDEO_ID
 - https://youtu.be/VIDEO_ID
 - https://www.youtube.com/shorts/VIDEO_ID
+- https://www.youtube.com/embed/VIDEO_ID
 - VIDEO_ID (bare 11-character ID)
 - VIDEO_ID 200 (with optional comment limit)`,
   model: "openai/gpt-4o-mini",
