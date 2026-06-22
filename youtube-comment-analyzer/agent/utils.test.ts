@@ -35,6 +35,12 @@ describe("extractVideoId", () => {
     );
   });
 
+  test("extracts ID from embed URL", () => {
+    expect(extractVideoId("https://www.youtube.com/embed/dQw4w9WgXcQ")).toBe(
+      "dQw4w9WgXcQ",
+    );
+  });
+
   test("returns raw 11-char ID as-is", () => {
     expect(extractVideoId("dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
   });
