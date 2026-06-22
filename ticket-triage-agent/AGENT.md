@@ -79,4 +79,4 @@ Configure a Zendesk webhook to `POST` to your agent's URL:
 
 ## Slack integration
 
-Deploy with the Slack adapter to enable direct Slack interaction. When the agent cannot resolve a ticket, it replies in the channel — no separate Slack bot token required. Enable at deploy time via `ast project configure`.
+Deploy with the Slack adapter to enable direct Slack interaction. When the agent cannot resolve a ticket, it replies in the channel.
