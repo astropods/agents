@@ -47,7 +47,7 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td>Scores open GitHub issues by priority and sentiment using GPT-4o mini — ranking by urgency, surfacing frustrated users, flagging competitor mentions, and collecting community workarounds. Requires <code>GITHUB_TOKEN</code> and <code>OPENAI_API_KEY</code>.</td>
     </tr>
     <tr>
-      <td><a href="./route-urgent-tickets-agent">route-urgent-tickets-agent</a></td>
+      <td><a href="./route-urgent-tickets-agent">urgent-ticket-router</a></td>
       <td>Receives Zendesk ticket webhooks, applies relevant tags using GPT-4.1, and routes urgent tickets (outage, security, P1/P2) to the correct PagerDuty team. Standard tickets are tagged only. Requires <code>ZENDESK_SUBDOMAIN</code>, <code>ZENDESK_USERNAME</code>, <code>ZENDESK_API_KEY</code>, <code>ZENDESK_TICKET_URL</code>, <code>PAGERDUTY_API_KEY</code>, <code>PAGERDUTY_FROM_EMAIL</code>, and <code>OPENAI_API_KEY</code>.</td>
     </tr>
   </tbody>
