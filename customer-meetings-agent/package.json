@@ -1,6 +1,7 @@
 {
   "name": "customer-meetings-agent",
   "version": "1.0.0",
+  "description": "Generates daily pre-meeting customer briefs from Google Calendar, Zendesk, and HubSpot",
   "private": true,
   "scripts": {
     "start": "bun run agent/index.ts",
