@@ -47,7 +47,7 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td>Scores open GitHub issues by priority and sentiment using GPT-4o mini — ranking by urgency, surfacing frustrated users, flagging competitor mentions, and collecting community workarounds. Requires <code>GITHUB_TOKEN</code> and <code>OPENAI_API_KEY</code>.</td>
     </tr>
     <tr>
-      <td><a href="./incident-management-agent">incident-management-agent</a></td>
+      <td><a href="./incident-management-agent">incident-manager</a></td>
       <td>Slack-triggered incident management agent that logs incidents in Notion and keeps detail summaries, engineering updates, and support updates current as the conversation unfolds. Requires <code>NOTION_API_KEY</code>, <code>NOTION_DATABASE_ID</code>, and <code>OPENAI_API_KEY</code>.</td>
     </tr>
   </tbody>
