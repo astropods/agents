@@ -1,5 +1,7 @@
 # Customer Call Follow-Up Agent
 
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/customer-call-followup)
+
 An Astro agent that automates post-call follow-up for sales reps. Give it a Zoom meeting ID and it fetches the transcript, extracts action items, raises Zendesk tickets for any issues, creates a Notion call summary page, and returns a formatted action list ready for Slack.
 
 ## Workflow
