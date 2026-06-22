@@ -2,12 +2,12 @@
 
 [![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/incident-manager)
 
-An Astro agent that tracks incidents in Notion, triggered from Slack. Declare an incident with a slash command and the agent logs it immediately — then keeps the detail summary, engineering update, and support update current as the conversation unfolds.
+An Astro agent that tracks incidents in Notion, triggered by @mentions in Slack. Declare an incident by mentioning the agent and it logs it immediately — then keeps the detail summary, engineering update, and support update current as the conversation unfolds.
 
 ## Workflow
 
-1. **Declare** — Send `/incident-management <name>` in Slack to create a new Notion incident page
-2. **Track** — As messages arrive, the agent checks existing incidents and decides whether to create a new one or update an existing one
+1. **Declare** — @mention the agent in Slack (`@incident-manager start incident: <name>`) to create a new Notion incident page
+2. **Track** — As follow-up @mentions arrive, the agent checks existing incidents and decides whether to create a new one or update an existing one
 3. **Update** — Writes a timestamped detail summary, engineering update, and support update to the Notion page
 4. **Close** — Marks the incident as Done when resolved; reopens if new information warrants it
 
@@ -20,16 +20,6 @@ ast configure
 # Start the agent locally
 ast dev
 ```
-
-## Webhook setup
-
-Configure your Slack app to send slash command and event payloads to your agent on port `3000`:
-
-- **Slash command URL:** `https://<agent-url>:3000/`
-- **Event subscription URL:** `https://<agent-url>:3000/`
-
-Required Slack app scopes: `channels:history`, `channels:read`, `chat:write`, `commands`
-Required event subscription: `message.channels`
 
 ## Environment variables
 
@@ -54,7 +44,7 @@ Unit tests cover the Notion API helpers (fetch, create, update) and `validateNot
 ```
 incident-management-agent/
 ├── agent/
-│   ├── index.ts        # Agent definition, tools, and Slack webhook server
+│   ├── index.ts        # Agent definition, tools, and serve()
 │   ├── utils.ts        # Notion API helpers and type definitions
 │   └── utils.test.ts   # Unit tests
 ├── astropods.yml        # Agent specification (models, integrations)
@@ -66,7 +56,7 @@ incident-management-agent/
 ## Interfaces
 
 - **Web** — Playground available at `localhost:3000` during `ast dev`
-- **Slack** — Receives slash commands and message events via webhook on port `3000`
+- **Slack** — @mention the agent in any channel to declare or update an incident
 
 ## Model
 

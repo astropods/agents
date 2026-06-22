@@ -1,4 +1,3 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { serve } from "@astropods/adapter-core";
 import { MastraAdapter } from "@astropods/adapter-mastra";
 import { Agent } from "@mastra/core/agent";
@@ -17,22 +16,20 @@ import {
 // Env guards
 // ---------------------------------------------------------------------------
 
+const REQUIRED_ENV_VARS = ["NOTION_API_KEY", "NOTION_DATABASE_ID"] as const;
+const missing = REQUIRED_ENV_VARS.filter((k) => !process.env[k]);
+if (missing.length > 0) {
+  throw new Error(
+    `Missing required environment variables: ${missing.join(", ")}`,
+  );
+}
+
 function notionApiKey(): string {
-  const k = process.env.NOTION_API_KEY;
-  if (!k) throw new Error("NOTION_API_KEY is not set");
-  return k;
+  return process.env.NOTION_API_KEY ?? "";
 }
 
 function notionDatabaseId(): string {
-  const d = process.env.NOTION_DATABASE_ID;
-  if (!d) throw new Error("NOTION_DATABASE_ID is not set");
-  return d;
-}
-
-function slackSigningSecret(): string {
-  const s = process.env.SLACK_SIGNING_SECRET;
-  if (!s) throw new Error("SLACK_SIGNING_SECRET is not set");
-  return s;
+  return process.env.NOTION_DATABASE_ID ?? "";
 }
 
 // ---------------------------------------------------------------------------
@@ -124,11 +121,11 @@ const updateIncidentInNotionTool = createTool({
 // Agent
 // ---------------------------------------------------------------------------
 
-const INSTRUCTIONS = `You are responsible for managing an ongoing incident.
+const INSTRUCTIONS = `You are responsible for managing ongoing incidents. You are triggered by @mentions in Slack.
 
-When you receive a slash command (check for the "command" field), use the command text as the incident name and create a new incident in Notion. Do nothing else for this step.
+When a user declares a new incident (e.g. "@incident-manager start incident: DB outage"), create a new incident in Notion using the provided name. Do nothing else for this step.
 
-When you receive message events (no "command" field), use the conversation context to decide whether to create a new incident or update an existing one — check existing incidents and take timestamps into account.
+For all other messages, use the conversation context to decide whether to create a new incident or update an existing one — check existing incidents and take timestamps into account.
 
 Only update Notion when you have genuinely useful information. Don't update with filler content.
 
@@ -159,94 +156,5 @@ const agent = new Agent({
 });
 
 new Mastra({ agents: { "incident-manager-agent": agent } });
-
-// ---------------------------------------------------------------------------
-// Slack webhook HTTP server (port 3000)
-// ---------------------------------------------------------------------------
-
-Bun.serve({
-  port: 3000,
-  async fetch(req) {
-    if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405 });
-    }
-
-    // Read raw body first — HMAC is computed on the raw bytes.
-    const rawBody = await req.text();
-
-    // Slack signature verification per https://api.slack.com/authentication/verifying-requests-from-slack
-    const ts = req.headers.get("x-slack-request-timestamp") ?? "";
-    const sig = req.headers.get("x-slack-signature") ?? "";
-
-    // Reject requests older than 5 minutes to prevent replay attacks.
-    if (Math.abs(Date.now() / 1000 - Number(ts)) > 300) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-
-    const expected = `v0=${createHmac("sha256", slackSigningSecret()).update(`v0:${ts}:${rawBody}`).digest("hex")}`;
-    const sigBuf = Buffer.from(sig);
-    const expectedBuf = Buffer.from(expected);
-    if (
-      sigBuf.length !== expectedBuf.length ||
-      !timingSafeEqual(sigBuf, expectedBuf)
-    ) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-
-    let payload: unknown;
-    try {
-      payload = JSON.parse(rawBody);
-    } catch {
-      return new Response("Invalid JSON", { status: 400 });
-    }
-
-    // Slack URL verification handshake — required when saving Event Subscription URL.
-    if (
-      typeof payload === "object" &&
-      payload !== null &&
-      (payload as Record<string, unknown>).type === "url_verification"
-    ) {
-      const challenge = (payload as Record<string, unknown>).challenge;
-      return new Response(JSON.stringify({ challenge }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Respond immediately to Slack (<3s required), process async.
-    // NOTE: failures are logged but not retried — monitor logs for
-    // webhook.failed events to catch dropped payloads.
-    const eventTs =
-      (payload as { event?: { ts?: string } })?.event?.ts ?? "unknown";
-    agent
-      .generate(JSON.stringify(payload))
-      .then((result) =>
-        console.log(
-          JSON.stringify({
-            event: "webhook.processed",
-            event_ts: eventTs,
-            summary: result.text?.slice(0, 200),
-          }),
-        ),
-      )
-      .catch((err) =>
-        console.error(
-          JSON.stringify({
-            event: "webhook.failed",
-            event_ts: eventTs,
-            error: err instanceof Error ? err.message : String(err),
-          }),
-          err,
-        ),
-      );
-
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  },
-});
-
-console.log("Slack webhook server listening on :3000");
 
 serve(new MastraAdapter(agent));
