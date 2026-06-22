@@ -48,7 +48,7 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td>Scores open GitHub issues by priority and sentiment using GPT-4o mini — ranking by urgency, surfacing frustrated users, flagging competitor mentions, and collecting community workarounds. Requires <code>GITHUB_TOKEN</code> and <code>OPENAI_API_KEY</code>.</td>
     </tr>
     <tr>
-      <td><a href="./ticket-triage-agent">ticket-triage-agent</a></td>
+      <td><a href="./ticket-triage-agent">zendesk-ticket-triage</a></td>
       <td>Automatically triages Zendesk support tickets — searches a Pinecone vector knowledge base to auto-resolve common questions, escalates unresolved tickets via Slack, and learns from human-solved tickets by indexing new Q&amp;A pairs into Pinecone. Requires <code>ZENDESK_SUBDOMAIN</code>, <code>ZENDESK_AGENT_EMAIL</code>, <code>ZENDESK_API_KEY</code>, <code>PINECONE_HOST</code>, <code>PINECONE_API_KEY</code>, and <code>OPENAI_API_KEY</code>.</td>
     </tr>
   </tbody>
