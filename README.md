@@ -51,6 +51,10 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td><a href="./ticket-triage-agent">zendesk-ticket-triage</a></td>
       <td>Automatically triages Zendesk support tickets — searches a Pinecone vector knowledge base to auto-resolve common questions, escalates unresolved tickets via Slack, and learns from human-solved tickets by indexing new Q&amp;A pairs into Pinecone. Requires <code>ZENDESK_SUBDOMAIN</code>, <code>ZENDESK_AGENT_EMAIL</code>, <code>ZENDESK_API_KEY</code>, <code>PINECONE_HOST</code>, <code>PINECONE_API_KEY</code>, and <code>OPENAI_API_KEY</code>.</td>
     </tr>
+    <tr>
+      <td><a href="./trip-planner-agent">trip-planner</a></td>
+      <td>Plans multi-day trips from a plain language request — checks the weather via Open-Meteo, searches Yelp for activities and restaurants, and writes a structured day-by-day itinerary and packing list to Notion. Requires <code>OPENAI_API_KEY</code>, <code>YELP_API_KEY</code>, <code>NOTION_BEARER_TOKEN</code>, and <code>NOTION_PARENT_PAGE_ID</code>.</td>
+    </tr>
   </tbody>
 </table>
 
