@@ -1,6 +1,7 @@
 {
   "name": "customer-call-follow-up-agent",
   "version": "1.0.0",
+  "description": "Fetches Zoom call transcripts and sends AI-generated follow-up emails via SendGrid",
   "private": true,
   "scripts": {
     "start": "bun run agent/index.ts",
