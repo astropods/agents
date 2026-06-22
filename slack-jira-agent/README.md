@@ -1,6 +1,6 @@
 # Slack to Jira Agent
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/slack-jira-agent)
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/create-jira-tickets)
 
 An Astro agent that turns a problem description or Slack thread URL into a Jira ticket in seconds. Describe the issue in plain text or paste a Slack thread link — from the web playground or directly in Slack — and the agent generates a concise title and detailed description, creates the ticket, and returns the link.
 
