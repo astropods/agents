@@ -25,6 +25,24 @@ function env(name: string): string {
   return v;
 }
 
+const REQUIRED_ENV_VARS = [
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
+  "GOOGLE_REFRESH_TOKEN",
+  "GOOGLE_CALENDAR_ID",
+  "ZENDESK_URL",
+  "ZENDESK_EMAIL",
+  "ZENDESK_API_KEY",
+  "HUBSPOT_API_KEY",
+] as const;
+
+const missing = REQUIRED_ENV_VARS.filter((k) => !process.env[k]);
+if (missing.length > 0) {
+  throw new Error(
+    `Missing required environment variables: ${missing.join(", ")}`,
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Google token cache — avoids refreshing on every tool call (tokens live 3600s)
 // ---------------------------------------------------------------------------
