@@ -29,6 +29,9 @@ export function extractVideoId(input: string): string | null {
   const shorts = input.match(/shorts\/([a-zA-Z0-9_-]{11})/);
   if (shorts) return shorts[1];
 
+  const embed = input.match(/embed\/([a-zA-Z0-9_-]{11})/);
+  if (embed) return embed[1];
+
   if (/^[a-zA-Z0-9_-]{11}$/.test(input.trim())) return input.trim();
 
   return null;
