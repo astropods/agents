@@ -27,7 +27,7 @@ ast dev
 
 ## Environment variables
 
-All runtime credentials are managed by `ast configure` — no manual `.env` file needed.
+All runtime credentials are managed by `ast configure`.
 
 | Variable | Source | Description |
 |----------|--------|-------------|
