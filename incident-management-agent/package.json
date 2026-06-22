@@ -1,6 +1,7 @@
 {
   "name": "incident-manager-agent",
   "version": "1.0.0",
+  "description": "Slack-triggered incident management agent that tracks and updates incidents in Notion",
   "private": true,
   "scripts": {
     "start": "bun run agent/index.ts",
