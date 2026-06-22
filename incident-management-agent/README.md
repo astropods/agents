@@ -1,6 +1,6 @@
 # Incident Manager Agent
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/incident-management-agent)
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/incident-manager)
 
 An Astro agent that tracks incidents in Notion, triggered from Slack. Declare an incident with a slash command and the agent logs it immediately — then keeps the detail summary, engineering update, and support update current as the conversation unfolds.
 
