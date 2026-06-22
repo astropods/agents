@@ -1,7 +1,7 @@
 {
   "name": "trip-planner",
   "version": "0.1.0",
-  "description": "Trip planning agent \u2014 Astropods port of the Postman trip-planner template",
+  "description": "Trip planning agent",
   "scripts": {
     "dev": "bun --watch agent/index.ts",
     "start": "bun agent/index.ts",
