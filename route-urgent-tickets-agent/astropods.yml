@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://astropods.com/schema/package.json
 spec: package/v1
-name: route-urgent-tickets-agent
+name: urgent-ticket-router
 
 agent:
   build:
