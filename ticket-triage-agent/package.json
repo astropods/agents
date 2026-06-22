@@ -1,6 +1,7 @@
 {
   "name": "ticket-triage-agent",
   "version": "1.0.0",
+  "description": "Auto-resolves Zendesk tickets using a Pinecone knowledge base and learns from human-solved tickets",
   "private": true,
   "scripts": {
     "start": "bun run agent/index.ts",
