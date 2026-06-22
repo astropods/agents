@@ -175,6 +175,23 @@ const addWeatherToNotionDatabaseTool = createTool({
 });
 
 // ---------------------------------------------------------------------------
+// Env guards
+// ---------------------------------------------------------------------------
+
+const REQUIRED_ENV_VARS = [
+  "YELP_API_KEY",
+  "NOTION_BEARER_TOKEN",
+  "NOTION_PARENT_PAGE_ID",
+] as const;
+
+const missing = REQUIRED_ENV_VARS.filter((k) => !process.env[k]);
+if (missing.length > 0) {
+  throw new Error(
+    `Missing required environment variables: ${missing.join(", ")}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Agent
 // ---------------------------------------------------------------------------
 

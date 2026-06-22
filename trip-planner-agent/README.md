@@ -86,12 +86,7 @@ trip-planner-agent/
 ## Interfaces
 
 - **Web** — Playground available at `localhost:3000` during `ast dev`
-- **Slack** — Bot integration via Socket Mode (mention the bot or reply in a thread)
 
 ## Model
 
 Uses `openai/gpt-4.1` via the Astro-managed OpenAI integration.
-
-## Agent directory
-
-View this agent on Astropods: [astropods.com/astro-ai/trip-planner-agent](https://astropods.com/astro-ai/trip-planner-agent)
