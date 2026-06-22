@@ -6,7 +6,7 @@ An Astro agent that automatically triages incoming Zendesk tickets. It analyses 
 
 ## Workflow
 
-1. **Receive webhook** — Zendesk POSTs a new ticket payload to port `3000`
+1. **Receive webhook** — Zendesk POSTs a new ticket payload to the agent's HTTPS endpoint
 2. **Tag** — Fetches all existing Zendesk tags, selects the most relevant ones, and updates the ticket
 3. **Assess urgency** — Determines whether the ticket is urgent (outage, security, data loss, P1/P2)
 4. **Route** — If urgent: fetches PagerDuty services and creates an incident routed to the correct team
@@ -24,9 +24,9 @@ ast dev
 
 ## Webhook setup
 
-Configure a Zendesk webhook to `POST` to your agent URL on port `3000`:
+Configure a Zendesk webhook to `POST` to your agent's URL:
 
-- **Trigger:** Ticket created → `https://<agent-url>:3000/`
+- **Trigger:** Ticket created → `https://<agent-url>/`
 - **Signing:** Enable webhook signing in Zendesk and copy the signing secret into `WEBHOOK_SECRET`. The agent verifies the `x-zendesk-webhook-signature` HMAC-SHA256 header on every request and rejects anything that doesn't match.
 
 ## Usage via chat
@@ -79,7 +79,7 @@ route-urgent-tickets-agent/
 ## Interfaces
 
 - **Web** — Playground available at `localhost:3000` during `ast dev`
-- **Webhook** — Zendesk sends `POST` payloads to port `3000`
+- **Webhook** — Zendesk sends `POST` payloads to the agent's HTTPS endpoint (port 80 in production, 3000 locally via `ast dev`)
 
 ## Observability
 
