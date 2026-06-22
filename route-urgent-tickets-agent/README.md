@@ -1,6 +1,6 @@
 # Route Urgent Tickets Agent
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/route-urgent-tickets-agent)
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/urgent-ticket-router)
 
 An Astro agent that automatically triages incoming Zendesk tickets. It analyses each ticket, applies relevant tags, and routes urgent issues (outages, security incidents, P1/P2) to the correct PagerDuty team — all triggered by a webhook.
 
