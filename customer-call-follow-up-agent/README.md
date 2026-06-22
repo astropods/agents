@@ -4,7 +4,7 @@ An Astro agent that automates post-call follow-up for sales reps. Give it a Zoom
 
 ## Workflow
 
-1. **Receive meeting ID** — via webhook POST to port 3000 or direct chat/Slack message
+1. **Receive meeting ID** — via webhook POST or chat/Slack message (extracted from natural language)
 2. **Fetch transcript** — Zoom OAuth refresh → GET recording files → download VTT transcript
 3. **Analyse** — GPT-4.1 identifies the account name, action items, and support issues
 4. **Create tickets** — Zendesk ticket per support issue found (0 or more)
@@ -23,14 +23,17 @@ ast dev
 
 ## Usage
 
-**Via chat or Slack** — send the Zoom meeting ID:
+**Via chat or Slack** — send the meeting ID in any form:
 
 > *"87654321098"*
+> *"Can you process my Acme call? Meeting ID is 876 5432 1098"*
+
+The agent extracts the 9–11 digit meeting ID from your message automatically.
 
 **Via webhook** — POST from an automation (e.g. Zapier, Zoom webhook on recording ready):
 
 ```bash
-curl -X POST https://<agent-url>:3000 \
+curl -X POST https://<agent-url> \
   -H "Content-Type: application/json" \
   -d '{"meetingId": "87654321098"}'
 ```
@@ -60,7 +63,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 bun test
 ```
 
-Unit tests cover Zoom OAuth token refresh, transcript fetching, Zendesk auth encoding, ticket creation, and Notion page creation — all with mocked `fetch`.
+Unit tests cover meeting ID extraction, Zoom OAuth token refresh, transcript fetching (including processing vs. not-found errors), Zendesk auth encoding, ticket creation, and Notion page creation — all with mocked `fetch`.
 
 ## Project structure
 
@@ -79,8 +82,8 @@ customer-call-follow-up-agent/
 ## Interfaces
 
 - **Web** — Playground available at `localhost:3000` during `ast dev`
-- **Slack** — Bot integration via Socket Mode; send the meeting ID directly to the bot
-- **Webhook** — POST `{ meetingId }` to port `3000` from any automation tool
+- **Slack** — Bot integration via Socket Mode; send the meeting ID (plain or in natural language) directly to the bot
+- **Webhook** — POST `{ meetingId }` to the agent URL from any automation tool
 
 ## Model
 

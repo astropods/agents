@@ -3,6 +3,7 @@ import {
   buildZendeskAuth,
   createNotionPage,
   createZendeskTicket,
+  extractMeetingId,
   getZoomTranscript,
   refreshZoomToken,
   validateMeetingId,
@@ -20,12 +21,24 @@ afterEach(() => {
 });
 
 describe("validateMeetingId", () => {
-  test("accepts numeric meeting ID", () => {
+  test("accepts 11-digit numeric ID", () => {
     expect(validateMeetingId("12345678901")).toBe("12345678901");
   });
 
-  test("accepts UUID-style meeting ID", () => {
-    expect(validateMeetingId("abc-123_XYZ")).toBe("abc-123_XYZ");
+  test("accepts 9-digit numeric ID", () => {
+    expect(validateMeetingId("123456789")).toBe("123456789");
+  });
+
+  test("strips spaces from formatted ID", () => {
+    expect(validateMeetingId("876 5432 1098")).toBe("87654321098");
+  });
+
+  test("throws on alphanumeric ID", () => {
+    expect(() => validateMeetingId("abc-123_XYZ")).toThrow("Invalid meeting ID");
+  });
+
+  test("throws on too-short number", () => {
+    expect(() => validateMeetingId("12345678")).toThrow("Invalid meeting ID");
   });
 
   test("throws on path traversal attempt", () => {
@@ -36,6 +49,34 @@ describe("validateMeetingId", () => {
 
   test("throws on empty string", () => {
     expect(() => validateMeetingId("")).toThrow("Invalid meeting ID");
+  });
+});
+
+describe("extractMeetingId", () => {
+  test("extracts a plain 11-digit ID from text", () => {
+    expect(extractMeetingId("Please process meeting 87654321098 thanks")).toBe(
+      "87654321098",
+    );
+  });
+
+  test("extracts a space-formatted ID", () => {
+    expect(extractMeetingId("Meeting ID: 876 5432 1098")).toBe("87654321098");
+  });
+
+  test("extracts a 9-digit ID", () => {
+    expect(extractMeetingId("ID is 123456789")).toBe("123456789");
+  });
+
+  test("returns null when no ID found", () => {
+    expect(extractMeetingId("No meeting here")).toBeNull();
+  });
+
+  test("returns null for a number that is too short", () => {
+    expect(extractMeetingId("ID: 12345678")).toBeNull();
+  });
+
+  test("returns null for a number that is too long", () => {
+    expect(extractMeetingId("ID: 123456789012")).toBeNull();
   });
 });
 
@@ -196,7 +237,7 @@ describe("getZoomTranscript", () => {
         new Response("WEBVTT\n\nSpeaker: Hello world", { status: 200 }),
       );
     spies.push(spy);
-    const transcript = await getZoomTranscript("tok", "12345");
+    const transcript = await getZoomTranscript("tok", "123456789");
     expect(transcript).toContain("Hello world");
   });
 
@@ -219,7 +260,7 @@ describe("getZoomTranscript", () => {
     );
   });
 
-  test("throws when TRANSCRIPT file is not completed", async () => {
+  test("returns processing error when TRANSCRIPT is not yet completed", async () => {
     const mockRecordings = {
       recording_files: [
         {
@@ -233,8 +274,27 @@ describe("getZoomTranscript", () => {
       new Response(JSON.stringify(mockRecordings), { status: 200 }),
     );
     spies.push(spy);
-    await expect(getZoomTranscript("tok", "12345")).rejects.toThrow(
-      "No completed transcript",
+    await expect(getZoomTranscript("tok", "123456789")).rejects.toThrow(
+      "still processing",
+    );
+  });
+
+  test("returns not-found error when no TRANSCRIPT file exists at all", async () => {
+    const mockRecordings = {
+      recording_files: [
+        {
+          file_type: "MP4",
+          status: "completed",
+          download_url: "https://zoom.us/mp4",
+        },
+      ],
+    };
+    const spy = spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(mockRecordings), { status: 200 }),
+    );
+    spies.push(spy);
+    await expect(getZoomTranscript("tok", "123456789")).rejects.toThrow(
+      "No transcript found",
     );
   });
 
@@ -266,7 +326,7 @@ describe("getZoomTranscript", () => {
   });
 
   test("throws on invalid meeting ID", async () => {
-    await expect(getZoomTranscript("tok", "../etc/passwd")).rejects.toThrow(
+    await expect(getZoomTranscript("tok", "abc123")).rejects.toThrow(
       "Invalid meeting ID",
     );
   });

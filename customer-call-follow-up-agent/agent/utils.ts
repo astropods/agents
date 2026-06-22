@@ -22,10 +22,21 @@ export interface NotionPageResult {
 // ---------------------------------------------------------------------------
 
 export function validateMeetingId(value: string): string {
-  if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
+  // Zoom meeting IDs are 9–11 digit numbers; strip spaces before validating
+  const stripped = value.replace(/\s/g, "");
+  if (!/^\d{9,11}$/.test(stripped)) {
     throw new Error(`Invalid meeting ID: "${value}"`);
   }
-  return value;
+  return stripped;
+}
+
+export function extractMeetingId(text: string): string | null {
+  // Match a sequence of 9–11 digits, optionally space-separated (e.g. "876 5432 1098")
+  const match = text.match(/\b(\d[\d ]{7,10}\d)\b/);
+  if (!match) return null;
+  const stripped = match[1].replace(/\s/g, "");
+  if (!/^\d{9,11}$/.test(stripped)) return null;
+  return stripped;
 }
 
 export function validateNotionPageId(value: string): string {
@@ -105,8 +116,17 @@ export async function getZoomTranscript(
   const transcriptFile = files.find(
     (f) => f.file_type === "TRANSCRIPT" && f.status === "completed",
   );
-  if (!transcriptFile)
-    throw new Error("No completed transcript found for this meeting");
+  if (!transcriptFile) {
+    const isProcessing = files.some(
+      (f) => f.file_type === "TRANSCRIPT" && f.status !== "completed",
+    );
+    if (isProcessing) {
+      throw new Error(
+        "The call transcript is still processing. Please try again in a few minutes.",
+      );
+    }
+    throw new Error("No transcript found for this meeting.");
+  }
   const transcriptRes = await fetch(transcriptFile.download_url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });

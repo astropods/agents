@@ -10,6 +10,7 @@ import { z } from "zod";
 import {
   createNotionPage,
   createZendeskTicket,
+  extractMeetingId,
   getZoomTranscript,
   refreshZoomToken,
   validateMeetingId,
@@ -57,6 +58,26 @@ function getZoomAccessToken(): Promise<string> {
 // Tools
 // ---------------------------------------------------------------------------
 
+const extractMeetingIdTool = createTool({
+  id: "extract_meeting_id",
+  description:
+    "Extracts and validates a Zoom meeting ID from free-form text. Use this when the user provides a natural language message that may contain a meeting ID.",
+  inputSchema: z.object({
+    text: z
+      .string()
+      .describe("The user input that may contain a Zoom meeting ID"),
+  }),
+  execute: async ({ text }: { text: string }) => {
+    const id = extractMeetingId(text);
+    if (!id) {
+      throw new Error(
+        "No valid Zoom meeting ID found in the input. Zoom meeting IDs are 9–11 digit numbers.",
+      );
+    }
+    return { meeting_id: id };
+  },
+});
+
 const getZoomTranscriptTool = createTool({
   id: "get_zoom_transcript",
   description:
@@ -64,8 +85,8 @@ const getZoomTranscriptTool = createTool({
   inputSchema: z.object({
     meeting_id: z
       .string()
-      .regex(/^[a-zA-Z0-9_-]+$/, "must be alphanumeric")
-      .describe("The Zoom meeting ID (numeric or UUID format)"),
+      .regex(/^\d{9,11}$/, "must be a 9–11 digit number")
+      .describe("The Zoom meeting ID (9–11 digit number)"),
   }),
   execute: async ({ meeting_id }: { meeting_id: string }) => {
     try {
@@ -145,18 +166,25 @@ const updateNotionPageTool = createTool({
 // Agent
 // ---------------------------------------------------------------------------
 
-const INSTRUCTIONS = `You are an AI assistant for sales reps. When given a Zoom meeting ID, follow these steps:
+const INSTRUCTIONS = `You are an AI assistant for sales reps that processes Zoom call recordings and creates follow-up artifacts.
 
-1. Call get_zoom_transcript with the meeting ID to retrieve the call transcript.
+You can be triggered two ways:
+- **Webhook**: the meeting ID is provided explicitly in the request.
+- **Chat or Slack**: the user sends a natural language message that contains a meeting ID.
+
+When receiving a chat or Slack message, first call extract_meeting_id to pull the meeting ID out of the input. If no valid meeting ID is found, ask the user to provide one.
+
+Once you have a meeting ID, follow these steps:
+1. Call get_zoom_transcript with the meeting ID to retrieve the call transcript. If the transcript is still processing, tell the user clearly and stop.
 2. Read the transcript carefully to identify:
    - The account/company name of the customer
    - A list of action items (commitments made, next steps, follow-ups required)
    - Any support issues that require a Zendesk ticket
 3. For each support issue, call create_zendesk_ticket. The sales rep is the ticket owner.
 4. Call update_notion_page with title "<AccountName> - Call Summary <YYYY-MM-DD>" and the full summary including all action items.
-5. Return a clean, Slack-friendly response with:
-   - Bold header: "*📋 Post-Call Action Items — <AccountName>*"
-   - Numbered action items, each prepended with the account name
+5. Respond with a clear summary including:
+   - The account name
+   - Numbered action items
    - Zendesk ticket IDs and URLs if any were created
    - Notion page link
 
@@ -173,6 +201,7 @@ const agent = new Agent({
   model: "openai/gpt-4.1",
   memory,
   tools: {
+    extract_meeting_id: extractMeetingIdTool,
     get_zoom_transcript: getZoomTranscriptTool,
     create_zendesk_ticket: createZendeskTicketTool,
     update_notion_page: updateNotionPageTool,
