@@ -6,7 +6,10 @@ agent:
     context: .
     dockerfile: Dockerfile
   interfaces:
-    messaging: true
+    messaging:
+      adapters: [web, slack]
+      slack:
+        auto_thread: true
 
 models:
   openai:
@@ -59,7 +62,6 @@ inputs:
     datatype: string
     description: "ID of the Notion page that holds all call summary pages"
     display-as: short-text
-
   WEBHOOK_SECRET:
     name: WEBHOOK_SECRET
     datatype: string
