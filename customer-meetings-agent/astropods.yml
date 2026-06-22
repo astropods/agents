@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: package/v1
+name: daily-customer-briefs
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    messaging: true
+
+models:
+  openai:
+    provider: openai
+
+inputs:
+  GOOGLE_CLIENT_ID:
+    name: GOOGLE_CLIENT_ID
+    datatype: string
+    secret: true
+    description: "Google OAuth client ID"
+    display-as: short-text
+  GOOGLE_CLIENT_SECRET:
+    name: GOOGLE_CLIENT_SECRET
+    datatype: string
+    secret: true
+    description: "Google OAuth client secret"
+    display-as: short-text
+  GOOGLE_REFRESH_TOKEN:
+    name: GOOGLE_REFRESH_TOKEN
+    datatype: string
+    secret: true
+    description: "Google OAuth refresh token for Calendar access"
+    display-as: short-text
+  GOOGLE_CALENDAR_ID:
+    name: GOOGLE_CALENDAR_ID
+    datatype: string
+    description: "Google Calendar ID to read events from (e.g. primary or a calendar email)"
+    display-as: short-text
+  ZENDESK_URL:
+    name: ZENDESK_URL
+    datatype: string
+    description: "Zendesk instance URL (e.g. https://yourcompany.zendesk.com)"
+    display-as: short-text
+  ZENDESK_EMAIL:
+    name: ZENDESK_EMAIL
+    datatype: string
+    secret: true
+    description: "Zendesk agent email address"
+    display-as: short-text
+  ZENDESK_API_KEY:
+    name: ZENDESK_API_KEY
+    datatype: string
+    secret: true
+    description: "Zendesk API token"
+    display-as: short-text
+  HUBSPOT_API_KEY:
+    name: HUBSPOT_API_KEY
+    datatype: string
+    secret: true
+    description: "HubSpot private app access token"
+    display-as: short-text
+  SLACK_CHANNEL:
+    name: SLACK_CHANNEL
+    datatype: string
+    description: "Slack channel ID to post the daily brief to"
+    optional: true
+    display-as: short-text
+  CRON_SCHEDULE:
+    name: CRON_SCHEDULE
+    datatype: string
+    description: "Cron expression for the daily brief schedule"
+    default: "0 8 * * 1-5"
+    optional: true
+    display-as: short-text
+
+dev:
+  interfaces:
+    messaging:
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true
