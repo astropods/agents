@@ -1,27 +1,28 @@
 {
-  "name": "github-issue-scorer",
-  "version": "0.1.0",
+  "name": "ticket-triage-agent",
+  "version": "1.0.0",
+  "description": "Auto-resolves Zendesk tickets using a Pinecone knowledge base and learns from human-solved tickets",
   "private": true,
   "scripts": {
     "start": "bun run agent/index.ts",
-    "test": "bun test",
     "lint": "biome check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "test:unit": "bun test"
   },
   "dependencies": {
     "@astropods/adapter-core": "latest",
     "@astropods/adapter-mastra": "latest",
     "@mastra/core": "latest",
-    "@mastra/libsql": "latest",
     "@mastra/memory": "latest",
-    "@octokit/rest": "^21.0.0",
-    "p-map": "^7.0.0",
+    "@mastra/libsql": "latest",
     "openai": "^4.0.0",
+    "axios": "^1.7.0",
     "zod": "^3.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "latest",
+    "@biomejs/biome": "^2.4.16",
     "@types/bun": "latest",
-    "typescript": "^5.0.0"
+    "typescript": "^5.4.0"
   }
 }
