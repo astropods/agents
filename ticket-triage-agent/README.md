@@ -1,6 +1,6 @@
 # Customer Ticket Triage Agent
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/ticket-triage-agent)
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/zendesk-ticket-triage)
 
 An Astro agent that automatically triages incoming Zendesk support tickets. It searches a Pinecone vector knowledge base to auto-resolve common questions, escalates unresolved tickets via Slack, and learns from human-solved tickets by indexing new Q&A pairs back into Pinecone.
 
