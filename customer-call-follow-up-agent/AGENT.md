@@ -92,7 +92,7 @@ If the transcript is still processing, the agent will respond with a clear messa
 | `ZENDESK_API_KEY` | Zendesk API token |
 | `NOTION_API_KEY` | Notion internal integration secret — from [notion.so/my-integrations](https://www.notion.so/my-integrations) |
 | `NOTION_PARENT_PAGE_ID` | ID of the Notion page that holds all call summary pages |
-| `WEBHOOK_SECRET` | Optional bearer token to authenticate incoming webhook requests (treated as a secret) |
+| `WEBHOOK_SECRET` | Bearer token to authenticate incoming webhook requests — required; all requests without a valid `Authorization: Bearer <token>` header are rejected with 401 |
 
 ## Limitations
 

@@ -57,7 +57,7 @@ All runtime credentials are managed by `ast configure` — no manual `.env` file
 | `ZENDESK_API_KEY` | `ast configure` | Zendesk API token — from Zendesk Admin > Apps & Integrations > API |
 | `NOTION_API_KEY` | `ast configure` | Notion internal integration secret — from [notion.so/my-integrations](https://www.notion.so/my-integrations) |
 | `NOTION_PARENT_PAGE_ID` | `ast configure` | ID of the Notion page that holds all call summary pages |
-| `WEBHOOK_SECRET` | `ast configure` | Optional bearer token to authenticate incoming webhook requests (treated as a secret) |
+| `WEBHOOK_SECRET` | `ast configure` | Bearer token to authenticate incoming webhook requests — required; requests without a valid `Authorization: Bearer <token>` header are rejected with 401 |
 
 ## Testing
 

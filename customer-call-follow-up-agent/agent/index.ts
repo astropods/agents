@@ -222,17 +222,18 @@ Bun.serve({
     }
 
     const secret = process.env.WEBHOOK_SECRET;
-    if (secret) {
-      const auth = req.headers.get("authorization") ?? "";
-      const expected = `Bearer ${secret}`;
-      const authBuf = Buffer.from(auth);
-      const expectedBuf = Buffer.from(expected);
-      const valid =
-        authBuf.length === expectedBuf.length &&
-        timingSafeEqual(authBuf, expectedBuf);
-      if (!valid) {
-        return new Response("Unauthorized", { status: 401 });
-      }
+    if (!secret) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+    const auth = req.headers.get("authorization") ?? "";
+    const expected = `Bearer ${secret}`;
+    const authBuf = Buffer.from(auth);
+    const expectedBuf = Buffer.from(expected);
+    const valid =
+      authBuf.length === expectedBuf.length &&
+      timingSafeEqual(authBuf, expectedBuf);
+    if (!valid) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
     let payload: unknown;

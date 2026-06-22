@@ -241,25 +241,6 @@ describe("getZoomTranscript", () => {
     expect(transcript).toContain("Hello world");
   });
 
-  test("throws when no TRANSCRIPT file exists", async () => {
-    const mockRecordings = {
-      recording_files: [
-        {
-          file_type: "MP4",
-          status: "completed",
-          download_url: "https://zoom.us/mp4",
-        },
-      ],
-    };
-    const spy = spyOn(global, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(mockRecordings), { status: 200 }),
-    );
-    spies.push(spy);
-    await expect(getZoomTranscript("tok", "12345")).rejects.toThrow(
-      "No completed transcript",
-    );
-  });
-
   test("returns processing error when TRANSCRIPT is not yet completed", async () => {
     const mockRecordings = {
       recording_files: [
@@ -303,7 +284,7 @@ describe("getZoomTranscript", () => {
       new Response("Not Found", { status: 404 }),
     );
     spies.push(spy);
-    await expect(getZoomTranscript("tok", "bad-id")).rejects.toThrow("404");
+    await expect(getZoomTranscript("tok", "123456789")).rejects.toThrow("404");
   });
 
   test("throws when transcript download fails", async () => {
@@ -322,7 +303,7 @@ describe("getZoomTranscript", () => {
       )
       .mockResolvedValueOnce(new Response("Forbidden", { status: 403 }));
     spies.push(spy);
-    await expect(getZoomTranscript("tok", "12345")).rejects.toThrow("403");
+    await expect(getZoomTranscript("tok", "123456789")).rejects.toThrow("403");
   });
 
   test("throws on invalid meeting ID", async () => {

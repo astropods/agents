@@ -32,7 +32,7 @@ export function validateMeetingId(value: string): string {
 
 export function extractMeetingId(text: string): string | null {
   // Match a sequence of 9–11 digits, optionally space-separated (e.g. "876 5432 1098")
-  const match = text.match(/\b(\d[\d ]{7,10}\d)\b/);
+  const match = text.match(/\b(\d[\d ]{7,11}\d)\b/);
   if (!match) return null;
   const stripped = match[1].replace(/\s/g, "");
   if (!/^\d{9,11}$/.test(stripped)) return null;

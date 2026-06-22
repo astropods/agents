@@ -66,7 +66,6 @@ inputs:
     name: WEBHOOK_SECRET
     datatype: string
     secret: true
-    optional: true
     description: "Bearer token to authenticate incoming webhook requests"
     display-as: short-text
 
