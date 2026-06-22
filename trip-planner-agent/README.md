@@ -1,6 +1,6 @@
 # Trip Planner Agent
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/trip-planner-agent)
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/trip-planner)
 
 An Astro agent that plans multi-day trips from a plain language request. It checks the weather, searches Yelp for activities and restaurants, and writes a structured day-by-day itinerary and packing list directly to your Notion workspace.
 
