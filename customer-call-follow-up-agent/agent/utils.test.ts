@@ -34,7 +34,9 @@ describe("validateMeetingId", () => {
   });
 
   test("throws on alphanumeric ID", () => {
-    expect(() => validateMeetingId("abc-123_XYZ")).toThrow("Invalid meeting ID");
+    expect(() => validateMeetingId("abc-123_XYZ")).toThrow(
+      "Invalid meeting ID",
+    );
   });
 
   test("throws on too-short number", () => {
