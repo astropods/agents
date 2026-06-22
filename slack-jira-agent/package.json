@@ -1,6 +1,7 @@
 {
   "name": "slack-jira-agent",
   "version": "1.0.0",
+  "description": "Turns a problem description or Slack thread URL into a Jira ticket using GPT-4o mini",
   "private": true,
   "scripts": {
     "dev": "bun run agent/index.ts",
@@ -16,7 +17,6 @@
     "@mastra/libsql": "latest",
     "@mastra/memory": "latest",
     "axios": "^1.7.0",
-    "openai": "^4.0.0",
     "zod": "^3.0.0"
   },
   "devDependencies": {
