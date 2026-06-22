@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://astropods.com/schema/package.json
 spec: package/v1
-name: incident-manager-agent
+name: incident-manager
 
 agent:
   build:
