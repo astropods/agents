@@ -1,6 +1,7 @@
 {
   "name": "route-urgent-tickets-agent",
   "version": "1.0.0",
+  "description": "Triages Zendesk tickets via webhook, applies tags, and routes urgent issues to PagerDuty",
   "private": true,
   "scripts": {
     "start": "bun run agent/index.ts",
