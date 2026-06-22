@@ -47,7 +47,7 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td>Scores open GitHub issues by priority and sentiment using GPT-4o mini — ranking by urgency, surfacing frustrated users, flagging competitor mentions, and collecting community workarounds. Requires <code>GITHUB_TOKEN</code> and <code>OPENAI_API_KEY</code>.</td>
     </tr>
     <tr>
-      <td><a href="./customer-meetings-agent">customer-meetings-agent</a></td>
+      <td><a href="./customer-meetings-agent">daily-customer-brief</a></td>
       <td>Runs every weekday morning and posts a pre-meeting customer brief to Slack. Fetches Google Calendar events, looks up open Zendesk tickets and active HubSpot deals per attendee, and formats a concise per-meeting summary. Requires <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, <code>GOOGLE_REFRESH_TOKEN</code>, <code>ZENDESK_URL</code>, <code>ZENDESK_EMAIL</code>, <code>ZENDESK_API_KEY</code>, <code>HUBSPOT_API_KEY</code>, and <code>OPENAI_API_KEY</code>.</td>
     </tr>
   </tbody>
