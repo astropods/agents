@@ -19,6 +19,7 @@ export type OutputFormat = "summary" | "analysis" | "key insights";
 export function deduplicate(articles: Article[]): Article[] {
   const seen = new Set<string>();
   return articles.filter((a) => {
+    if (!a.title) return false;
     const key = a.title.toLowerCase().trim();
     if (seen.has(key)) return false;
     seen.add(key);
@@ -48,7 +49,10 @@ export function detectFormat(text: string): {
   }
 
   const topic = text
-    .replace(/\b(summary|analysis|analyse|analyze|key insights?)\b/gi, "")
+    .replace(
+      /\b(summary|analysis|analyse|analyze|key insights?|insights)\b/gi,
+      "",
+    )
     .replace(/\s+/g, " ")
     .trim();
 

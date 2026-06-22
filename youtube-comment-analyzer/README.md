@@ -1,5 +1,7 @@
 # YouTube Comment Analyzer
 
+[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/youtube-comment-analyzer)
+
 An Astro agent that classifies YouTube comments by sentiment using GPT-4o mini. It fetches comments in bulk, processes them in batches of 30, and returns a breakdown of how your audience feels — with representative examples per category and a list of unreplied comments to prioritise.
 
 ## Workflow
@@ -29,6 +31,7 @@ Send a message with a YouTube video URL or ID:
 | `https://www.youtube.com/watch?v=VIDEO_ID` | Analyse top 100 comments |
 | `https://youtu.be/VIDEO_ID` | Analyse top 100 comments |
 | `https://www.youtube.com/shorts/VIDEO_ID` | Analyse top 100 comments |
+| `https://www.youtube.com/embed/VIDEO_ID` | Analyse top 100 comments |
 | `VIDEO_ID` | Bare 11-character ID |
 | `VIDEO_ID 200` | Analyse up to 200 comments |
 
@@ -75,3 +78,7 @@ youtube-comment-analyzer/
 ## Model
 
 Uses `openai/gpt-4o-mini` via the Astro-managed OpenAI integration.
+
+## Agent directory
+
+View this agent on Astropods: [astropods.com/astro-ai/youtube-comment-analyzer](https://astropods.com/astro-ai/youtube-comment-analyzer)

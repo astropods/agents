@@ -12,13 +12,14 @@ import type { Article, OutputFormat } from "./utils";
 import { deduplicate, detectFormat } from "./utils";
 
 const openai = new OpenAI();
+const http = axios.create({ timeout: 15_000 });
 
 // ---------------------------------------------------------------------------
 // Source fetchers
 // ---------------------------------------------------------------------------
 
 async function fetchNewsAPI(topic: string): Promise<Article[]> {
-  const { data } = await axios.get("https://newsapi.org/v2/everything", {
+  const { data } = await http.get("https://newsapi.org/v2/everything", {
     params: {
       q: topic,
       apiKey: process.env.NEWS_API_KEY,
@@ -37,7 +38,7 @@ async function fetchNewsAPI(topic: string): Promise<Article[]> {
 }
 
 async function fetchGNews(topic: string): Promise<Article[]> {
-  const { data } = await axios.get("https://gnews.io/api/v4/search", {
+  const { data } = await http.get("https://gnews.io/api/v4/search", {
     params: {
       q: topic,
       token: process.env.GNEWS_API_KEY,
@@ -55,7 +56,7 @@ async function fetchGNews(topic: string): Promise<Article[]> {
 }
 
 async function fetchGuardian(topic: string): Promise<Article[]> {
-  const { data } = await axios.get("https://content.guardianapis.com/search", {
+  const { data } = await http.get("https://content.guardianapis.com/search", {
     params: {
       q: topic,
       "api-key": process.env.GUARDIAN_API_KEY,
@@ -74,7 +75,7 @@ async function fetchGuardian(topic: string): Promise<Article[]> {
 }
 
 async function fetchMediaStack(topic: string): Promise<Article[]> {
-  const { data } = await axios.get("http://api.mediastack.com/v1/news", {
+  const { data } = await http.get("https://api.mediastack.com/v1/news", {
     params: {
       keywords: topic,
       access_key: process.env.MEDIASTACK_API_KEY,
