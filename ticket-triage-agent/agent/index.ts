@@ -317,7 +317,7 @@ if (missing.length > 0) {
 // ---------------------------------------------------------------------------
 
 Bun.serve({
-  port: 3000,
+  port: Number(process.env.PORT) || 80,
   async fetch(req) {
     if (req.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
@@ -381,6 +381,8 @@ Bun.serve({
   },
 });
 
-console.log("Zendesk webhook server listening on :3000");
+console.log(
+  `Zendesk webhook server listening on :${Number(process.env.PORT) || 80}`,
+);
 
 serve(new MastraAdapter(agent));

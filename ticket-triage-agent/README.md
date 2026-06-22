@@ -30,10 +30,10 @@ ast dev
 
 ## Webhook setup
 
-Configure two Zendesk webhooks to `POST` to your agent URL on port `3000`:
+Configure two Zendesk webhooks to `POST` to your agent's URL:
 
-- **Trigger 1:** Ticket created → `https://<agent-url>:3000`
-- **Trigger 2:** Ticket status changed to Solved → `https://<agent-url>:3000`
+- **Trigger 1:** Ticket created → `https://<agent-url>/`
+- **Trigger 2:** Ticket status changed to Solved → `https://<agent-url>/`
 - **Signing:** Enable webhook signing in Zendesk and copy the signing secret into `WEBHOOK_SECRET`. The agent verifies the `x-zendesk-webhook-signature` HMAC-SHA256 header on every request and rejects anything that doesn't match.
 
 ## Usage via chat
@@ -86,7 +86,7 @@ ticket-triage-agent/
 
 - **Web** — Playground available at `localhost:3000` during `ast dev`
 - **Slack** — Deploy with the Slack adapter to receive escalation notifications directly in a channel
-- **Webhook** — Zendesk sends `POST` payloads to port `3000`
+- **Webhook** — Zendesk sends `POST` payloads to the agent's HTTPS endpoint (port 80 in production, 3000 locally via `ast dev`)
 
 ## Model
 

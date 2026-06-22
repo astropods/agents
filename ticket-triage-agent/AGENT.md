@@ -11,7 +11,7 @@ capabilities:
   - "Auto-resolve common support tickets using a Pinecone vector knowledge base"
   - "Escalate unresolved tickets by notifying via the active adapter (web or Slack)"
   - "Learn from human-solved tickets by indexing new Q&A pairs into Pinecone"
-  - "Accept Zendesk webhooks directly on port 3000 or ticket IDs via chat"
+  - "Accept Zendesk webhooks via the agent's HTTPS endpoint or ticket IDs via chat"
 repository:
   type: github
   url: https://github.com/astropods/agents
@@ -51,9 +51,9 @@ Automatically triages incoming Zendesk support tickets. Uses a Pinecone vector k
 
 ## Webhook setup
 
-Configure a Zendesk webhook to `POST` to your agent's URL on port `3000`:
-- **Trigger 1:** Ticket created → send to `https://<your-agent-url>:3000`
-- **Trigger 2:** Ticket status changed to Solved → send to `https://<your-agent-url>:3000`
+Configure a Zendesk webhook to `POST` to your agent's URL:
+- **Trigger 1:** Ticket created → send to `https://<your-agent-url>/`
+- **Trigger 2:** Ticket status changed to Solved → send to `https://<your-agent-url>/`
 
 ## Usage
 
