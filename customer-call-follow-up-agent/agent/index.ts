@@ -299,8 +299,6 @@ Bun.serve({
   },
 });
 
-console.log(
-  `Webhook server listening on :${Number(process.env.PORT) || 80}`,
-);
+console.log(`Webhook server listening on :${Number(process.env.PORT) || 80}`);
 
 serve(new MastraAdapter(agent));
