@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: package/v1
+name: trip-planner
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    messaging: true
+
+models:
+  openai:
+    provider: openai
+
+inputs:
+  YELP_API_KEY:
+    name: YELP_API_KEY
+    datatype: string
+    secret: true
+    description: "Yelp Fusion API key for searching local businesses"
+    display-as: short-text
+  NOTION_BEARER_TOKEN:
+    name: NOTION_BEARER_TOKEN
+    datatype: string
+    secret: true
+    description: "Notion integration token"
+    display-as: short-text
+  NOTION_PARENT_PAGE_ID:
+    name: NOTION_PARENT_PAGE_ID
+    datatype: string
+    description: "Notion page ID under which trip pages are created"
+    display-as: short-text
+
+dev:
+  interfaces:
+    messaging:
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true
