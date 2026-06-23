@@ -1,0 +1,26 @@
+{
+  "name": "incident-manager-agent",
+  "version": "1.0.0",
+  "description": "Slack-triggered incident management agent that tracks and updates incidents in Notion",
+  "private": true,
+  "scripts": {
+    "start": "bun run agent/index.ts",
+    "test": "bun test",
+    "test:unit": "bun test",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@astropods/adapter-core": "latest",
+    "@astropods/adapter-mastra": "latest",
+    "@mastra/core": "latest",
+    "@mastra/memory": "latest",
+    "@mastra/libsql": "latest",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@types/bun": "latest",
+    "typescript": "^5.4.0"
+  }
+}
