@@ -40,7 +40,7 @@ Automatically triages incoming Zendesk tickets. Uses GPT-4.1 to analyse ticket c
 ## Webhook setup
 
 Configure a Zendesk webhook to `POST` to your agent's URL`:
-- **Trigger:** Ticket created → send to `https://<your-agent-url>:3000/`
+- **Trigger:** Ticket created → send to `https://<your-agent-url>`
 
 ## Usage via web chat or Slack
 
