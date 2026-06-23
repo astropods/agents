@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: package/v1
+name: urgent-ticket-router
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    frontend: true
+    messaging: true
+
+models:
+  openai:
+    provider: openai
+
+inputs:
+  ZENDESK_SUBDOMAIN:
+    name: ZENDESK_SUBDOMAIN
+    datatype: string
+    description: "The {subdomain} in https://{subdomain}.zendesk.com"
+    display-as: short-text
+  ZENDESK_USERNAME:
+    name: ZENDESK_USERNAME
+    datatype: string
+    description: "Zendesk agent email address for API authentication"
+    display-as: short-text
+  ZENDESK_API_KEY:
+    name: ZENDESK_API_KEY
+    datatype: string
+    secret: true
+    description: "Zendesk API token"
+    display-as: short-text
+  ZENDESK_TICKET_URL:
+    name: ZENDESK_TICKET_URL
+    datatype: string
+    description: "Base ticket URL e.g. https://mycompany.zendesk.com/agent/tickets"
+    display-as: short-text
+  PAGERDUTY_API_KEY:
+    name: PAGERDUTY_API_KEY
+    datatype: string
+    secret: true
+    description: "PagerDuty REST API key"
+    display-as: short-text
+  PAGERDUTY_FROM_EMAIL:
+    name: PAGERDUTY_FROM_EMAIL
+    datatype: string
+    description: "Email address for PagerDuty From header (required by PagerDuty API)"
+    display-as: short-text
+  WEBHOOK_SECRET:
+    name: WEBHOOK_SECRET
+    datatype: string
+    secret: true
+    description: "Zendesk webhook signing secret — used to verify HMAC-SHA256 signatures on incoming webhook requests"
+    display-as: short-text
+
+dev:
+  interfaces:
+    frontend:
+      port: 3000
+    messaging:
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true
