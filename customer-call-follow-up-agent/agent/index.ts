@@ -215,7 +215,7 @@ new Mastra({ agents: { "customer-call-follow-up-agent": agent } });
 // ---------------------------------------------------------------------------
 
 Bun.serve({
-  port: 3000,
+  port: Number(process.env.PORT) || 80,
   async fetch(req) {
     if (req.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
@@ -299,6 +299,8 @@ Bun.serve({
   },
 });
 
-console.log("Webhook server listening on :3000");
+console.log(
+  `Webhook server listening on :${Number(process.env.PORT) || 80}`,
+);
 
 serve(new MastraAdapter(agent));

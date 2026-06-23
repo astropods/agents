@@ -6,6 +6,7 @@ agent:
     context: .
     dockerfile: Dockerfile
   interfaces:
+    frontend: true
     messaging: true
 
 models:
@@ -68,6 +69,8 @@ inputs:
 
 dev:
   interfaces:
+    frontend:
+      port: 3000
     messaging:
       adapters: [web, slack]
       slack:

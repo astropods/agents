@@ -11,7 +11,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/tsconfig.json ./
 COPY --from=builder /app/agent ./agent
-EXPOSE 3000
+EXPOSE 80
 RUN chown -R bun:bun /app
 USER bun
 CMD ["bun", "run", "agent/index.ts"]
