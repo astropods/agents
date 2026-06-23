@@ -25,6 +25,7 @@ const REQUIRED_ENV_VARS = [
   "JIRA_USERNAME",
   "JIRA_SUBDOMAIN",
   "JIRA_PROJECT_ID",
+  "SLACK_BOT_TOKEN",
 ] as const;
 
 const missing = REQUIRED_ENV_VARS.filter((k) => !process.env[k]);
@@ -77,11 +78,7 @@ const fetchSlackThreadTool = createTool({
     if (extractSlackIds(url) === null) {
       return "Not a valid Slack thread URL.";
     }
-    const slackToken = process.env.SLACK_BOT_TOKEN;
-    if (!slackToken) {
-      return "SLACK_BOT_TOKEN is not configured. Set SLACK_BOT_TOKEN to enable thread fetching, or paste the thread content directly.";
-    }
-    return fetchSlackThread(url, slackToken);
+    return fetchSlackThread(url, process.env.SLACK_BOT_TOKEN ?? "");
   },
 });
 
