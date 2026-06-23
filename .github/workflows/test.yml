@@ -1,4 +1,4 @@
-name: lint
+name: test
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
 
       - id: list
-        name: list agent directories
+        name: list agent directories with changes
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -28,8 +28,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Files whose change should re-check every agent (shared infra).
-          SHARED_RE='^(scripts/|biome\.json$|pyproject\.toml$|\.github/workflows/lint\.yml$)'
+          # Files whose change should re-test every agent (shared infra).
+          SHARED_RE='^(scripts/|pyproject\.toml$|\.github/workflows/test\.yml$)'
 
           case "$EVENT_NAME" in
             pull_request)
@@ -37,13 +37,13 @@ jobs:
               ;;
             push)
               if [[ "$PUSH_BEFORE" =~ ^0+$ ]]; then
-                changed=""  # first push to branch, no diff base — check all
+                changed=""  # first push to branch, no diff base — test all
               else
                 changed="$(git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER")"
               fi
               ;;
             *)
-              changed=""  # workflow_dispatch etc. — check all
+              changed=""  # workflow_dispatch etc. — test all
               ;;
           esac
 
@@ -56,7 +56,7 @@ jobs:
           }
 
           if [[ -z "$changed" ]] || echo "$changed" | grep -qE "$SHARED_RE"; then
-            echo "Triggering full re-check (shared infra changed or no diff context)."
+            echo "Triggering full re-test (shared infra changed or no diff context)."
             agents=$(to_json "${all_agents[@]}")
           else
             touched=()
@@ -76,8 +76,8 @@ jobs:
 
           echo "agents=$agents" >> "$GITHUB_OUTPUT"
 
-  check:
-    name: check (${{ matrix.agent }})
+  test:
+    name: test (${{ matrix.agent }})
     needs: discover
     if: needs.discover.outputs.agents != '[]'
     runs-on: ubuntu-latest
@@ -96,16 +96,5 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: install ruff
-        run: pip install ruff
-
-      - name: install ast CLI
-        run: |
-          curl -fsSL https://astropods.com/install | sh
-          echo "$HOME/.ast/bin" >> "$GITHUB_PATH"
-
-      - name: check ${{ matrix.agent }}
-        # Unit tests run in the dedicated test.yml workflow; skip them here
-        # so each agent's tests don't run twice per PR. (The pre-commit hook
-        # still runs them locally.)
-        run: SKIP_TESTS=1 ./scripts/check-agent.sh "${{ matrix.agent }}"
+      - name: test ${{ matrix.agent }}
+        run: ./scripts/test-agent.sh "${{ matrix.agent }}"

@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "bun --watch agent/index.ts",
     "start": "bun agent/index.ts",
-    "test": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:evals": "vitest run --project evals",
     "lint": "biome check .",
