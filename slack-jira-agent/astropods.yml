@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: package/v1
+name: create-jira-tickets
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    messaging: true
+
+models:
+  openai:
+    provider: openai
+
+inputs:
+  JIRA_API_KEY:
+    name: JIRA_API_KEY
+    datatype: string
+    secret: true
+    description: "Jira API token for authentication"
+    display-as: short-text
+  JIRA_USERNAME:
+    name: JIRA_USERNAME
+    datatype: string
+    secret: true
+    description: "Jira account email address"
+    display-as: short-text
+  JIRA_SUBDOMAIN:
+    name: JIRA_SUBDOMAIN
+    datatype: string
+    description: "Jira subdomain (e.g. 'mycompany' for mycompany.atlassian.net)"
+    display-as: short-text
+  JIRA_PROJECT_ID:
+    name: JIRA_PROJECT_ID
+    datatype: string
+    description: "Jira project key (e.g. 'PROJ')"
+    display-as: short-text
+  SLACK_BOT_TOKEN:
+    name: SLACK_BOT_TOKEN
+    datatype: string
+    secret: true
+    description: "Slack Bot OAuth token (xoxb-...) — required for fetching Slack thread content when a thread URL is provided"
+    display-as: short-text
+dev:
+  interfaces:
+    messaging:
+      adapters: [web, slack]
+      slack:
+        socket_mode: true
+        auto_thread: true

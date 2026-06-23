@@ -63,6 +63,10 @@ This repo contains pre-built agents you can run locally with `ast dev`. You can 
       <td><a href="./trip-planner-agent">trip-planner</a></td>
       <td>Plans multi-day trips from a plain language request — checks the weather via Open-Meteo, searches Yelp for activities and restaurants, and writes a structured day-by-day itinerary and packing list to Notion. Requires <code>OPENAI_API_KEY</code>, <code>YELP_API_KEY</code>, <code>NOTION_BEARER_TOKEN</code>, and <code>NOTION_PARENT_PAGE_ID</code>.</td>
     </tr>
+    <tr>
+      <td><a href="./slack-jira-agent">slack-jira-agent</a></td>
+      <td>Turns a problem description or Slack thread into a Jira ticket in seconds. GPT-4o mini generates a concise title and detailed description, creates the ticket, and returns the direct link. Requires <code>OPENAI_API_KEY</code>, <code>JIRA_API_KEY</code>, <code>JIRA_USERNAME</code>, <code>JIRA_SUBDOMAIN</code>, and <code>JIRA_PROJECT_ID</code>.</td>
+    </tr>
   </tbody>
 </table>
 
