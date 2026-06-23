@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "start": "bun run agent/index.ts",
-    "test": "bun test",
     "test:unit": "bun test",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit"

@@ -7,7 +7,6 @@
     "start": "bun run agent/index.ts",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
     "test:unit": "bun test"
   },
   "dependencies": {

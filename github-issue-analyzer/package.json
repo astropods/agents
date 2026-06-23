@@ -8,7 +8,6 @@
     "dev:ingest": "bun --watch ingestion/index.ts",
     "start": "bun agent/index.ts",
     "ingest": "bun ingestion/index.ts",
-    "test": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:evals": "vitest run --project evals",
     "test:dump": "bun test/dump-fixtures.ts",

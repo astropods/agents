@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "bun run agent/index.ts",
     "start": "bun run agent/index.ts",
-    "test": "bun test",
     "test:unit": "bun test",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit"
