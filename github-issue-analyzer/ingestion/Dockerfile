@@ -14,13 +14,12 @@ FROM oven/bun:1-slim
 
 ARG SYNC_MODE=startup
 ARG ISSUE_LIMIT=0
-ARG GITHUB_OWNER
-ARG GITHUB_REPO
 
 ENV SYNC_MODE=${SYNC_MODE}
 ENV ISSUE_LIMIT=${ISSUE_LIMIT}
-ENV GITHUB_OWNER=${GITHUB_OWNER}
-ENV GITHUB_REPO=${GITHUB_REPO}
+
+# GITHUB_OWNER and GITHUB_REPO are supplied at deploy time via the astropods.yml
+# top-level `inputs` (injected as runtime env vars), not baked at build time.
 
 WORKDIR /app
 
