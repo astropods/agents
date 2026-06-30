@@ -18,7 +18,7 @@ Confirm the plan before performing any actions.
 - The entry point still calls the framework directly (`agent.invoke(...)`, `mastra.getAgent(...).stream(...)`, etc.) instead of an Astropods adapter's `serve()`.
 - The platform's run/trace views are empty even though the agent responds.
 
-Supported frameworks today: **LangChain (Python)** and **Mastra (TypeScript)**. For other frameworks, telemetry must be emitted manually via the OTEL SDK using `OTEL_EXPORTER_OTLP_ENDPOINT` (injected by the runner) — see [Manual instrumentation](#manual-instrumentation). The same applies to a **frontend agent** that serves its own HTTP surface (`interfaces.frontend: true`, no messaging sidecar, hence no `serve()`): its OTEL SDK is the entire telemetry path.
+Supported frameworks today: **LangChain (Python)** and **Mastra (TypeScript)**. For other frameworks, telemetry must be emitted manually via the OTEL SDK using `OTEL_EXPORTER_OTLP_ENDPOINT` (injected by the runner)—see [Manual instrumentation](#manual-instrumentation). The same applies to a **frontend agent** that serves its own HTTP surface (`interfaces.frontend: true`, no messaging sidecar, hence no `serve()`): its OTEL SDK is the entire telemetry path.
 
 ---
 
