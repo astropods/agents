@@ -55,6 +55,20 @@ The body is free-form GitHub-Flavored Markdown. Use the following patterns where
 
   Skip if there is no logo, do not invent one unless asked or suggested.
 
+## Deploy button
+
+Optional guidance for a project's `README.md`, not the agent card — this skill writes `AGENT.md` and does not modify `README.md` unless asked.
+
+You can add a **Deploy on Astropods** button near the top of a project's `README.md` (right under the H1) that links to its Astropods page:
+
+```markdown
+[![Deploy on Astropods](https://raw.githubusercontent.com/astropods/agents/assets-v1/assets/deploy-button.svg)](https://astropods.com/<account>/<blueprint>)
+```
+
+- **Two uses.** In a **public GitHub repo**, point it at a **public blueprint** so anyone can one-click deploy the agent. In a **private repo**, use it as a convenience shortcut to reach your own Astropods deployment.
+- **Link target:** `https://astropods.com/<account>/<blueprint>` — `<account>` is the Astropods handle (`ast whoami`) and `<blueprint>` is the name pushed with `ast blueprint push <name>`.
+- **Use the raw SVG URL pinned to a tag** located at `raw.githubusercontent.com/astropods/agents/assets-v1/assets/deploy-button.svg`. This is the image itself (served `image/svg+xml`). Referencing the `assets-v1` tag keeps the URL stable, so a README's button doesn't break if the asset later moves.
+
 ## Notes
 
 - If an `AGENT.md` already exists, update it rather than overwriting, preserving any existing body content the author wrote.
