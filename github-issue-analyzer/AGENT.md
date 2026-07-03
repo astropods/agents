@@ -45,4 +45,4 @@ Issues are stored as nodes with rich relationships:
 
 ## Ingestion
 
-Runs automatically on startup. Set `SYNC_MODE=schedule` for incremental syncs (only fetches issues updated since the last run). Control scope with `GITHUB_OWNER`, `GITHUB_REPO`, and `ISSUE_LIMIT` build args in `astropods.yml`.
+Runs automatically on startup. Set `SYNC_MODE=schedule` for incremental syncs (only fetches issues updated since the last run). The target repo is set via the top-level `GITHUB_OWNER` / `GITHUB_REPO` inputs in `astropods.yml` (configured at deploy time with `ast configure`); tune `ISSUE_LIMIT` and `SYNC_MODE` build args in `astropods.yml`.

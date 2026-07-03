@@ -45,7 +45,7 @@ async function main() {
     repo = requireEnv('GITHUB_REPO');
   } catch (err) {
     console.error((err as Error).message);
-    console.error('Set these in astropods.yml under ingestion.*.container.build.args');
+    console.error('Set these via the top-level `inputs` in astropods.yml (run `ast configure`, or set them in .env for local dev)');
     process.exit(1);
   }
 

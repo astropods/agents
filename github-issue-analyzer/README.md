@@ -122,13 +122,18 @@ All configuration is in `astropods.yml`.
 | `tools.github` | `github` | `GITHUB_TOKEN` |
 | `knowledge.graph` | `neo4j` | `NEO4J_HOST`, `NEO4J_PORT` (auto) |
 
+**Deploy-time inputs** (top-level `inputs` in `astropods.yml`, prompted by `ast configure` and injected into every container, including both ingestion entries):
+
+| Input | Description |
+|-------|-------------|
+| `GITHUB_OWNER` | Repository owner |
+| `GITHUB_REPO` | Repository name |
+
 **Ingestion build args** (baked into container images via `astropods.yml`):
 
 | Arg | Default | Description |
 |-----|---------|-------------|
 | `SYNC_MODE` | `startup` / `schedule` | Full sync or incremental |
-| `GITHUB_OWNER` | *(required)* | Repository owner |
-| `GITHUB_REPO` | *(required)* | Repository name |
 | `ISSUE_LIMIT` | `100` (startup) / `0` (schedule) | Max issues to process (0 = all) |
 
 ## Environment Variables
