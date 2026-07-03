@@ -18,7 +18,7 @@ Confirm the plan before performing any actions.
 - The entry point still calls the framework directly (`agent.invoke(...)`, `mastra.getAgent(...).stream(...)`, etc.) instead of an Astropods adapter's `serve()`.
 - The platform's run/trace views are empty even though the agent responds.
 
-Supported frameworks today: **LangChain (Python)** and **Mastra (TypeScript)**. For other frameworks, telemetry must be emitted manually via the OTEL SDK using `OTEL_EXPORTER_OTLP_ENDPOINT` (injected by the runner).
+Supported frameworks today: **LangChain (Python)** and **Mastra (TypeScript)**. For other frameworks, telemetry must be emitted manually via the OTEL SDK using `OTEL_EXPORTER_OTLP_ENDPOINT` (injected by the runner)—see [Manual instrumentation](#manual-instrumentation). The same applies to a **frontend agent** that serves its own HTTP surface (`interfaces.frontend: true`, no messaging sidecar, hence no `serve()`): its OTEL SDK is the entire telemetry path.
 
 ---
 
@@ -114,6 +114,31 @@ If `OTEL_EXPORTER_OTLP_ENDPOINT` is unset (running outside `ast project start`),
 
 ---
 
+## Manual instrumentation
+
+For an agent with no first-party adapter (a different framework, raw LLM calls, or a frontend agent that owns its own HTTP surface and never calls `serve()`), there is nothing to auto-wire tracing — the OTEL SDK is the whole telemetry path.
+
+1. **Initialize the SDK first**, before any instrumented code runs. Export over OTLP to `OTEL_EXPORTER_OTLP_ENDPOINT` (the runner injects it; unset locally → no-op). Set `service.name` from `ASTRO_AGENT_NAME` and `service.version` from `ASTRO_AGENT_BUILD`.
+2. **Wrap meaningful work in spans** — the request, each LLM call, each tool call.
+3. **Set the attributes the backend reads.** It recognizes a specific set; anything else lands in raw metadata rather than the dedicated input/output/user/usage fields:
+
+| Purpose                          | Span attribute(s)                                                                 |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| Input                            | `langfuse.observation.input`, `langfuse.trace.input` (also `gen_ai.input`, `input.value`) |
+| Output                           | `langfuse.observation.output`, `langfuse.trace.output` (also `gen_ai.output`, `output.value`) |
+| User (filterable)                | `langfuse.user.id` — a stable, non-PII identifier                                 |
+| Session (groups a conversation)  | `langfuse.session.id`                                                             |
+| LLM generation                   | `langfuse.observation.type = "generation"` + `gen_ai.request.model`               |
+| Token usage                      | `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                         |
+
+On a root (or `workflow`-kind) span, observation-level input/output is promoted to the trace-level fields automatically; otherwise set the `langfuse.trace.*` keys directly.
+
+- **Cost.** Usage is recorded as token counts. A monetary cost renders only when the backend has a price for the reported model — the gateway emits raw usage and does not compute cost. For per-trace cost, register a model price in the backend for the model name you report.
+- **Redaction.** With prompt redaction enabled on the collector, the content keys (`langfuse.observation.input`/`output`, `langfuse.trace.input`/`output`, `gen_ai.prompt`/`completion`/`input`/`output`, `llm.prompts`/`completions`) become `[REDACTED]`; usage, model, user, and session are left intact.
+- **Streaming responses.** If the handler returns before the reply finishes streaming (work continues in a stream callback), the request span has already ended — open a dedicated span around the streaming work so the generation and tool calls are captured under it.
+
+---
+
 ## Common issues
 
 | Problem | Fix |
@@ -123,3 +148,5 @@ If `OTEL_EXPORTER_OTLP_ENDPOINT` is unset (running outside `ast project start`),
 | Mastra: traces appear but missing tool spans | Ensure tools are registered on the `Agent`/`Mastra` instance, not bound ad-hoc per call — only registered tools are auto-traced. |
 | LangChain: streaming feels slow / arrives in chunks | Expected. The LangChain adapter uses `astream(stream_mode="updates")`, so updates land as complete messages. Switch to per-token streaming requires a custom adapter. |
 | `serve()` exits immediately on container start | The runner injects `GRPC_SERVER_ADDR` only inside `ast project start`. Outside it, `serve()` has nothing to bind to. |
+| Manual instrumentation: user / input / output blank in a trace | You're setting non-recognized attribute keys. Use the `langfuse.*` / `gen_ai.*` keys from [Manual instrumentation](#manual-instrumentation); anything else lands in raw metadata, not the dedicated fields. |
+| Tokens show but cost is blank | Usage is recorded, but the backend has no price for the model. Register a model price for the reported model name; the gateway emits raw usage and does not compute cost. |
