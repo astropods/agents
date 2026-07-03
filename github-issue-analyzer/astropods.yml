@@ -3,6 +3,18 @@ name: "github-issue-analyzer"
 
 meta: {}
 
+# Top-level inputs are prompted by `ast configure` and injected into every
+# container — including both ingestion entries below. Declare once here.
+inputs:
+  GITHUB_OWNER:
+    name: GITHUB_OWNER
+    datatype: string
+    description: "Owner of the GitHub repo to ingest issues from"
+  GITHUB_REPO:
+    name: GITHUB_REPO
+    datatype: string
+    description: "Name of the GitHub repo to ingest issues from"
+
 agent:
   build:
     context: .
@@ -29,8 +41,6 @@ ingestion:
         args:
           SYNC_MODE: "startup"
           ISSUE_LIMIT: "20"
-          GITHUB_OWNER: "mastra-ai"
-          GITHUB_REPO: "mastra"
     trigger:
       type: startup
   schedule:
@@ -41,8 +51,6 @@ ingestion:
         args:
           SYNC_MODE: "schedule"
           ISSUE_LIMIT: "0"
-          GITHUB_OWNER: "mastra-ai"
-          GITHUB_REPO: "mastra"
     trigger:
       type: schedule
 
