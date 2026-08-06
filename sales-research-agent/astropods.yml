@@ -1,7 +1,6 @@
-spec: package/v1
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: blueprint/v1
 name: "sales-research-agent"
-
-meta: {}
 
 providers:
   gong:

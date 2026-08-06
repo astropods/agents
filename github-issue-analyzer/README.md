@@ -48,7 +48,7 @@ Built with [Mastra](https://mastra.ai) and the Astro platform.
 
 ### Prerequisites
 
-- Astro CLI (`curl -fsSL https://astropods.ai/install | sh`)
+- Astro CLI (`curl -fsSL https://astropods.com/install | sh`)
 - Docker
 - A GitHub token and OpenAI API key
 

@@ -18,7 +18,7 @@ Confirm the plan before performing any actions.
 - The entry point still calls the framework directly (`agent.invoke(...)`, `mastra.getAgent(...).stream(...)`, etc.) instead of an Astropods adapter's `serve()`.
 - The platform's run/trace views are empty even though the agent responds.
 
-Supported frameworks today: **LangChain (Python)** and **Mastra (TypeScript)**. For other frameworks, telemetry must be emitted manually via the OTEL SDK using `OTEL_EXPORTER_OTLP_ENDPOINT` (injected by the runner)—see [Manual instrumentation](#manual-instrumentation). The same applies to a **frontend agent** that serves its own HTTP surface (`interfaces.frontend: true`, no messaging sidecar, hence no `serve()`): its OTEL SDK is the entire telemetry path.
+Supported frameworks today: **LangChain (Python)** and **Mastra (TypeScript)**. For other frameworks, telemetry must be emitted manually via the OTEL SDK using `OTEL_EXPORTER_OTLP_ENDPOINT` — see [Manual instrumentation](#manual-instrumentation). The endpoint is injected in deployed environments only; see the local-dev caveat in step 5. The same applies to a **frontend agent** that serves its own HTTP surface (`interfaces.frontend: true`, no messaging sidecar, hence no `serve()`): its OTEL SDK is the entire telemetry path. For plain Python without LangChain, the framework-agnostic [`astropods-adapter-core`](https://pypi.org/project/astropods-adapter-core/) package provides `serve()`/`AgentAdapter` directly, and [`astropods-messaging`](https://pypi.org/project/astropods-messaging/) provides the raw gRPC stubs (requires `grpcio>=1.81`).
 
 ---
 
@@ -43,6 +43,8 @@ bun add @astropods/adapter-mastra
 # TypeScript / Mastra (npm)
 npm install @astropods/adapter-mastra
 ```
+
+OTEL auto-wiring needs `@astropods/adapter-mastra` >= 0.2.0 and `@mastra/core` >= 1.14.0. A fresh install satisfies both, but an agent pinned to an older adapter (0.0.9 has no `setupObservability` at all) produces no traces even when deployed — check the pinned version before assuming the wiring is at fault.
 
 ### 3. Wire up `serve()`
 
@@ -100,7 +102,7 @@ serve(myAgent);
 Notes:
 - Uses `fullStream` — responses stream token-by-token.
 - `options.conversationId` is passed as the memory `thread` automatically.
-- OTEL tracing is auto-configured when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (the runner injects it).
+- OTEL tracing is auto-configured when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (injected in deployed environments; see the local-dev caveat in step 5).
 
 ### 4. Update the `Dockerfile` `CMD` if needed
 
@@ -108,9 +110,17 @@ If the entry-point filename changed, update the final `CMD` line to match. If yo
 
 ### 5. Verify telemetry
 
-Run `ast project start`, send a request through the messaging interface, then check the platform's runs/traces view. You should see a new run with spans for the agent's LLM calls and tool invocations.
+> **Local-dev caveat (verified on CLI 0.15.10):** `ast project start` injects
+> `GRPC_SERVER_ADDR` but does **not** inject `OTEL_EXPORTER_OTLP_ENDPOINT`, and
+> the local stack runs no trace collector. Local tracing is therefore a silent
+> no-op — this is expected, not a bug in your wiring. Verify traces on the
+> deployed platform, where the endpoint is provided.
 
-If `OTEL_EXPORTER_OTLP_ENDPOINT` is unset (running outside `ast project start`), the adapter falls back to no-op tracing — agent works, telemetry is silently dropped.
+Deploy the agent, send a request through the messaging interface, then check the platform's runs/traces view. You should see a new run with spans for the agent's LLM calls and tool invocations.
+
+From the terminal, `ast agent trace --name <agent>` lists recent traces and `ast agent trace -t <trace-id>` shows one in detail — usually a faster loop than the platform UI.
+
+If `OTEL_EXPORTER_OTLP_ENDPOINT` is unset (local dev, tests, running outside the platform), the adapter falls back to no-op tracing — agent works, telemetry is silently dropped.
 
 ---
 
@@ -118,7 +128,7 @@ If `OTEL_EXPORTER_OTLP_ENDPOINT` is unset (running outside `ast project start`),
 
 For an agent with no first-party adapter (a different framework, raw LLM calls, or a frontend agent that owns its own HTTP surface and never calls `serve()`), there is nothing to auto-wire tracing — the OTEL SDK is the whole telemetry path.
 
-1. **Initialize the SDK first**, before any instrumented code runs. Export over OTLP to `OTEL_EXPORTER_OTLP_ENDPOINT` (the runner injects it; unset locally → no-op). Set `service.name` from `ASTRO_AGENT_NAME` and `service.version` from `ASTRO_AGENT_BUILD`.
+1. **Initialize the SDK first**, before any instrumented code runs. Export over OTLP to `OTEL_EXPORTER_OTLP_ENDPOINT` (the runner injects it; unset locally → no-op). Set `service.name` from `ASTRO_AGENT_NAME` and `service.version` from `ASTRO_AGENT_BUILD` — both are deploy-only, like the endpoint, so always supply a fallback (`process.env.ASTRO_AGENT_NAME ?? "agent"`, `process.env.ASTRO_AGENT_BUILD ?? "dev"`). Without one, pointing the endpoint at your own local collector emits traces with `undefined` service metadata.
 2. **Wrap meaningful work in spans** — the request, each LLM call, each tool call.
 3. **Set the attributes the backend reads.** It recognizes a specific set; anything else lands in raw metadata rather than the dedicated input/output/user/usage fields:
 
@@ -143,7 +153,7 @@ On a root (or `workflow`-kind) span, observation-level input/output is promoted 
 
 | Problem | Fix |
 |---------|-----|
-| Agent responds but no runs appear in the platform | Confirm the entry point calls `serve(...)`, not the framework's invoke/stream directly. Restart with `ast project start` so `OTEL_EXPORTER_OTLP_ENDPOINT` is injected. |
+| Agent responds but no runs appear in the platform | Confirm the entry point calls `serve(...)`, not the framework's invoke/stream directly. If running locally: expected — `ast project start` does not inject `OTEL_EXPORTER_OTLP_ENDPOINT` (see step 5); check the deployed agent instead. |
 | Mastra: agent can't connect to postgres after storage init | Storage must be initialized **before** `new Mastra()` is constructed — use top-level await on `storage.init()`. |
 | Mastra: traces appear but missing tool spans | Ensure tools are registered on the `Agent`/`Mastra` instance, not bound ad-hoc per call — only registered tools are auto-traced. |
 | LangChain: streaming feels slow / arrives in chunks | Expected. The LangChain adapter uses `astream(stream_mode="updates")`, so updates land as complete messages. Switch to per-token streaming requires a custom adapter. |

@@ -1,7 +1,6 @@
-spec: astro/v1
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: blueprint/v1
 name: "github-issue-analyzer"
-
-meta: {}
 
 # Top-level inputs are prompted by `ast configure` and injected into every
 # container — including both ingestion entries below. Declare once here.
