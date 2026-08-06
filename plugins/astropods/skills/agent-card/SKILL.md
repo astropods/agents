@@ -10,7 +10,7 @@ Create or update the `AGENT.md` for the current Astropods agent project, conform
 
 2. Fetch the spec from https://docs.astropods.com/agent-card-spec.md to make sure you are using the latest version before generating the required AGENT.md file.
 
-3. Read the spec file to extract the agent name, integrations (for deriving known integration labels), and any existing `meta.description` or `meta.tags` to migrate. Then evaluate the agent name:
+3. Read the spec file to extract the agent name, integrations (for deriving known integration labels), and any existing `meta.description` or `meta.tags` to migrate. Those two fields were deprecated in spec v1.2 (§2.1, 'moved to Agent Card frontmatter') but are **still accepted by `ast spec validate` and read as a fallback** when no Agent Card is present — so migrating is a SHOULD, not a hard requirement, and an un-migrated spec still validates. Once their content has moved into the Agent Card frontmatter, delete them from `astropods.yml`. The whole `meta` block is deprecated; if removing those two leaves it empty or holding only `visibility`, drop the block. Then evaluate the agent name:
    - If the name is unclear, date-based, or otherwise not descriptive (e.g. a name derived from a date, an internal codename, or a generic placeholder), suggest a better name based on what the agent does.
    - If the name is not scoped to an organization (i.e. does not follow the `@org/name` pattern), ask the user whether it should be scoped and what organization prefix to use. Apply the scope once confirmed.
    - Update the `name` field in `astropods.yml` only after confirmation from the user.

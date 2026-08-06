@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://astropods.com/schema/package.json
-spec: package/v1
+spec: blueprint/v1
 name: zendesk-ticket-triage
 
 agent:

@@ -48,8 +48,8 @@ If the project already includes an `astropods.yml`, check if it needs to be upda
 
 ```yaml
 # yaml-language-server: $schema=https://astropods.com/schema/package.json
-spec: astro/v1
-name: "<agent-name>"         # kebab-case; org-scoped: "@postman/agent-name"
+spec: blueprint/v1
+name: "<agent-name>"         # kebab-case; org-scoped: "@your-account/agent-name"
 
 agent:
   build:
@@ -74,7 +74,7 @@ inputs:                      # everything else — secrets and config
     datatype: string
     secret: true
     description: "Tavily API key for web search"
-    display-as: short-text   # short-text | select | textarea
+    display-as: short-text   # short-text | long-text | select
   SOME_OPTION:
     name: SOME_OPTION
     datatype: string
@@ -90,12 +90,43 @@ dev:
       adapters: [web]        # web | slack (can list both)
 ```
 
-**Rules:**
-- `inputs` must be a **map** (not a list). Each key is the env var name.
+**Rules** — the CLI is BETA and the schema shifts between minor versions, so treat `ast spec validate` as the source of truth over anything written here. Re-verified on CLI 0.15.10.
+
+- `spec` must be `blueprint/v1`. **The validator does not enforce this value** (any
+  non-empty string passes `ast spec validate`, though omitting `spec` entirely is
+  caught), so a wrong value here is a silent defect — check it by eye. RFC-1 §2 is
+  authoritative for this value regardless of what an older cached copy of the JSON
+  schema says. Same rule, same wording in
+  [`build-astropods-agent`](../build-astropods-agent/SKILL.md) §2
+  (*astropods.yml essentials*) — keep the two in sync.
+- Top-level `inputs` must be a **map** (not a list); each key is the env var name,
+  injected into every container. The **list** form is a *different field* used for
+  nested inputs (`agent.inputs`, `knowledge[].inputs`, etc.), injected only into
+  that container — see [`build-astropods-agent`](../build-astropods-agent/SKILL.md) §2
+  (*astropods.yml essentials*). The type follows the placement
+  (top-level → map; nested → list); using both in one file is expected, not a
+  conflict.
 - Omit `models`, `integrations`, `knowledge`, or `inputs` entirely if not needed.
 - Model provider keys (openai, anthropic) inject the corresponding API key automatically.
 - Built-in integrations (firecrawl, github) inject their credentials automatically. Anything else goes in `inputs`.
-- `meta.description` does NOT go in `astropods.yml` — put it in `AGENT.md` frontmatter (see step 5).
+- **The whole `meta` block is deprecated — omit it in new specs.** `meta.description`/`meta.tags`
+  went first (spec v1.2, §2.1: *'Moved to Agent Card frontmatter'*); `meta.visibility` followed
+  in spec v1.5 (*'Visibility is managed via the platform UI and API, not the spec.'*). All three
+  are **DEPRECATED, not removed** — they still **pass `ast spec validate`**, and the platform
+  still reads `meta.description`/`meta.tags` as a fallback when no `AGENT.md` is present. So
+  porting an old spec does not break; migrating is a SHOULD, not a hard requirement. But don't
+  ship them in new work: move description/tags to `AGENT.md` frontmatter (step 5), and set
+  visibility with `ast push --visibility public|private`, the platform UI, or the API — see the
+  rules under *Headless / scheduled workers* below. `meta.visibility` is accepted but has no
+  effect — verified by pushing `meta.visibility: private` to a public blueprint and watching it
+  stay public.
+- An org-scoped `name` (`@your-account/...`) must match your **active Astropods
+  account** at `ast push` time (or pass `--allow-account-override`). Nothing checks
+  this locally, so it surfaces on first push.
+- If the agent posts to Slack, consider the platform's Slack adapter (bot
+  credentials live in the messaging sidecar — see
+  [`build-astropods-agent`](../build-astropods-agent/SKILL.md) §8 *The Slack adapter*)
+  instead of declaring a `SLACK_BOT_TOKEN` input.
 
 #### Interfaces (`agent.interfaces` vs `dev.interfaces`)
 
@@ -132,21 +163,18 @@ See the troubleshooting table below for the IPv6 caveat when the host name is IP
 
 #### Adding a database (`knowledge`)
 
-If the agent needs persistent storage, declare it under `knowledge`. The platform manages the service and injects connection details.
+If the agent needs persistent storage, declare it under `knowledge`. The platform manages the service and injects connection details. Persistence is automatic — derived from the provider's mount path, or `container.volume` in container mode.
 
 ```yaml
 knowledge:
   db:
     provider: postgres      # platform-managed postgres; injects POSTGRES_HOST/PORT/USER/PASSWORD/DB
-    persistent: true
 
   vectors:
     provider: qdrant        # platform-managed qdrant; injects QDRANT_HOST/PORT/API_KEY
-    persistent: true
 
   cache:
     provider: redis         # platform-managed redis; injects REDIS_HOST/PORT/PASSWORD
-    persistent: true
 ```
 
 For vector workloads requiring pgvector, use a custom container instead of provider mode (provider postgres does not include pgvector):
@@ -157,8 +185,7 @@ knowledge:
     container:
       image: pgvector/pgvector:pg17
       port: 5432
-      volume: /var/lib/postgresql/data
-    persistent: true
+      volume: /var/lib/postgresql/data   # mount path — this is what makes the store persistent
     inputs:
       - name: POSTGRES_DB
         datatype: string
@@ -291,9 +318,42 @@ Known gaps or constraints.
 
 ### 5. Verify
 
-Run `ast project start` in the agent directory. It should build the container, start all services, and expose a messaging interface.
+First validate the spec — this catches schema mistakes (invalid `display-as`,
+malformed `inputs`, etc.) before any containers build. Re-run it after every
+`ast upgrade`; the CLI is BETA and the schema shifts between minor versions.
+
+```bash
+ast spec validate
+```
+
+Then run `ast project start` in the agent directory. It should build the container, start all services, and expose a messaging interface.
 
 Once running, the agent works end-to-end but the platform records no run telemetry. To enable OpenTelemetry traces, follow up with [`wire-astropods-telemetry`](../wire-astropods-telemetry/SKILL.md).
+
+#### Headless / scheduled workers
+
+Not every migrated project is conversational. For a cron-style worker nobody
+chats with:
+- `agent.interfaces: { frontend: false, messaging: false }` is a valid shape —
+  the worker just runs its own schedule inside the container. Note `ast deploy`
+  defaults to `--adapter web`; confirm how a no-interface blueprint is surfaced
+  before relying on it in production.
+- Alternatively, declare the job under `ingestion:` with `type: schedule` and let
+  the **platform** own the timer instead of an in-container scheduler
+  (trigger locally with `ast project trigger`).
+- A worker can also use `messaging: true` for **egress only** (e.g. posting Slack
+  digests via the messaging sidecar) without implementing `serve()` — inbound
+  chat will go unanswered, so say so in `AGENT.md`.
+- Internal workers rarely belong in the public catalog. Pushes default to **private**, so
+  a plain `ast push` already does the right thing — there is no pick-one prompt on a normal
+  private push. The rules worth knowing:
+  - `ast push --visibility public|private` (`-V`) sets it explicitly.
+  - An agent already public on the server **stays public** on re-push unless you pass
+    `--visibility private`.
+  - The confirm prompt fires only when going public, or demoting a public agent to
+    private; `-y` skips it.
+  - `meta.visibility` is deprecated (spec v1.5) and has no effect — see the `meta` rule
+    above.
 
 ---
 

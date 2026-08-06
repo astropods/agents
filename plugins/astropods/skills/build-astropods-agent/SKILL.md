@@ -36,7 +36,7 @@ Validate every change with `ast spec validate`. The full schema lives at
 
 ```yaml
 # yaml-language-server: $schema=https://astropods.com/schema/package.json
-spec: package/v1
+spec: blueprint/v1
 name: myagent
 
 agent:
@@ -73,6 +73,25 @@ Pitfalls:
   `dev.interfaces.frontend.port`.
 - `interfaces:` MUST be nested under `agent:`. Top-level placement is
   silently ignored.
+- `spec` must be `blueprint/v1`. **The validator does not enforce this value** (any
+  non-empty string passes `ast spec validate`, though omitting `spec` entirely is
+  caught), so a wrong value here is a silent defect — check it by eye. RFC-1 §2 is
+  authoritative for this value regardless of what an older cached copy of the JSON
+  schema says. Same rule, same wording in
+  [`migrate-to-astropods`](../migrate-to-astropods/SKILL.md) §2
+  (*Create `astropods.yml`*) — keep the two in sync.
+- `inputs` appears in two places with **different types and scopes** — this is
+  by design (per the [Astropods package spec](https://docs.astropods.com/astropods-package-spec.md):
+  §2 Top-Level Structure, §3 Agent, §8.4 Inputs), not a stylistic choice:
+  - **Top-level `inputs`** is a **map** keyed by env var name, injected into
+    **every** container. Writing it as a list is a type error
+    (`cannot unmarshal !!seq into map[string]spec.Input`).
+  - **`agent.inputs`** (and `models[].inputs`, `knowledge[].inputs`, etc.) is a
+    **list** of input objects, injected into that component's container only.
+
+  Using both in one file is expected — see the spec's complete example. The only
+  rule is: pick the correct type for the placement (top-level → map; nested →
+  list). Neither form is deprecated.
 
 ## 3. Knowledge stores (Redis, Postgres, Qdrant, …)
 
