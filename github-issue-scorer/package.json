@@ -9,14 +9,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@astropods/adapter-core": "latest",
-    "@astropods/adapter-mastra": "latest",
-    "@mastra/core": "latest",
-    "@mastra/libsql": "latest",
-    "@mastra/memory": "latest",
+    "@astropods/adapter-core": "^0.10.0",
+    "@astropods/adapter-mastra": "^0.7.1",
+    "@mastra/core": "^1.64.0",
+    "@mastra/libsql": "^1.22.3",
+    "@mastra/memory": "^1.28.2",
     "@octokit/rest": "^21.0.0",
-    "p-map": "^7.0.0",
     "openai": "^4.0.0",
+    "p-map": "^7.0.0",
     "zod": "^3.0.0"
   },
   "devDependencies": {
