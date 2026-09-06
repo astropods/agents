@@ -44,7 +44,7 @@ bun add @astropods/adapter-mastra
 npm install @astropods/adapter-mastra
 ```
 
-OTEL auto-wiring needs `@astropods/adapter-mastra` >= 0.2.0 and `@mastra/core` >= 1.14.0. A fresh install satisfies both, but an agent pinned to an older adapter (0.0.9 has no `setupObservability` at all) produces no traces even when deployed — check the pinned version before assuming the wiring is at fault.
+OTEL auto-wiring needs `@astropods/adapter-mastra` >= 0.2.0 and `@mastra/core` >= 1.63.0. A fresh install satisfies both, but an agent pinned to an older adapter (0.0.9 has no `setupObservability` at all) produces no traces even when deployed — check the pinned version before assuming the wiring is at fault.
 
 ### 3. Wire up `serve()`
 

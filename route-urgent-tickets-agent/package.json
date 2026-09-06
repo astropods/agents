@@ -10,11 +10,11 @@
     "test:unit": "bun test"
   },
   "dependencies": {
-    "@astropods/adapter-core": "latest",
-    "@astropods/adapter-mastra": "latest",
-    "@mastra/core": "latest",
-    "@mastra/memory": "latest",
-    "@mastra/libsql": "latest",
+    "@astropods/adapter-core": "^0.10.0",
+    "@astropods/adapter-mastra": "^0.7.1",
+    "@mastra/core": "^1.64.0",
+    "@mastra/libsql": "^1.22.3",
+    "@mastra/memory": "^1.28.2",
     "axios": "^1.7.0",
     "zod": "^3.0.0"
   },
