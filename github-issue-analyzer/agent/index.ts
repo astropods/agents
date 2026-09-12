@@ -27,6 +27,7 @@ import { applyLabelSyncTool } from './tools/apply-label-sync';
 import { previewLabelSyncTool } from './tools/preview-label-sync';
 import { prioritizeIssuesTool } from './tools/prioritize-issues';
 import { queryNeo4jTool } from './tools/query-neo4j';
+import { reconcileIssueStateTool } from './tools/reconcile-issue-state';
 import { summarizeCommentsTool } from './tools/summarize-comments';
 
 const owner = process.env.GITHUB_OWNER;
@@ -56,6 +57,7 @@ const agent = new Agent({
     prioritizeIssues: prioritizeIssuesTool,
     previewLabelSync: previewLabelSyncTool,
     applyLabelSync: applyLabelSyncTool,
+    reconcileIssueState: reconcileIssueStateTool,
   },
   memory,
 });

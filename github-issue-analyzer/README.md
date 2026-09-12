@@ -113,6 +113,22 @@ rather than just the distinct values already on issues.
 
 > Which small-effort issues have high severity? Those are the quick wins.
 
+### Check the graph against GitHub
+
+`Issue.state` can lag reality. The startup sync fetches open issues, so an issue
+closed after it was ingested keeps a stale `OPEN` state, and the scheduled sync
+only sees issues touched since its last run. Ask the agent to check:
+
+> Check whether the graph's issue open/closed state matches GitHub.
+
+That reports drift and changes nothing. To correct it, say so explicitly:
+
+> Reconcile the issue state against GitHub and correct any stale entries.
+
+The word that flips it is "correct", "fix", or "apply". This tool writes only to
+the graph, never to GitHub, so unlike the label sync it is not confirmation
+gated: the worst it can do is make the graph agree with GitHub.
+
 ### Sync labels to GitHub
 
 Preview first. This is read-only and cannot write, however it is phrased:
