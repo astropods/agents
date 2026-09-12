@@ -2,6 +2,7 @@
  * GitHub GraphQL API — fetches issue data (issue + comments + reactions + labels).
  */
 
+import { fetchWithRetry } from './http';
 import type { GitHubComment, GitHubIssue, IssueData } from './neo4j';
 
 // ---------------------------------------------------------------------------
@@ -71,38 +72,24 @@ query ($owner: String!, $repo: String!, $issueNumber: Int!, $commentsAfter: Stri
 // GraphQL helper
 // ---------------------------------------------------------------------------
 
-const MAX_RETRIES = 5;
-const RETRY_STATUS_CODES = new Set([429, 500, 502, 503]);
-
 async function graphql<T = unknown>(query: string, variables: Record<string, unknown>): Promise<T> {
   const token = requireToken();
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const res = await fetch(GITHUB_API_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables }),
-    });
+  const res = await fetchWithRetry(
+    () =>
+      fetch(GITHUB_API_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables }),
+      }),
+    'GitHub GraphQL',
+  );
 
-    if (res.ok) {
-      const json = (await res.json()) as { data?: T; errors?: { message: string }[] };
-      if (json.errors) throw new Error(`GraphQL: ${JSON.stringify(json.errors)}`);
-      return json.data as T;
-    }
+  if (!res.ok) throw new Error(`GitHub API HTTP ${res.status}`);
 
-    if (attempt < MAX_RETRIES && RETRY_STATUS_CODES.has(res.status)) {
-      const backoff = Math.min(1000 * 2 ** attempt, 30000);
-      console.warn(
-        `  GitHub API ${res.status}, retrying in ${backoff / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`,
-      );
-      await new Promise((r) => setTimeout(r, backoff));
-      continue;
-    }
-
-    throw new Error(`GitHub API HTTP ${res.status}`);
-  }
-
-  throw new Error('GitHub API: max retries exceeded');
+  const json = (await res.json()) as { data?: T; errors?: { message: string }[] };
+  if (json.errors) throw new Error(`GraphQL: ${JSON.stringify(json.errors)}`);
+  return json.data as T;
 }
 
 // ---------------------------------------------------------------------------

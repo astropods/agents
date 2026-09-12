@@ -6,8 +6,16 @@ export default defineConfig({
       {
         test: {
           name: 'unit',
-          include: ['agent/**/__tests__/**/*.test.ts'],
+          include: ['agent/**/__tests__/**/*.test.ts', 'src/**/__tests__/**/*.test.ts'],
           testTimeout: 10_000,
+        },
+      },
+      {
+        test: {
+          name: 'integration',
+          include: ['test/integration/**/*.test.ts'],
+          testTimeout: 180_000,
+          hookTimeout: 180_000,
         },
       },
       {

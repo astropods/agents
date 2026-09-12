@@ -69,6 +69,22 @@ ingestion:
           ISSUE_STATE: "all"
     trigger:
       type: schedule
+  sync-labels:
+    container:
+      build:
+        context: .
+        dockerfile: ingestion/Dockerfile.labels
+    # Declared as an input, not container.environment: the local compose builder
+    # ignores container.environment for ingestion services, so only an input is
+    # overridable per run via `--env`.
+    inputs:
+      - name: APPLY
+        datatype: boolean
+        description: "Set true to write labels to GitHub. Anything else is a dry run."
+        default: "false"
+        optional: true
+    trigger:
+      type: manual
 
 dev:
   interfaces: [web]

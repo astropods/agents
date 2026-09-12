@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package.json ./
 RUN bun install
 
-COPY ingestion/index.ts ./ingestion/
+COPY ingestion ./ingestion
 COPY src ./src
 
 # Runtime stage

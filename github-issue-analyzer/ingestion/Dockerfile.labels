@@ -1,0 +1,30 @@
+# Label sync container — pushes derived classification back to GitHub.
+# Separate from ingestion/Dockerfile only because ContainerConfig has no
+# command override, so a second entry point needs its own CMD.
+FROM oven/bun:1 AS builder
+
+WORKDIR /app
+
+COPY package.json ./
+RUN bun install
+
+COPY ingestion ./ingestion
+COPY src ./src
+
+# Runtime stage
+FROM oven/bun:1-slim
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/ingestion ./ingestion
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/package.json ./
+
+RUN chown -R bun:bun /app
+USER bun
+
+# Writes only when APPLY=true. The default makes an unattended run a dry run.
+ENV APPLY=false
+
+CMD ["bun", "run", "ingestion/sync-labels.ts"]

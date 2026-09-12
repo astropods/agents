@@ -4,6 +4,16 @@
  */
 
 import OpenAI from 'openai';
+import {
+  EFFORTS,
+  type Effort,
+  IMPACTS,
+  type Impact,
+  SEVERITIES,
+  type Severity,
+  TAXONOMY,
+} from './priority';
+import type { SubcategoryTerm } from './subcategory';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,6 +48,12 @@ export interface CompetitorAnalysis {
 export interface IssueAnalysis {
   summary: string;
   categories: string[];
+  category: string;
+  subcategory: string | null;
+  severity: Severity;
+  impact: Impact;
+  effort: Effort;
+  priorityRationale: string;
   competitors: CompetitorAnalysis[];
   solutions: SolutionAnalysis[];
   workarounds: WorkaroundAnalysis[];
@@ -75,65 +91,120 @@ export function transformIssueDataForAnalysis(issueData: {
 // Analysis
 // ---------------------------------------------------------------------------
 
-const JSON_SCHEMA = {
-  type: 'object' as const,
-  properties: {
-    summary: { type: 'string' as const, description: 'One-sentence summary of the issue' },
-    categories: {
-      type: 'array' as const,
-      items: { type: 'string' as const },
-      description: 'Relevant categories',
-    },
-    competitors: {
-      type: 'array' as const,
-      items: {
-        type: 'object' as const,
-        properties: {
-          name: { type: 'string' as const },
-          source: { type: 'string' as const, description: 'commentId where mentioned' },
-        },
-        required: ['name', 'source'] as const,
-        additionalProperties: false,
+function buildJsonSchema(subcategories: string[]) {
+  const schema = {
+    type: 'object' as const,
+    properties: {
+      summary: { type: 'string' as const, description: 'One-sentence summary of the issue' },
+      categories: {
+        type: 'array' as const,
+        items: { type: 'string' as const },
+        description: 'Relevant categories',
       },
-    },
-    solutions: {
-      type: 'array' as const,
-      items: {
-        type: 'object' as const,
-        properties: {
-          solutionText: {
-            type: 'string' as const,
-            description: 'AI-generated description of the solution',
+      category: {
+        type: 'string' as const,
+        enum: TAXONOMY,
+        description: 'The single best-fitting bucket for this issue',
+      },
+      severity: {
+        type: 'string' as const,
+        enum: SEVERITIES,
+        description: 'How damaging the issue is if left unfixed',
+      },
+      impact: {
+        type: 'string' as const,
+        enum: IMPACTS,
+        description: 'How much of the user base the issue affects',
+      },
+      effort: {
+        type: 'string' as const,
+        enum: EFFORTS,
+        description: 'Rough size of the work to resolve it',
+      },
+      priorityRationale: {
+        type: 'string' as const,
+        description: 'One sentence justifying the severity, impact, and effort call',
+      },
+      competitors: {
+        type: 'array' as const,
+        items: {
+          type: 'object' as const,
+          properties: {
+            name: { type: 'string' as const },
+            source: { type: 'string' as const, description: 'commentId where mentioned' },
           },
-          source: { type: 'string' as const, description: 'commentId where mentioned' },
-          keywords: { type: 'array' as const, items: { type: 'string' as const } },
+          required: ['name', 'source'] as const,
+          additionalProperties: false,
         },
-        required: ['solutionText', 'source', 'keywords'] as const,
-        additionalProperties: false,
       },
-    },
-    workarounds: {
-      type: 'array' as const,
-      items: {
-        type: 'object' as const,
-        properties: {
-          workaroundText: {
-            type: 'string' as const,
-            description: 'AI-generated description of the workaround',
+      solutions: {
+        type: 'array' as const,
+        items: {
+          type: 'object' as const,
+          properties: {
+            solutionText: {
+              type: 'string' as const,
+              description: 'AI-generated description of the solution',
+            },
+            source: { type: 'string' as const, description: 'commentId where mentioned' },
+            keywords: { type: 'array' as const, items: { type: 'string' as const } },
           },
-          source: { type: 'string' as const, description: 'commentId where mentioned' },
-          keywords: { type: 'array' as const, items: { type: 'string' as const } },
+          required: ['solutionText', 'source', 'keywords'] as const,
+          additionalProperties: false,
         },
-        required: ['workaroundText', 'source', 'keywords'] as const,
-        additionalProperties: false,
+      },
+      workarounds: {
+        type: 'array' as const,
+        items: {
+          type: 'object' as const,
+          properties: {
+            workaroundText: {
+              type: 'string' as const,
+              description: 'AI-generated description of the workaround',
+            },
+            source: { type: 'string' as const, description: 'commentId where mentioned' },
+            keywords: { type: 'array' as const, items: { type: 'string' as const } },
+          },
+          required: ['workaroundText', 'source', 'keywords'] as const,
+          additionalProperties: false,
+        },
       },
     },
-  },
-  required: ['summary', 'categories', 'competitors', 'solutions', 'workarounds'] as const,
-  additionalProperties: false,
-};
+    required: [
+      'summary',
+      'categories',
+      'category',
+      'severity',
+      'impact',
+      'effort',
+      'priorityRationale',
+      'competitors',
+      'solutions',
+      'workarounds',
+    ] as const,
+    additionalProperties: false,
+  };
 
-export async function analyzeIssueWithOpenAI(issueData: AnalysisInput): Promise<AnalysisResult> {
+  if (subcategories.length === 0) return schema;
+
+  return {
+    ...schema,
+    properties: {
+      ...schema.properties,
+      subcategory: {
+        type: 'string' as const,
+        enum: subcategories,
+        description: 'The single best-fitting corpus-derived subcategory',
+      },
+    },
+    required: [...schema.required, 'subcategory'] as const,
+  };
+}
+
+export async function analyzeIssueWithOpenAI(
+  issueData: AnalysisInput,
+  vocabulary: SubcategoryTerm[] = [],
+): Promise<AnalysisResult> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const prompt = `
@@ -141,6 +212,9 @@ You are analyzing a GitHub issue and its comments to extract structured informat
 
 **CRITICAL INSTRUCTIONS:**
 - Only extract information that is explicitly stated in the text
+- The no-inference rule below governs extraction only. The category, severity,
+  impact, and effort fields are deliberate judgments: make your best call from
+  the title, description, and labels even when nothing states them outright
 - Do NOT infer or assume anything
 - For competitors, solutions, and workarounds: ONLY extract from COMMENTS, not from the issue description
 - For each extracted item, provide the commentId as the source (this is the source of truth)
@@ -164,7 +238,47 @@ ${issueData.comments.map((c) => `Comment ID: ${c.commentId}\nText: ${c.text}\n--
 3. Competitors: Only from comments — explicit mentions of competitor tools/services
 4. Solutions: Only from comments — user-proposed solutions mentioned explicitly
 5. Workarounds: Only from comments — user-found workarounds mentioned explicitly
-`;
+
+**Then classify the issue (judgment, not extraction):**
+
+6. Category: exactly one bucket, the single best fit:
+   - frontend: web client UI, React components, styling, design, accessibility
+   - backend: server APIs, handlers, database, business logic, jobs
+   - cli: the ast command line tool and local dev workflow
+   - infra: Kubernetes, Terraform, networking, registry, deploys, clusters
+   - docs: documentation content, guides, references
+   - security: auth, permissions, secrets, tenant isolation, vulnerabilities
+   - observability: traces, metrics, logs, dashboards, alerting
+   - tooling: build system, tests, CI, repo hygiene, developer tooling
+   - other: none of the above fits
+
+7. Severity — how damaging if left unfixed:
+   - critical: data loss, security hole, or the product is unusable
+   - high: a core workflow is broken with no workaround
+   - medium: a workflow is degraded, or a workaround exists
+   - low: cosmetic, or a minor annoyance
+
+8. Impact — how much of the user base it touches:
+   - broad: most users hit this
+   - moderate: a common workflow or a sizeable subset
+   - narrow: an edge case or a single user
+
+9. Effort — rough size of the fix:
+   - small: a contained change, roughly under a day
+   - medium: several files or a subsystem
+   - large: cross-cutting work, migration, or new architecture
+
+10. PriorityRationale: one sentence justifying those three calls
+${
+  vocabulary.length === 0
+    ? ''
+    : `
+11. Subcategory: exactly one term from this corpus-derived vocabulary, naming
+    the concern or work type. This is a second axis, independent of the area
+    category above. Pick the closest fit:
+${vocabulary.map((t) => `   - ${t.name}: ${t.definition}`).join('\n')}
+`
+}`;
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
@@ -172,13 +286,17 @@ ${issueData.comments.map((c) => `Comment ID: ${c.commentId}\nText: ${c.text}\n--
       {
         role: 'system',
         content:
-          'You are an expert at analyzing GitHub issues and extracting structured information. Only extract explicitly stated information, do not infer or assume anything.',
+          'You are an expert at analyzing GitHub issues. Extract only explicitly stated information for summary, competitors, solutions, and workarounds. Classify category, severity, impact, and effort using your own judgment.',
       },
       { role: 'user', content: prompt },
     ],
     response_format: {
       type: 'json_schema',
-      json_schema: { name: 'issue_analysis', schema: JSON_SCHEMA },
+      json_schema: {
+        name: 'issue_analysis',
+        schema: buildJsonSchema(vocabulary.map((t) => t.name)),
+        strict: true,
+      },
     },
     temperature: 0.1,
   });

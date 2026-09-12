@@ -18,6 +18,7 @@
  *   ISSUE_STATE     — open | closed | all (default: all)
  *   ISSUE_LIMIT     — Max issues to process (0 = all, default: 0)
  *   SKIP_ANALYSIS   — Set to "true" to skip OpenAI analysis
+ *   REFRESH_VOCAB   — Set to "true" to re-derive the subcategory vocabulary
  */
 
 import type { IssueState } from '../src/services/github';
@@ -58,6 +59,7 @@ async function main() {
     limit: Number.parseInt(process.env.ISSUE_LIMIT || '0', 10),
     analyze: process.env.SKIP_ANALYSIS !== 'true',
     fullSync,
+    refreshVocabulary: process.env.REFRESH_VOCAB === 'true',
   };
 
   console.log(`  Owner: ${config.owner}`);

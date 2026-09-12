@@ -5,6 +5,8 @@ capabilities:
   - "Query GitHub issues using natural language via a Neo4j knowledge graph"
   - "Surface issue trends, categories, competitor mentions, and workarounds"
   - "Summarize comments on a specific issue"
+  - "Group issues into a fixed taxonomy and rank them by derived priority"
+  - "Push category, subcategory, and priority back to GitHub as labels, on confirmation"
   - "Run incremental or full syncs of repository issues into the graph"
 integrations:
   - "GitHub"
@@ -32,12 +34,21 @@ Reading through hundreds of GitHub issues to spot patterns, find workarounds, or
 |------|-------------|
 | `queryNeo4j` | Runs read-only Cypher queries against the knowledge graph |
 | `summarizeComments` | Fetches and summarizes comments for a specific issue |
+| `prioritizeIssues` | Ranks issues by priority score, filtered or grouped by category |
+| `previewLabelSync` | Shows which GitHub labels would change, which would be created, and which unused ones would be deleted. Read-only |
+| `applyLabelSync` | Writes those labels, creates the ones it needs, and deletes the unused ones it created, all after you confirm the diff |
 
 ## Knowledge graph
 
 Issues are stored as nodes with rich relationships:
 
-- **Categories** — bug, feature, performance, docs, etc. (AI-assigned)
+- **Category** — one of frontend, backend, cli, infra, docs, security,
+  observability, tooling, other
+- **Subcategory** — a concern or work type, from a vocabulary derived from this
+  repository's own issue titles
+- **Priority** — severity, impact, and effort judged per issue, combined into a
+  0-100 score
+- **Categories** — legacy free-text categories (AI-assigned, noisy)
 - **Competitors** — any competitor tools mentioned in the issue body or comments
 - **Workarounds / Solutions** — extracted by OpenAI and stored as linked nodes
 - **Keywords** — salient terms for search and clustering

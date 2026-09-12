@@ -17,6 +17,7 @@ import {
   setLastSyncTimestamp,
 } from './neo4j';
 import { analyzeIssueWithOpenAI, transformIssueDataForAnalysis } from './openai';
+import { ensureVocabulary } from './subcategory';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,6 +36,8 @@ export interface PipelineConfig {
   analyze: boolean;
   /** Force full sync even if a lastSync timestamp exists */
   fullSync?: boolean;
+  /** Re-derive the subcategory vocabulary instead of reusing the persisted one */
+  refreshVocabulary?: boolean;
 }
 
 export interface PipelineResult {
@@ -123,6 +126,7 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
   if (config.analyze) {
     // 4. Run OpenAI analysis — skip issues whose updatedAt hasn't changed
     console.log('Step 4/5: Running OpenAI analysis...');
+    const vocabulary = await ensureVocabulary(config.refreshVocabulary ?? false, runTimestamp);
     const ingestedNumbers = ingested.results
       .map((r) => {
         const match = fetched.results.find((f) => f.issue.id === r.issueId);
@@ -154,7 +158,7 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
 
         const transformed = transformIssueDataForAnalysis(detail);
         console.log(`  Analyzing issue #${detail.issue.number}: ${detail.issue.title}`);
-        const result = await analyzeIssueWithOpenAI(transformed);
+        const result = await analyzeIssueWithOpenAI(transformed, vocabulary);
         analysisResults.push({
           issueNumber: detail.issue.number,
           title: detail.issue.title,

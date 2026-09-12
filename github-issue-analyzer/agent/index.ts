@@ -19,6 +19,9 @@ import { Agent } from '@mastra/core/agent';
 import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
 import { buildInstructions } from './instructions';
+import { applyLabelSyncTool } from './tools/apply-label-sync';
+import { previewLabelSyncTool } from './tools/preview-label-sync';
+import { prioritizeIssuesTool } from './tools/prioritize-issues';
 import { queryNeo4jTool } from './tools/query-neo4j';
 import { summarizeCommentsTool } from './tools/summarize-comments';
 
@@ -46,6 +49,9 @@ const agent = new Agent({
   tools: {
     queryNeo4j: queryNeo4jTool,
     summarizeComments: summarizeCommentsTool,
+    prioritizeIssues: prioritizeIssuesTool,
+    previewLabelSync: previewLabelSyncTool,
+    applyLabelSync: applyLabelSyncTool,
   },
   memory,
 });

@@ -37,6 +37,39 @@ describe('buildInstructions', () => {
     expect(buildInstructions(undefined, 'agents')).toContain('Do NOT construct');
   });
 
+  it('documents the classification properties the agent must query', () => {
+    const instructions = buildInstructions('astropods', 'agents');
+
+    for (const prop of [
+      'category',
+      'subcategory',
+      'severity',
+      'impact',
+      'effort',
+      'priorityScore',
+    ]) {
+      expect(instructions, `${prop} is invisible to the agent unless documented`).toContain(prop);
+    }
+    expect(instructions, 'the agent must know the taxonomy to group by it').toContain(
+      'frontend, backend, cli, infra, docs, security',
+    );
+    expect(instructions, 'unclassified rows must be filtered out when ranking').toContain(
+      'i.priorityScore IS NOT NULL',
+    );
+  });
+
+  it('documents the Subcategory node so the vocabulary is discoverable', () => {
+    const instructions = buildInstructions('astropods', 'agents');
+
+    expect(instructions, 'the agent cannot list terms it does not know exist').toContain(
+      'Subcategory — name (STRING), definition (STRING)',
+    );
+  });
+
+  it('advertises the prioritizeIssues tool', () => {
+    expect(buildInstructions('astropods', 'agents')).toContain('prioritizeIssues');
+  });
+
   it('keeps the graph schema in the prompt regardless of repo configuration', () => {
     for (const instructions of [
       buildInstructions('astropods', 'agents'),

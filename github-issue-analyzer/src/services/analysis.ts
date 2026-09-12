@@ -14,6 +14,7 @@ import type {
   SolutionAnalysis,
   WorkaroundAnalysis,
 } from './openai';
+import { computePriorityScore, isCategory } from './priority';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -156,6 +157,40 @@ async function ingestCategories(
 // Public API
 // ---------------------------------------------------------------------------
 
+async function ingestClassification(
+  session: Session,
+  issueNumber: number,
+  analysis: IssueAnalysis,
+): Promise<void> {
+  const category = isCategory(analysis.category) ? analysis.category : 'other';
+  const priorityScore = computePriorityScore({
+    severity: analysis.severity,
+    impact: analysis.impact,
+    effort: analysis.effort,
+  });
+
+  await session.run(
+    `MATCH (i:Issue {number: $n})
+     SET i.category          = $category,
+         i.subcategory       = $subcategory,
+         i.severity          = $severity,
+         i.impact            = $impact,
+         i.effort            = $effort,
+         i.priorityScore     = toInteger($priorityScore),
+         i.priorityRationale = $priorityRationale`,
+    {
+      n: issueNumber,
+      category,
+      subcategory: analysis.subcategory ?? null,
+      severity: analysis.severity ?? null,
+      impact: analysis.impact ?? null,
+      effort: analysis.effort ?? null,
+      priorityScore,
+      priorityRationale: analysis.priorityRationale ?? null,
+    },
+  );
+}
+
 async function processIssueAnalysis(session: Session, data: AnalysisData): Promise<AnalysisStats> {
   const { issueNumber, analysis } = data;
   if (!analysis) return { solutions: 0, workarounds: 0, competitors: 0, categories: 0 };
@@ -175,6 +210,7 @@ async function processIssueAnalysis(session: Session, data: AnalysisData): Promi
   }
   stats.competitors = await ingestCompetitors(session, analysis.competitors ?? [], issueNumber);
   stats.categories = await ingestCategories(session, analysis.categories ?? [], issueNumber);
+  await ingestClassification(session, issueNumber, analysis);
 
   return stats;
 }
