@@ -129,6 +129,24 @@ The word that flips it is "correct", "fix", or "apply". This tool writes only to
 the graph, never to GitHub, so unlike the label sync it is not confirmation
 gated: the worst it can do is make the graph agree with GitHub.
 
+Two different things can be wrong, and they need different tools. A stale state
+on an issue the graph already holds is drift, and the tool above fixes it. An
+issue that was never ingested at all is a gap, and that tool cannot see it: it
+compares only the issues it already knows about, so it reports no drift while a
+total stays short. When a count looks wrong, check for a gap first:
+
+> Are any open issues missing from the graph?
+
+That reports the missing issue numbers and changes nothing. To add them:
+
+> Find the missing issues and ingest them.
+
+Ingesting fetches each issue with its comments and reactions, then classifies
+it, so it costs one model call per issue. It works 25 at a time by default and
+says how many are left, so re-run it until the count reaches zero. It reuses the
+persisted subcategory vocabulary rather than re-deriving it, so a backfill
+cannot redefine the taxonomy the rest of the graph is already classified against.
+
 ### Sync labels to GitHub
 
 Preview first. This is read-only and cannot write, however it is phrased:

@@ -24,6 +24,7 @@ import { Memory } from '@mastra/memory';
 import { gatewayModel } from '../src/services/models';
 import { buildInstructions } from './instructions';
 import { applyLabelSyncTool } from './tools/apply-label-sync';
+import { ingestMissingIssuesTool } from './tools/ingest-missing-issues';
 import { previewLabelSyncTool } from './tools/preview-label-sync';
 import { prioritizeIssuesTool } from './tools/prioritize-issues';
 import { queryNeo4jTool } from './tools/query-neo4j';
@@ -58,6 +59,7 @@ const agent = new Agent({
     previewLabelSync: previewLabelSyncTool,
     applyLabelSync: applyLabelSyncTool,
     reconcileIssueState: reconcileIssueStateTool,
+    ingestMissingIssues: ingestMissingIssuesTool,
   },
   memory,
 });
