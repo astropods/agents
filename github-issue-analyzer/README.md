@@ -2,7 +2,7 @@
 
 [![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/deploy/simon/github-issue-analyzer)
 
-Ingests GitHub issues from a repository into a Neo4j knowledge graph, enriches them with OpenAI analysis, and answers questions using Cypher queries and comment summarization.
+Ingests GitHub issues from a repository into a Neo4j knowledge graph, enriches them with Claude analysis, and answers questions using Cypher queries and comment summarization.
 
 Built with [Mastra](https://mastra.ai) and the Astro platform.
 
@@ -12,7 +12,7 @@ Built with [Mastra](https://mastra.ai) and the Astro platform.
 ┌───────────────────────────────────────────────────────┐
 │  Ingestion (SYNC_MODE=startup — full sync)            │
 │                                                       │
-│  GitHub GraphQL ─► Neo4j ─► OpenAI ─► Neo4j           │
+│  GitHub GraphQL ─► Neo4j ─► Claude ─► Neo4j           │
 │  (fetch issues)    (store)  (analyze)  (store result) │
 └───────────────────────────────────────────────────────┘
 
@@ -56,7 +56,7 @@ derived from the other three by `src/services/priority.ts`).
 
 - Astro CLI (`curl -fsSL https://astropods.com/install | sh`)
 - Docker
-- A GitHub token and OpenAI API key
+- A GitHub token, and `ast login` for AI gateway access
 
 ### Setup
 
@@ -75,7 +75,7 @@ ast dev
 This will:
 1. Start Neo4j (persistent volume, no auth)
 2. Start the messaging service and playground UI
-3. Build and run the startup ingestion (full sync: fetches issues, analyzes with OpenAI, stores in Neo4j)
+3. Build and run the startup ingestion (full sync: fetches issues, analyzes with Claude, stores in Neo4j)
 4. Start the agent
 
 Open http://localhost:3100 (or the URL shown by ast dev) to chat with the agent.
@@ -172,7 +172,8 @@ github-issue-analyzer/
 │   ├── neo4j.ts                    # Neo4j driver singleton + write operations
 │   ├── database.ts                 # Neo4j read operations (issue details)
 │   ├── github.ts                   # GitHub GraphQL API client
-│   ├── openai.ts                   # OpenAI structured analysis
+│   ├── models.ts                   # AI gateway client + model per task
+│   ├── issue-analysis.ts           # Structured issue analysis + classification
 │   ├── analysis.ts                 # Store analysis results back into Neo4j
 │   ├── priority.ts                 # Taxonomy + priority scoring (pure)
 │   ├── subcategory.ts              # Corpus-derived subcategory vocabulary
@@ -195,7 +196,8 @@ All configuration is in `astropods.yml`.
 
 | Section | Provider | Env var injected |
 |---------|----------|------------------|
-| `models.openai` | `openai` | `OPENAI_API_KEY` |
+| `models.reasoning` | `gateway` | `MODEL_REASONING`, plus the two gateway vars below |
+| `models.fast` | `gateway` | `MODEL_FAST`, plus the two gateway vars below |
 | `tools.github` | `github` | `GITHUB_TOKEN` |
 | `knowledge.graph` | `neo4j` | `NEO4J_HOST`, `NEO4J_PORT` (auto) |
 
@@ -232,8 +234,30 @@ is re-fetched and marked `CLOSED` in the graph.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | Powers GPT-4o for analysis and the agent |
+| `ASTRO_GATEWAY_URL` | Yes | AI gateway host. Injected by `ast dev` and by the platform |
+| `ASTRO_GATEWAY_API_KEY` | Yes | AI gateway key. Injected the same way |
 | `GITHUB_TOKEN` | Yes | GitHub API access for fetching issues |
+| `MODEL_REASONING` | No | Overrides the reasoning tier (default `claude-sonnet-4-6`) |
+| `MODEL_FAST` | No | Overrides the cheap tier (default `claude-haiku-4-5`) |
+
+### Models
+
+Every model call goes through the Astropods [AI gateway](https://docs.astropods.com/ai-gateway),
+so no provider key lives in this project. `src/services/models.ts` maps each
+task to a tier, and the tier to a model:
+
+| Task | Tier | Default model | Why |
+|------|------|---------------|-----|
+| Issue analysis and classification | fast | `claude-haiku-4-5` | One call per issue, so cost scales with the corpus |
+| Comment summarization | fast | `claude-haiku-4-5` | Bounded extraction from text already in hand |
+| Subcategory vocabulary | reasoning | `claude-sonnet-4-6` | Runs once over every title and shapes every later classification |
+| The agent itself | reasoning | `claude-sonnet-4-6` | Plans over five tools and writes to GitHub |
+
+The gateway is OpenAI-API-compatible, so the OpenAI SDK is the client and only
+the base URL, key, and model IDs differ. Structured calls attach their JSON
+schema to a tool the model is forced to call, because Claude has no
+`response_format: json_schema` (see `structuredCompletion` in
+`src/services/models.ts` and its tests).
 
 ## Label sync
 
@@ -304,7 +328,7 @@ to an elicitation prompt. Declining or dismissing ends the turn without writing.
 
 ### Unit tests (fast, no Docker, no API keys)
 
-Tests the agent tools with mocked Neo4j and OpenAI:
+Tests the agent tools with mocked Neo4j and model calls:
 
 ```bash
 bun run test:unit

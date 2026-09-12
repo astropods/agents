@@ -19,9 +19,15 @@ agent:
     context: .
     dockerfile: Dockerfile
 
+# Two tiers, each exporting MODEL_<KEY> to every container: MODEL_REASONING
+# and MODEL_FAST. src/services/models.ts maps each task onto one of them.
 models:
-  openai:
-    provider: openai
+  reasoning:
+    provider: gateway
+    models: [claude-sonnet-4-6, claude-opus-4-8]
+  fast:
+    provider: gateway
+    models: [claude-haiku-4-5]
 
 integrations:
   github:

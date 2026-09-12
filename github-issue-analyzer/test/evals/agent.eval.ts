@@ -7,7 +7,7 @@
  * Prerequisites:
  *   - Docker running
  *   - test/fixtures/seed.cypher exists (run `bun test/dump-fixtures.ts` first)
- *   - OPENAI_API_KEY set in env (for the agent + LLM-based scorers)
+ *   - ASTRO_GATEWAY_URL / ASTRO_GATEWAY_API_KEY set in env (agent + LLM-based scorers)
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -21,6 +21,7 @@ import neo4j, { type Driver } from 'neo4j-driver';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { queryNeo4jTool } from '../../agent/tools/query-neo4j';
 import { summarizeCommentsTool } from '../../agent/tools/summarize-comments';
+import { gatewayModel } from '../../src/services/models';
 
 const FIXTURE_PATH = join(import.meta.dirname, '..', 'fixtures', 'seed.cypher');
 const RELEVANCY_THRESHOLD = 0.5;
@@ -108,7 +109,7 @@ beforeAll(async () => {
   agent = new Agent({
     name: 'github-issue-analyzer-test',
     instructions,
-    model: 'openai/gpt-4o',
+    model: gatewayModel('agent'),
     tools: {
       queryNeo4j: queryNeo4jTool,
       summarizeComments: summarizeCommentsTool,
@@ -124,7 +125,7 @@ afterAll(async () => {
 describe('agent evals', () => {
   it('scores well on answer relevancy', async () => {
     const relevancyScorer = createAnswerRelevancyScorer({
-      model: 'openai/gpt-4o-mini',
+      model: gatewayModel('judge'),
     });
 
     const result = await runEvals({

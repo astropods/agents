@@ -2,7 +2,7 @@
   "name": "@astropods/github-issue-analyzer",
   "version": "0.1.0",
   "type": "module",
-  "description": "GitHub Issue Analyzer \u2014 ingests GitHub issues into a Neo4j knowledge graph with OpenAI-powered analysis",
+  "description": "GitHub Issue Analyzer \u2014 ingests GitHub issues into a Neo4j knowledge graph with Claude-powered analysis",
   "scripts": {
     "dev": "bun --watch agent/index.ts",
     "dev:ingest": "bun --watch ingestion/index.ts",

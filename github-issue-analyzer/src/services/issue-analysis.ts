@@ -1,9 +1,10 @@
 /**
- * OpenAI analysis — sends issue data to GPT-4o and extracts structured info
- * (summary, categories, competitors, solutions, workarounds).
+ * Issue analysis — sends issue data to the model and extracts structured info
+ * (summary, categories, competitors, solutions, workarounds) along with the
+ * category, subcategory, and priority judgments.
  */
 
-import OpenAI from 'openai';
+import { structuredCompletion } from './models';
 import {
   EFFORTS,
   type Effort,
@@ -201,12 +202,10 @@ function buildJsonSchema(subcategories: string[]) {
   };
 }
 
-export async function analyzeIssueWithOpenAI(
+export async function analyzeIssue(
   issueData: AnalysisInput,
   vocabulary: SubcategoryTerm[] = [],
 ): Promise<AnalysisResult> {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
   const prompt = `
 You are analyzing a GitHub issue and its comments to extract structured information.
 
@@ -280,40 +279,18 @@ ${vocabulary.map((t) => `   - ${t.name}: ${t.definition}`).join('\n')}
 `
 }`;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are an expert at analyzing GitHub issues. Extract only explicitly stated information for summary, competitors, solutions, and workarounds. Classify category, severity, impact, and effort using your own judgment.',
-      },
-      { role: 'user', content: prompt },
-    ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'issue_analysis',
-        schema: buildJsonSchema(vocabulary.map((t) => t.name)),
-        strict: true,
-      },
-    },
-    temperature: 0.1,
+  const { data: analysis, tokenUsage } = await structuredCompletion<IssueAnalysis>({
+    task: 'analysis',
+    system:
+      'You are an expert at analyzing GitHub issues. Extract only explicitly stated information for summary, competitors, solutions, and workarounds. Classify category, severity, impact, and effort using your own judgment.',
+    prompt,
+    name: 'issue_analysis',
+    schema: buildJsonSchema(vocabulary.map((t) => t.name)),
   });
 
-  const analysis = JSON.parse(completion.choices[0].message.content!) as IssueAnalysis;
-  const usage = completion.usage!;
-
   console.log(
-    `  Token usage — prompt: ${usage.prompt_tokens}, completion: ${usage.completion_tokens}, total: ${usage.total_tokens}`,
+    `  Token usage — prompt: ${tokenUsage.prompt_tokens}, completion: ${tokenUsage.completion_tokens}, total: ${tokenUsage.total_tokens}`,
   );
 
-  return {
-    analysis,
-    tokenUsage: {
-      prompt_tokens: usage.prompt_tokens,
-      completion_tokens: usage.completion_tokens,
-      total_tokens: usage.total_tokens,
-    },
-  };
+  return { analysis, tokenUsage };
 }

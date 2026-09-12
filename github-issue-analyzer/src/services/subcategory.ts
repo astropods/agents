@@ -9,7 +9,7 @@
  */
 
 import type { Session } from 'neo4j-driver';
-import OpenAI from 'openai';
+import { structuredCompletion } from './models';
 import { getDriver } from './neo4j';
 
 export interface SubcategoryTerm {
@@ -86,8 +86,6 @@ async function fetchIssueTitles(session: Session): Promise<string[]> {
 }
 
 export async function deriveVocabulary(titles: string[]): Promise<SubcategoryTerm[]> {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
   const prompt = `
 Below are the titles of every issue in one repository, each followed by its
 labels in brackets.
@@ -111,27 +109,17 @@ Issues (${titles.length}):
 ${titles.map((t) => `- ${t}`).join('\n')}
 `;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You derive a compact, mutually exclusive vocabulary from a corpus. Ground every term in the supplied text.',
-      },
-      { role: 'user', content: prompt },
-    ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: { name: 'subcategory_vocabulary', schema: VOCAB_SCHEMA, strict: true },
-    },
+  const { data } = await structuredCompletion<{ terms: SubcategoryTerm[] }>({
+    task: 'vocabulary',
+    system:
+      'You derive a compact, mutually exclusive vocabulary from a corpus. Ground every term in the supplied text.',
+    prompt,
+    name: 'subcategory_vocabulary',
+    schema: VOCAB_SCHEMA,
     temperature: 0.2,
   });
 
-  const parsed = JSON.parse(completion.choices[0].message.content!) as {
-    terms: SubcategoryTerm[];
-  };
-  return parsed.terms.slice(0, MAX_TERMS);
+  return data.terms.slice(0, MAX_TERMS);
 }
 
 /**

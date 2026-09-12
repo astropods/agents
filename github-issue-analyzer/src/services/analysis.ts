@@ -1,5 +1,5 @@
 /**
- * Analysis ingestion — stores OpenAI analysis results back into Neo4j.
+ * Analysis ingestion — stores model analysis results back into Neo4j.
  *
  * Analysis nodes: Solution, Workaround, Competitor, Category, Keyword
  * Relationships: HAS_SOLUTION, HAS_WORKAROUND, MENTIONS_COMPETITOR,
@@ -7,13 +7,13 @@
  */
 
 import type { Session } from 'neo4j-driver';
-import { getDriver } from './neo4j';
 import type {
   CompetitorAnalysis,
   IssueAnalysis,
   SolutionAnalysis,
   WorkaroundAnalysis,
-} from './openai';
+} from './issue-analysis';
+import { getDriver } from './neo4j';
 import { computePriorityScore, isCategory } from './priority';
 
 // ---------------------------------------------------------------------------

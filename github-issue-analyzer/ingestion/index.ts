@@ -8,7 +8,7 @@
  *   GITHUB_TOKEN    — GitHub API token
  *   GITHUB_OWNER    — Repo owner
  *   GITHUB_REPO     — Repo name
- *   OPENAI_API_KEY  — OpenAI API key (required for analysis)
+ *   ASTRO_GATEWAY_URL / ASTRO_GATEWAY_API_KEY — AI gateway, injected by the platform
  *
  * Optional:
  *   SYNC_MODE       — "startup" (full sync, default) or "schedule" (incremental)
@@ -17,7 +17,7 @@
  *   NEO4J_AUTH      — Set to enable auth (default: disabled)
  *   ISSUE_STATE     — open | closed | all (default: all)
  *   ISSUE_LIMIT     — Max issues to process (0 = all, default: 0)
- *   SKIP_ANALYSIS   — Set to "true" to skip OpenAI analysis
+ *   SKIP_ANALYSIS   — Set to "true" to skip model analysis
  *   REFRESH_VOCAB   — Set to "true" to re-derive the subcategory vocabulary
  */
 

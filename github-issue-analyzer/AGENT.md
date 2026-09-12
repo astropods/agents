@@ -50,7 +50,7 @@ Issues are stored as nodes with rich relationships:
   0-100 score
 - **Categories** — legacy free-text categories (AI-assigned, noisy)
 - **Competitors** — any competitor tools mentioned in the issue body or comments
-- **Workarounds / Solutions** — extracted by OpenAI and stored as linked nodes
+- **Workarounds / Solutions** — extracted by the model and stored as linked nodes
 - **Keywords** — salient terms for search and clustering
 - **Users** — authors and commenters
 

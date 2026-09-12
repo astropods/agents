@@ -34,6 +34,8 @@ const ctx = {} as Parameters<NonNullable<typeof summarizeCommentsTool.execute>>[
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv('ASTRO_GATEWAY_URL', 'https://aig.test');
+  vi.stubEnv('ASTRO_GATEWAY_API_KEY', 'gw-key');
 });
 
 function fakeRecord(data: Record<string, unknown>) {
@@ -60,7 +62,7 @@ describe('summarizeCommentsTool', () => {
     expect(mockOpenAICreate).not.toHaveBeenCalled();
   });
 
-  it('fetches comments and calls OpenAI for summary', async () => {
+  it('fetches comments and calls the model for a summary', async () => {
     mockSession.run.mockResolvedValueOnce({
       records: [
         fakeRecord({ text: 'This is broken', date: '2025-01-01', author: 'alice' }),
@@ -83,7 +85,7 @@ describe('summarizeCommentsTool', () => {
     expect(mockOpenAICreate).toHaveBeenCalledTimes(1);
 
     const callArgs = mockOpenAICreate.mock.calls[0][0];
-    expect(callArgs.model).toBe('gpt-4o');
+    expect(callArgs.model, 'summaries run on the cheap tier').toBe('claude-haiku-4-5');
     expect(callArgs.messages[1].content).toContain('[alice — 2025-01-01]: This is broken');
     expect(callArgs.messages[1].content).toContain('[bob — 2025-01-02]: Me too');
   });

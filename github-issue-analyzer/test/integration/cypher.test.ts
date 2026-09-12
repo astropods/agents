@@ -61,7 +61,7 @@ describe('subcategory vocabulary queries', () => {
     const { ensureVocabulary } = await import('../../src/services/subcategory');
 
     // Two issues is below the derivation floor, so this exercises the title
-    // query and returns without calling OpenAI.
+    // query and returns without calling the model.
     const terms = await ensureVocabulary(false, new Date(0).toISOString());
 
     expect(terms, 'a small corpus must not invent a vocabulary').toEqual([]);

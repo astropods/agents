@@ -1,7 +1,7 @@
 import { createTool } from '@mastra/core/tools';
 import neo4j from 'neo4j-driver';
-import OpenAI from 'openai';
 import { z } from 'zod';
+import { textCompletion } from '../../src/services/models';
 import { getDriver } from '../../src/services/neo4j';
 
 export const summarizeCommentsTool = createTool({
@@ -56,8 +56,6 @@ export const summarizeCommentsTool = createTool({
       };
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
     const summaryPrompt = input.userQuery
       ? `Summarize the following GitHub issue comments, focusing on: ${input.userQuery}`
       : `Summarize the following GitHub issue comments. Extract:
@@ -69,25 +67,16 @@ export const summarizeCommentsTool = createTool({
 
     const formatted = comments.map((c) => `[${c.author} — ${c.date}]: ${c.text}`).join('\n\n');
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert at summarizing GitHub issue discussions.',
-        },
-        {
-          role: 'user',
-          content: `${summaryPrompt}\n\nComments (${comments.length} total):\n${formatted}`,
-        },
-      ],
-      temperature: 0.2,
+    const summary = await textCompletion({
+      task: 'summary',
+      system: 'You are an expert at summarizing GitHub issue discussions.',
+      prompt: `${summaryPrompt}\n\nComments (${comments.length} total):\n${formatted}`,
     });
 
     console.log(`  [summarizeComments] summarised ${comments.length} comments`);
 
     return {
-      summary: completion.choices[0].message.content ?? 'Unable to generate summary.',
+      summary: summary ?? 'Unable to generate summary.',
       commentCount: comments.length,
     };
   },

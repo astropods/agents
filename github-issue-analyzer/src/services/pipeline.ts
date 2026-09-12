@@ -1,6 +1,6 @@
 /**
  * Pipeline orchestrator — ties together GitHub fetch, Neo4j ingest,
- * OpenAI analysis, and analysis ingestion into a single end-to-end flow.
+ * model analysis, and analysis ingestion into a single end-to-end flow.
  *
  * Supports incremental sync: when a previous run's timestamp is found in
  * Neo4j (Meta node), only issues updated since then are fetched and
@@ -10,13 +10,14 @@
 import { type AnalysisData, ingestAnalysisResults } from './analysis';
 import { fetchMultipleIssueDetails } from './database';
 import { type IssueState, getAllIssueNumbers, getIssuesData } from './github';
+import { analyzeIssue, transformIssueDataForAnalysis } from './issue-analysis';
+import { modelFor } from './models';
 import {
   getIssueUpdatedAt,
   getLastSyncTimestamp,
   ingestMultipleIssues,
   setLastSyncTimestamp,
 } from './neo4j';
-import { analyzeIssueWithOpenAI, transformIssueDataForAnalysis } from './openai';
 import { ensureVocabulary } from './subcategory';
 
 // ---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ export interface PipelineConfig {
   state: IssueState;
   /** Max issues to process (0 = all). Useful for testing. */
   limit: number;
-  /** Whether to run OpenAI analysis after ingestion */
+  /** Whether to run model analysis after ingestion */
   analyze: boolean;
   /** Force full sync even if a lastSync timestamp exists */
   fullSync?: boolean;
@@ -124,8 +125,8 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
   let skippedCount = 0;
 
   if (config.analyze) {
-    // 4. Run OpenAI analysis — skip issues whose updatedAt hasn't changed
-    console.log('Step 4/5: Running OpenAI analysis...');
+    // 4. Run model analysis — skip issues whose updatedAt hasn't changed
+    console.log(`Step 4/5: Running model analysis (${modelFor('analysis')})...`);
     const vocabulary = await ensureVocabulary(config.refreshVocabulary ?? false, runTimestamp);
     const ingestedNumbers = ingested.results
       .map((r) => {
@@ -158,7 +159,7 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
 
         const transformed = transformIssueDataForAnalysis(detail);
         console.log(`  Analyzing issue #${detail.issue.number}: ${detail.issue.title}`);
-        const result = await analyzeIssueWithOpenAI(transformed, vocabulary);
+        const result = await analyzeIssue(transformed, vocabulary);
         analysisResults.push({
           issueNumber: detail.issue.number,
           title: detail.issue.title,
