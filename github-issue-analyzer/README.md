@@ -124,17 +124,32 @@ All configuration is in `astropods.yml`.
 
 **Deploy-time inputs** (top-level `inputs` in `astropods.yml`, prompted by `ast configure` and injected into every container, including both ingestion entries):
 
-| Input | Description |
-|-------|-------------|
-| `GITHUB_OWNER` | Repository owner |
-| `GITHUB_REPO` | Repository name |
+| Input | Default | Description |
+|-------|---------|-------------|
+| `GITHUB_OWNER` | none | Repository owner |
+| `GITHUB_REPO` | none | Repository name |
+
+**Startup ingestion inputs** (scoped to the `startup` entry, so they reach only that container):
+
+| Input | Default | Values | Description |
+|-------|---------|--------|-------------|
+| `ISSUE_LIMIT` | `20` | any integer | Max issues to ingest on the first run (0 = all) |
+| `ISSUE_STATE` | `open` | `open`, `closed`, `all` | Which issue states to ingest on the first run |
+
+Change either at deploy time to backfill more history or pull in closed issues.
+The scheduled sync stays uncapped and set to `all`, so declaring these per-entry
+rather than top-level keeps the startup defaults from narrowing incremental runs.
 
 **Ingestion build args** (baked into container images via `astropods.yml`):
 
-| Arg | Default | Description |
-|-----|---------|-------------|
+| Arg | Value | Description |
+|-----|-------|-------------|
 | `SYNC_MODE` | `startup` / `schedule` | Full sync or incremental |
-| `ISSUE_LIMIT` | `100` (startup) / `0` (schedule) | Max issues to process (0 = all) |
+| `ISSUE_LIMIT` | `0` (schedule) | Fallback when no input is supplied |
+| `ISSUE_STATE` | `all` (schedule) | Fallback when no input is supplied |
+
+The scheduled sync uses `ISSUE_STATE=all` so an issue closed since the last run
+is re-fetched and marked `CLOSED` in the graph.
 
 ## Environment Variables
 

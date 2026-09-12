@@ -39,7 +39,21 @@ ingestion:
         dockerfile: ingestion/Dockerfile
         args:
           SYNC_MODE: "startup"
-          ISSUE_LIMIT: "20"
+    # Scoped to this entry, not top-level, so these defaults never reach the
+    # schedule container and throttle or narrow the incremental sync.
+    inputs:
+      - name: ISSUE_LIMIT
+        datatype: number
+        description: "Max issues to ingest on the first run (0 = all)"
+        default: "20"
+        optional: true
+      - name: ISSUE_STATE
+        datatype: string
+        description: "Which issue states to ingest on the first run"
+        display-as: select
+        options: ["open", "closed", "all"]
+        default: "open"
+        optional: true
     trigger:
       type: startup
   schedule:
@@ -50,6 +64,9 @@ ingestion:
         args:
           SYNC_MODE: "schedule"
           ISSUE_LIMIT: "0"
+          # Stays "all" so an issue closed since the last sync is re-fetched
+          # and its state updated, instead of staying OPEN in the graph.
+          ISSUE_STATE: "all"
     trigger:
       type: schedule
 
