@@ -67,19 +67,7 @@ You can add a **Deploy on Astropods** button near the top of a project's `README
 
 - **Two uses.** In a **public GitHub repo**, point it at a **public blueprint** so anyone can one-click deploy the agent. In a **private repo**, use it as a convenience shortcut to reach your own Astropods deployment.
 - **Link target:** `https://astropods.com/<account>/<blueprint>` — `<account>` is the Astropods handle (`ast whoami`) and `<blueprint>` is the name pushed with `ast blueprint push <name>`.
-- **Use the stable raw SVG URL** at `raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg`. This is the image itself (served `image/svg+xml`). The `latest` branch is the public current channel, so existing READMEs pick up new artwork without changing their URL.
-- **A README in this repository uses the relative path `../assets/deploy-button.svg` instead.** GitHub resolves it, and it always renders the current artwork. Only a README outside this repository needs the absolute URL above.
-
-### Changing the artwork
-
-The `latest` branch controls the artwork shown in external READMEs. Replacing
-the button is therefore two steps:
-
-1. Commit and merge the new `assets/deploy-button.svg`.
-2. Fast-forward `latest` to the merged commit.
-
-Leave older `assets-vN` tags in place for consumers that deliberately pinned a
-specific version. Existing consumers of `latest` do not need a URL change.
+- **Use the exact raw SVG URL shown above.** It renders the current button artwork without requiring future README edits.
 
 ## Notes
 
