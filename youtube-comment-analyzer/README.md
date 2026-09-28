@@ -1,6 +1,6 @@
 # YouTube Comment Analyzer
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/youtube-comment-analyzer)
+[![Deploy on Astropods](https://raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg)](https://astropods.com/astro-ai/youtube-comment-analyzer)
 
 An Astro agent that classifies YouTube comments by sentiment using GPT-4o mini. It fetches comments in bulk, processes them in batches of 30, and returns a breakdown of how your audience feels — with representative examples per category and a list of unreplied comments to prioritise.
 

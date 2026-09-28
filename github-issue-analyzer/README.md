@@ -1,6 +1,6 @@
 # GitHub Issue Analyzer
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/deploy/simon/github-issue-analyzer)
+[![Deploy on Astropods](https://raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg)](https://astropods.com/deploy/simon/github-issue-analyzer)
 
 Ingests GitHub issues from a repository into a Neo4j knowledge graph, enriches them with OpenAI analysis, and answers questions using Cypher queries and comment summarization.
 

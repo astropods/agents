@@ -1,6 +1,6 @@
 # Release Note Helper
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/deploy/simon/release-note-helper)
+[![Deploy on Astropods](https://raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg)](https://astropods.com/deploy/simon/release-note-helper)
 
 An Astro agent that helps craft release notes from Jira issues and GitHub pull requests. It queries Jira for completed issues, lets you curate the list interactively, verifies linked PRs on GitHub, and drafts a formatted release note matching your team's style.
 
