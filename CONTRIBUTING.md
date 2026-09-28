@@ -52,6 +52,20 @@ By opening a pull request
 - Include tests for your agent.
 - Add the agent to the table in the top-level [`README.md`](README.md).
 
+### Maintaining the deploy button
+
+Agent READMEs in this repository should reference the button with the relative
+path `../assets/deploy-button.svg`. External READMEs should use
+`https://raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg`.
+
+To publish new artwork:
+
+1. Commit and merge the updated `assets/deploy-button.svg`.
+2. Fast-forward the `latest` branch to the merged commit.
+
+Leave existing `assets-vN` tags unchanged for consumers that deliberately
+pinned a specific version.
+
 ---
 
 ## Contact us
