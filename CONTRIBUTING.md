@@ -54,8 +54,7 @@ By opening a pull request
 
 ### Maintaining the deploy button
 
-Agent READMEs in this repository should reference the button with the relative
-path `../assets/deploy-button.svg`. External READMEs should use
+All agent READMEs should reference the button with the stable current URL:
 `https://raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg`.
 
 To publish new artwork:

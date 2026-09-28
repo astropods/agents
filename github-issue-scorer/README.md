@@ -1,6 +1,6 @@
 # GitHub Issue Scorer
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/github-issue-scorer)
+[![Deploy on Astropods](https://raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg)](https://astropods.com/astro-ai/github-issue-scorer)
 
 An Astro agent that scores open GitHub issues by priority and sentiment using GPT-4o mini. It reads every issue — body and all comments — then ranks them by priority, surfaces frustrated users, flags competitor mentions, and collects workarounds the community has already found.
 

@@ -1,6 +1,6 @@
 # Customer Meetings Agent
 
-[![Deploy on Astropods](../assets/deploy-button.svg)](https://astropods.com/astro-ai/daily-customer-briefs)
+[![Deploy on Astropods](https://raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg)](https://astropods.com/astro-ai/daily-customer-briefs)
 
 An Astro agent that runs every weekday morning and posts a pre-meeting customer brief to Slack. For each calendar event with external attendees, it looks up open Zendesk tickets and active HubSpot deals, then formats a concise per-meeting summary.
 
