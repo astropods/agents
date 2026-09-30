@@ -120,9 +120,11 @@ dev:
   rules under *Headless / scheduled workers* below. `meta.visibility` is accepted but has no
   effect — verified by pushing `meta.visibility: private` to a public blueprint and watching it
   stay public.
-- An org-scoped `name` (`@your-account/...`) must match your **active Astropods
-  account** at `ast push` time (or pass `--allow-account-override`). Nothing checks
-  this locally, so it surfaces on first push.
+- An org-scoped `name` (`@your-account/...`) pushes to that account directly,
+  regardless of the active Astropods account, no flag needed. Use `--org`/
+  `--personal` to target a different account for one push instead, or
+  `--current` to push to the active account and override the prefix (e.g. a
+  shared template whose spec still carries someone else's account).
 - If the agent posts to Slack, consider the platform's Slack adapter (bot
   credentials live in the messaging sidecar — see
   [`build-astropods-agent`](../build-astropods-agent/SKILL.md) §8 *The Slack adapter*)
