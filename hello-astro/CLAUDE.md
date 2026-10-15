@@ -4,7 +4,8 @@ See `AGENTS.md` for the full project overview, structure, and conventions.
 
 ## Key files
 
-- `agent/index.ts` — agent logic; implement `stream()` and `getConfig()` on the `AgentAdapter`
+- `agent/adapter.ts` — agent logic; implement `stream()` and `getConfig()` on the `AgentAdapter`
+- `agent/index.ts` — entry point; enables tracing and calls `serve()`
 - `astropods.yml` — spec: name, interfaces, inputs, dev config
 - `AGENT.md` — catalog card: description, tags, capabilities
 

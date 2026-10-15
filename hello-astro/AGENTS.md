@@ -7,7 +7,9 @@ This is an Astropods agent project. The agent echoes messages and appends a rand
 ```
 hello-astro/
 ├── agent/
-│   └── index.ts         # Agent entry point — implement your logic here
+│   ├── adapter.ts       # Agent logic — implement your logic here
+│   ├── adapter.test.ts  # Unit tests for the adapter and its trace
+│   └── index.ts         # Entry point — enables tracing and calls serve()
 ├── astropods.yml        # Agent spec: name, interfaces, inputs, dev config
 ├── Dockerfile           # Container build — usually needs no changes
 ├── AGENT.md             # Agent card: description, tags, capabilities for the catalog
@@ -16,14 +18,14 @@ hello-astro/
 
 ## How the agent works
 
-`agent/index.ts` exports an `AgentAdapter` and calls `serve(adapter)` from `@astropods/adapter-core`. The adapter implements:
+`agent/adapter.ts` exports an `AgentAdapter`, and `agent/index.ts` calls `serve(adapter)` from `@astropods/adapter-core`. The adapter implements:
 
 - `stream(prompt, hooks, options)` — handles each incoming message. Call `hooks.onChunk(text)` to stream response tokens, `hooks.onFinish()` when done, `hooks.onError(err)` on failure.
 - `getConfig()` — returns static config: `systemPrompt`, `tools`.
 
 ## Making changes
 
-To change the agent's behaviour, edit `agent/index.ts`. To add inputs (API keys, config values), add them to `astropods.yml` under the `inputs` section and access them via `process.env.KEY_NAME` at runtime.
+To change the agent's behaviour, edit `agent/adapter.ts`. To add inputs (API keys, config values), add them to `astropods.yml` under the `inputs` section and access them via `process.env.KEY_NAME` at runtime.
 
 ## Running locally
 
