@@ -3,8 +3,8 @@
  * Uses @astropods/adapter-core directly — no LLM required.
  */
 
-import '@astropods/adapter-core/instrument';
-import { serve } from '@astropods/adapter-core';
+import { instrumentHttp, serve } from '@astropods/adapter-core';
 import { adapter } from './adapter';
 
+instrumentHttp();
 serve(adapter);
