@@ -10,14 +10,17 @@
     "ingest": "bun ingestion/index.ts",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "main": "./agent/index.ts",
   "dependencies": {
-    "@astropods/adapter-core": "latest"
+    "@astropods/adapter-core": "latest",
+    "@opentelemetry/api": "^1.9.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@opentelemetry/sdk-trace-base": "^2.12.0",
     "@types/bun": "^1.1.14",
     "typescript": "^5.9.3"
   }
