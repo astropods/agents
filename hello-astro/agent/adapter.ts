@@ -1,8 +1,6 @@
 import type { AgentAdapter, StreamHooks, StreamOptions } from '@astropods/adapter-core';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 
-const tracer = trace.getTracer('hello-astro');
-
 async function fetchJoke(): Promise<string> {
   const response = await fetch('https://v2.jokeapi.dev/joke/Any?type=single&safe-mode');
   const data = (await response.json()) as { joke?: string; setup?: string; delivery?: string };
@@ -13,6 +11,8 @@ export const adapter: AgentAdapter = {
   name: 'Hello World',
 
   async stream(prompt: string, hooks: StreamHooks, options: StreamOptions): Promise<void> {
+    const tracer = trace.getTracer('hello-astro');
+
     await tracer.startActiveSpan('hello.turn', async (span) => {
       span.setAttribute('gen_ai.operation.name', 'invoke_agent');
       span.setAttribute('gen_ai.agent.name', adapter.name);

@@ -16,7 +16,7 @@
   "main": "./agent/index.ts",
   "dependencies": {
     "@astropods/adapter-core": "latest",
-    "@opentelemetry/api": "^1.9.0"
+    "@opentelemetry/api": ">=1.9.0 <1.10.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
