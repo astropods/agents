@@ -1,0 +1,136 @@
+schema: evaluation/v1
+
+evaluators:
+  - ref: preset/claim-grounding
+  - ref: preset/unnecessary-tool-call
+  - ref: preset/exposed-pii
+
+  - key: triage_outcome
+    label: Triage outcome
+    description: Which path the agent took, so you can see the mix of auto-resolved, escalated, learned, and failed runs.
+    type: llm
+    config:
+      context:
+        steps: true
+        step_types:
+          - tool
+    prompt_file: evaluation/triage-outcome.md
+    output:
+      type: enum
+      options:
+        - answered_from_kb
+        - escalated
+        - learned_qa
+        - skipped_learning
+        - failed
+        - other
+
+  - key: status_matches_path
+    label: Status matches path
+    description: The ticket status the agent set follows its instructions for the path it took.
+    type: llm
+    config:
+      context:
+        steps: true
+        step_types:
+          - tool
+    prompt_file: evaluation/status-matches-path.md
+    output:
+      type: enum
+      options:
+        - correct
+        - incorrect
+        - not_applicable
+
+  - key: confidence_threshold_respected
+    label: Confidence threshold respected
+    description: The agent answered only on a knowledge base match scoring above 0.85 and escalated otherwise.
+    type: llm
+    config:
+      context:
+        steps: true
+        step_types:
+          - tool
+    prompt_file: evaluation/confidence-threshold-respected.md
+    output:
+      type: enum
+      options:
+        - respected
+        - violated
+        - not_applicable
+
+  - key: kb_gap_topic
+    label: Knowledge base gap
+    description: For escalated tickets, the topic the knowledge base could not answer. Use it to decide what Q&A to add.
+    type: llm
+    config:
+      context:
+        steps: true
+        step_types:
+          - tool
+    prompt: |
+      When the agent escalated a ticket, name the customer's topic in five words or fewer (for example "SSO setup for Okta").
+      Add "weak match" if retrieve_embeddings returned matches that were close but below the threshold, or "no match" if nothing relevant came back.
+      Return an empty string when the agent did not escalate.
+    output:
+      type: string
+      max_length: 120
+
+  - key: learned_qa_quality
+    label: Learned Q&A quality
+    description: The Q&A pair stored in the knowledge base is concise, self-contained, and free of ticket-specific text.
+    type: llm
+    config:
+      context:
+        steps: true
+        step_types:
+          - tool
+    prompt: |
+      Inspect the question and answer passed to update_pinecone.
+      Answer "clean" when both are concise, make sense without the ticket, and contain no ticket numbers, names, greetings, or sign-offs.
+      Answer "noisy" when either contains that extra text, or when the answer is vague or wrong for the question.
+      Answer "not_applicable" when the agent did not call update_pinecone.
+    output:
+      type: enum
+      options:
+        - clean
+        - noisy
+        - not_applicable
+
+  - key: learning_guard_respected
+    label: Learning guard respected
+    description: The agent stored a Q&A pair only for human-solved tickets that were not already in the knowledge base.
+    type: llm
+    config:
+      context:
+        steps: true
+        step_types:
+          - tool
+    prompt_file: evaluation/learning-guard-respected.md
+    output:
+      type: enum
+      options:
+        - respected
+        - violated
+        - not_applicable
+
+  - key: tool_failure_source
+    label: Tool failure source
+    description: Which dependency failed during the run, so you can tell integration problems from reasoning problems.
+    type: llm
+    config:
+      context:
+        steps: true
+        step_types:
+          - tool
+    prompt: |
+      Look for tool steps that carry an error.
+      Answer "zendesk" for failures in get_zendesk_ticket, update_zendesk_ticket, get_solved_ticket_comments, or lookup_zendesk_agent.
+      Answer "pinecone" for failures in retrieve_embeddings or update_pinecone, including rate limiting.
+      Answer "none" when every tool call succeeded.
+    output:
+      type: enum
+      options:
+        - none
+        - zendesk
+        - pinecone
