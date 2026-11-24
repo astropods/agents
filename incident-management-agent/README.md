@@ -61,7 +61,3 @@ incident-management-agent/
 ## Model
 
 Uses `openai/gpt-4.1` via the Astro-managed OpenAI integration.
-
-## Agent directory
-
-View this agent on Astropods: [astropods.com/astro-ai/incident-management-agent](https://astropods.com/astro-ai/incident-management-agent)
