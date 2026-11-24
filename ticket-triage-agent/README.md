@@ -91,3 +91,7 @@ ticket-triage-agent/
 ## Model
 
 Uses `openai/gpt-4o-mini` via the Astro-managed OpenAI integration.
+
+## Agent directory
+
+View this agent on Astropods: [astropods.com/astropods-org/zendesk-ticket-triage](https://astropods.com/astropods-org/zendesk-ticket-triage)

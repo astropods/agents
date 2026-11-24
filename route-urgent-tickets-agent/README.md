@@ -95,3 +95,7 @@ The webhook handler responds `200` immediately and processes tickets asynchronou
 ## Model
 
 Uses `openai/gpt-4.1` via the Astro-managed OpenAI integration.
+
+## Agent directory
+
+View this agent on Astropods: [astropods.com/astropods-org/urgent-ticket-router](https://astropods.com/astropods-org/urgent-ticket-router)

@@ -78,3 +78,7 @@ youtube-comment-analyzer/
 ## Model
 
 Uses `openai/gpt-4o-mini` via the Astro-managed OpenAI integration.
+
+## Agent directory
+
+View this agent on Astropods: [astropods.com/astropods-org/youtube-comment-analyzer](https://astropods.com/astropods-org/youtube-comment-analyzer)
