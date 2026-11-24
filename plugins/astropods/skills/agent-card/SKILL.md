@@ -59,14 +59,16 @@ The body is free-form GitHub-Flavored Markdown. Use the following patterns where
 
 Optional guidance for a project's `README.md`, not the agent card — this skill writes `AGENT.md` and does not modify `README.md` unless asked.
 
-You can add a **Deploy on Astropods** button near the top of a project's `README.md` (right under the H1) that links to its Astropods page:
+You can add a **Deploy on Astropods** button near the top of a project's `README.md` (right under the H1). It takes a visitor to Astropods to deploy the agent in their own account:
 
 ```markdown
-[![Deploy on Astropods](https://raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg)](https://astropods.com/<account>/<blueprint>)
+[![Deploy on Astropods](https://raw.githubusercontent.com/astropods/agents/latest/assets/deploy-button.svg)](https://astropods.com/deploy?repo=<owner>/<name>&path=<dir>)
 ```
 
-- **Two uses.** In a **public GitHub repo**, point it at a **public blueprint** so anyone can one-click deploy the agent. In a **private repo**, use it as a convenience shortcut to reach your own Astropods deployment.
-- **Link target:** `https://astropods.com/<account>/<blueprint>` — `<account>` is the Astropods handle (`ast whoami`) and `<blueprint>` is the name pushed with `ast blueprint push <name>`.
+- **`repo`:** the `owner/name` of the project's GitHub `origin` remote, without `.git`. Without a GitHub remote the button has nothing to deploy, so don't suggest it.
+- **`path`:** the directory that holds `astropods.yml`, relative to the repository root (e.g. `agents/support`). Leave out `&path=` when `astropods.yml` is at the root.
+- **The button builds from the repository's default branch**, so it works once `astropods.yml` is pushed there.
+- **Which blueprint it deploys.** When a public blueprint is connected to this repository and path (in Astropods, the blueprint's **Settings > Source**) and has a successful build, visitors deploy that blueprint. Otherwise each visitor connects or forks the repository and builds it in their own account first. A blueprint published only with `ast blueprint push` is not found by repository.
 - **Use the exact raw SVG URL shown above.** It renders the current button artwork without requiring future README edits.
 
 ## Notes
