@@ -23,6 +23,8 @@ hello-astro/
 - `stream(prompt, hooks, options)` — handles each incoming message. Call `hooks.onChunk(text)` to stream response tokens, `hooks.onFinish()` when done, `hooks.onError(err)` on failure.
 - `getConfig()` — returns static config: `systemPrompt`, `tools`.
 
+Each turn is one `hello.turn` trace. Under it, a `chat echo` step records the echo as a model call to a model named `echo`, with word counts as its input and output tokens. No model runs. The step shows how a real model call appears in Traces, and Astropods' smoke tests check its token counts end to end.
+
 ## Making changes
 
 To change the agent's behaviour, edit `agent/adapter.ts`. To add inputs (API keys, config values), add them to `astropods.yml` under the `inputs` section and access them via `process.env.KEY_NAME` at runtime.
