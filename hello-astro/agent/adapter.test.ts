@@ -23,6 +23,12 @@ function recordHooks() {
   return { calls, hooks };
 }
 
+function spanNamed(name: string) {
+  const span = exporter.getFinishedSpans().find((s) => s.name === name);
+  if (!span) throw new Error(`no finished span named ${name}`);
+  return span;
+}
+
 function stubFetch(handler: () => Promise<Response>) {
   globalThis.fetch = handler as unknown as typeof fetch;
 }
@@ -77,14 +83,14 @@ describe('stream', () => {
 });
 
 describe('trace', () => {
-  test('records one hello.turn span with the prompt as input and the reply as output', async () => {
+  test('records a hello.turn span with the prompt as input and the reply as output', async () => {
     stubFetch(async () => Response.json({ joke: 'a joke' }));
 
     await adapter.stream('hi', recordHooks().hooks, options);
 
     const spans = exporter.getFinishedSpans();
-    expect(spans.map((span) => span.name)).toEqual(['hello.turn']);
-    const { attributes } = spans[0];
+    expect(spans.map((span) => span.name).sort()).toEqual(['chat echo', 'hello.turn']);
+    const { attributes } = spanNamed('hello.turn');
     expect(attributes['gen_ai.input.messages']).toBe(
       JSON.stringify([{ role: 'user', content: 'hi' }]),
     );
@@ -93,12 +99,27 @@ describe('trace', () => {
     );
   });
 
+  test('records the echo as a model call under the turn, with word counts as tokens', async () => {
+    stubFetch(async () => Response.json({ joke: 'a joke' }));
+
+    await adapter.stream('three word prompt', recordHooks().hooks, options);
+
+    const step = spanNamed('chat echo');
+    expect(step.parentSpanContext?.spanId).toBe(spanNamed('hello.turn').spanContext().spanId);
+    expect(step.attributes).toMatchObject({
+      'langfuse.observation.type': 'generation',
+      'gen_ai.request.model': 'echo',
+      'gen_ai.usage.input_tokens': 3,
+      'gen_ai.usage.output_tokens': 4,
+    });
+  });
+
   test('tags the span with the conversation and user', async () => {
     stubFetch(async () => Response.json({ joke: 'a joke' }));
 
     await adapter.stream('hi', recordHooks().hooks, options);
 
-    const { attributes } = exporter.getFinishedSpans()[0];
+    const { attributes } = spanNamed('hello.turn');
     expect(attributes['gen_ai.conversation.id']).toBe('conv-1');
     expect(attributes['user.id']).toBe('user-1');
   });
@@ -110,7 +131,7 @@ describe('trace', () => {
 
     await adapter.stream('hi', recordHooks().hooks, options);
 
-    const [span] = exporter.getFinishedSpans();
+    const span = spanNamed('hello.turn');
     expect(span.status.code).toBe(SpanStatusCode.ERROR);
     expect(span.status.message).toBe('joke api down');
     expect(span.attributes['gen_ai.input.messages']).toBe(
