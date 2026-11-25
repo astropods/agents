@@ -78,4 +78,4 @@ Uses `openai/gpt-4o-mini` via the Astro-managed OpenAI integration.
 
 ## Agent directory
 
-View this agent on Astropods: [astropods.com/astro-ai/slack-jira-agent](https://astropods.com/astro-ai/slack-jira-agent)
+View this agent on Astropods: [astropods.com/astropods-org/create-jira-tickets](https://astropods.com/astropods-org/create-jira-tickets)

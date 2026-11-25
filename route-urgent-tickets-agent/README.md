@@ -98,4 +98,4 @@ Uses `openai/gpt-4.1` via the Astro-managed OpenAI integration.
 
 ## Agent directory
 
-View this agent on Astropods: [astropods.com/astro-ai/route-urgent-tickets-agent](https://astropods.com/astro-ai/route-urgent-tickets-agent)
+View this agent on Astropods: [astropods.com/astropods-org/urgent-ticket-router](https://astropods.com/astropods-org/urgent-ticket-router)
